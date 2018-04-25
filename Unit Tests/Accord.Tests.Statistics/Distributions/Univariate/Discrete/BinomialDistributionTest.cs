@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -26,31 +26,15 @@ namespace Accord.Tests.Statistics
     using Accord.Math;
     using Accord.Statistics.Distributions.Fitting;
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class BinomialDistributionTest
     {
 
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             var bin = new BinomialDistribution(trials: 16, probability: 0.12);
@@ -109,7 +93,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(5.0, range3.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityMassFunctionTest()
         {
             double[] expected =
@@ -117,7 +101,7 @@ namespace Accord.Tests.Statistics
                 0.0, 0.0260838446329553, 0.104335628936830,  0.198238170750635,
                 0.237886375826922,  0.202203904741285,  0.129410809619744,
                 0.0647055601029058, 0.0258822861585249, 0.00841176318971187,
-                0.00224314223412042 
+                0.00224314223412042
             };
 
             int trials = 20;
@@ -136,7 +120,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest()
         {
             int trials = 5;
@@ -152,7 +136,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.066666666666666666, target.ProbabilityOfSuccess, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void BinomialDistributionConstructorTest()
         {
             int trials = 5;
@@ -165,7 +149,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(trials * probability * (1 - probability), target.Variance);
         }
 
-        [TestMethod()]
+        [Test]
         public void CloneTest()
         {
             int trials = 3;
@@ -181,7 +165,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.ProbabilityOfSuccess, actual.ProbabilityOfSuccess);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest()
         {
             // http://www.stat.yale.edu/Courses/1997-98/101/binom.htm
@@ -231,7 +215,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest2()
         {
             // http://www.stat.yale.edu/Courses/1997-98/101/binom.htm
@@ -251,7 +235,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void InverseDistributionFunctionTest()
         {
             double[] pvalues = { 0.0260838, 0.130419, 0.3287, 0.5665, 0.7687, 0.8982, 0.9629, 0.9887, 0.9972, 0.9994 };
@@ -269,7 +253,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest3()
         {
             // http://www.danielsoper.com/statcalc3/calc.aspx?id=70
@@ -288,7 +272,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             int trials = 5;
@@ -319,7 +303,56 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
+        public void icdf()
+        {
+            int trials = 1;
+
+            BinomialDistribution dist = new BinomialDistribution(trials, 0.5);
+            double icdf000 = dist.InverseDistributionFunction(0.0);
+            Assert.AreEqual(0, icdf000);
+
+            double icdf001 = dist.InverseDistributionFunction(0.1);
+            Assert.AreEqual(0, icdf001);
+
+            double icdf050 = dist.InverseDistributionFunction(0.5); // important
+            Assert.AreEqual(0, icdf050);
+
+            double icdf090 = dist.InverseDistributionFunction(0.9);
+            Assert.AreEqual(1, icdf090);
+
+            double icdf100 = dist.InverseDistributionFunction(0.9);
+            Assert.AreEqual(1, icdf100);
+
+            Assert.AreEqual(dist.Median, icdf050);
+        }
+
+        [Test]
+        public void icdf2()
+        {
+            int trials = 1;
+
+            BinomialDistribution dist = new BinomialDistribution(trials, 0.5);
+
+            double[] percentiles = Vector.Range(0.0, 1.0, stepSize: 0.1);
+            for (int i = 0; i < percentiles.Length; i++)
+            {
+                double x = percentiles[i];
+                int icdf = dist.InverseDistributionFunction(x);
+                double cdf = dist.DistributionFunction(icdf);
+                int iicdf = dist.InverseDistributionFunction(cdf);
+                double iiicdf = dist.DistributionFunction(iicdf);
+                Assert.AreEqual(iicdf, icdf, 1e-5);
+
+                double rx = Math.Round(x);
+                double rc = Math.Round(cdf);
+
+                Assert.AreEqual(rx, rc, 1e-5);
+                Assert.AreEqual(iiicdf, cdf, 1e-5);
+            }
+        }
+
+        [Test]
         public void OverflowTest()
         {
             // http://stackoverflow.com/questions/23222097/accord-net-binomial-probability-mass-function-result-differs-from-excel-result
@@ -331,7 +364,8 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-7);
         }
 
-        [TestMethod()]
+        [Test]
+        [Category("Slow")]
         public void GenerateTest()
         {
             var target = new BinomialDistribution(4, 0.2);
@@ -344,7 +378,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.2, target.ProbabilityOfSuccess, 1e-3);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest2()
         {
             var target = new BinomialDistribution(4, 0.2);
@@ -357,7 +391,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.2, target.ProbabilityOfSuccess, 1e-3);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest3()
         {
             var target = new BinomialDistribution(4);

@@ -5,7 +5,7 @@
 // Copyright © Pablo Guzman Sanchez, 2013
 // pablogsanchez at gmail.com
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,15 +23,17 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 // This code originated as a contribution by Pablo Sanches, originally based on
-// Student Dave's tutorial on Object Tracking in Images Using 2D Kalman Filters:
+// Student Dave's tutorial on Object Tracking in Images Using 2D Kalman Filters,
+// shared under the LGPL by explicit written permissions from both authors:
 //
 //   http://studentdavestutorials.weebly.com/object-tracking-2d-kalman-filter.html
 //
 
 namespace Accord.Statistics.Running
 {
+    using System;
     using Accord.Math;
-    using AForge;
+    using Accord.Compat;
 
     /// <summary>
     ///   Kalman filter for 2D coordinate systems.
@@ -48,15 +50,20 @@ namespace Accord.Statistics.Running
     ///   </list></para>
     /// </remarks>
     /// 
-    public class KalmanFilter2D : IRunning<DoublePoint>
+    /// <example>
+    /// <code source="Unit Tests\Accord.Tests.Statistics\KalmanFilterTest.cs" region="doc_push" />
+    /// </example>
+    /// 
+    [Serializable]
+    public class KalmanFilter2D : IRunning<DoublePoint>, IRunning<double[]>
     {
 
         double samplingRate = 1;
 
-        double acceleration = 0.005f;
+        double acceleration = 0.0005f;
         double accelStdDev = 0.1f;
 
-        double[,] Q_estimate;
+        double[,] Q_estimate; // (location_0, location_1, vel_0, vel_1)
 
         double[,] A;
         double[,] B;
@@ -68,7 +75,7 @@ namespace Accord.Statistics.Running
         double[,] K;
         double[,] Aux;
 
-        static readonly double[,] diagonal = 
+        static readonly double[,] diagonal =
         {
             { 1, 0, 0, 0 },
             { 0, 1, 0, 0 },
@@ -155,8 +162,7 @@ namespace Accord.Statistics.Running
         /// <param name="acceleration">The acceleration.</param>
         /// <param name="accelerationStdDev">The acceleration standard deviation.</param>
         /// 
-        public KalmanFilter2D(double samplingRate,
-            double acceleration, double accelerationStdDev)
+        public KalmanFilter2D(double samplingRate, double acceleration, double accelerationStdDev)
         {
             this.acceleration = acceleration;
             this.accelStdDev = accelerationStdDev;
@@ -169,7 +175,7 @@ namespace Accord.Statistics.Running
         {
             double dt = samplingRate;
 
-            A = new double[,] 
+            A = new double[,]
             {
                 { 1,  0, dt,  0 },
                 { 0,  1,  0, dt },
@@ -177,11 +183,11 @@ namespace Accord.Statistics.Running
                 { 0,  0,  0,  1 }
             };
 
-            B = new double[,] 
+            B = new double[,]
             {
                 { (dt * dt) / 2 },
                 { (dt * dt) / 2 },
-                {       dt      }, 
+                {       dt      },
                 {       dt      }
             };
 
@@ -191,7 +197,11 @@ namespace Accord.Statistics.Running
                 { 0, 1, 0, 0 }
             };
 
-            Ez = new double[2, 2];
+            Ez = new double[,] 
+            {
+                { 1.0, 0.0 }, 
+                { 0.0, 1.0 }
+            };
 
             double dt2 = dt * dt;
             double dt3 = dt2 * dt;
@@ -205,9 +215,11 @@ namespace Accord.Statistics.Running
                 { 0,        dt4 / 4,        0,  dt3 / 2 },
                 { dt3 / 2,        0,      dt2,        0 },
                 { 0,        dt3 / 2,        0,      dt2 }
-            }.Multiply(aVar, inPlace: true);
+            };
 
+            Ex.Multiply(aVar, result: Ex);
 
+            Q_estimate = new double[4, 1];
             P = Ex.MemberwiseClone();
         }
 
@@ -218,24 +230,50 @@ namespace Accord.Statistics.Running
         /// 
         /// <param name="value">The value to be registered.</param>
         /// 
+        public void Push(double[] value)
+        {
+            if (value.Length != 2)
+                throw new DimensionMismatchException("value");
+
+            Push(value[0], value[1]);
+        }
+
+        /// <summary>
+        ///   Registers the occurrence of a value.
+        /// </summary>
+        /// 
+        /// <param name="value">The value to be registered.</param>
+        /// 
         public void Push(DoublePoint value)
         {
-            double[,] Qloc = { { value.X }, { value.Y } };
+            Push(value.X, value.Y);
+        }
+
+        /// <summary>
+        ///   Registers the occurrence of a value.
+        /// </summary>
+        /// 
+        /// <param name="x">The x-coordinate of the value to be registered.</param>
+        /// <param name="y">The y-coordinate of the value to be registered.</param>
+        /// 
+        public void Push(double x, double y)
+        {
+            double[,] Qloc = { { x }, { y } };
 
             // Predict next state
-            Q_estimate = (A.Multiply(Q_estimate)).Add(B.Multiply(acceleration));
+            Q_estimate = Matrix.Dot(A, Q_estimate).Add(B.Multiply(acceleration));
 
             // Predict Covariances
-            P = (A.Multiply(P.Multiply(A.Transpose()))).Add(Ex);
+            P = Matrix.Dot(A, P.DotWithTransposed(A)).Add(Ex);
 
-            Aux = (C.Multiply(P.Multiply(C.Transpose())).Add(Ez)).PseudoInverse();
+            Aux = Matrix.Dot(C, P.DotWithTransposed(C)).Add(Ez).PseudoInverse();
 
             // Kalman Gain
-            K = P.Multiply(C.Transpose().Multiply(Aux));
-            Q_estimate = Q_estimate.Add(K.Multiply(Qloc.Subtract(C.Multiply(Q_estimate))));
+            K = P.Dot(C.TransposeAndDot(Aux));
+            Q_estimate = Q_estimate.Add(K.Dot(Qloc.Subtract(C.Dot(Q_estimate))));
 
             // Update P (Covariances)
-            P = (diagonal.Subtract(K.Multiply(C))).Multiply(P);
+            P = Matrix.Dot(diagonal.Subtract(Matrix.Dot(K, C)), P);
         }
 
 

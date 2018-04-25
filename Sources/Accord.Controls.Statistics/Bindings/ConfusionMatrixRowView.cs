@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ namespace Accord.Controls
             get
             {
                 if (RowIndex == -1) 
-                    return Owner.RowNames[Owner.Matrix.Classes];
+                    return Owner.RowNames[Owner.Matrix.NumberOfClasses];
                 return Owner.RowNames[RowIndex];
             }
         }
@@ -127,7 +127,7 @@ namespace Accord.Controls
         public PropertyDescriptorCollection GetProperties(Attribute[] attributes)
         {
             GeneralConfusionMatrix matrix = Owner.Matrix;
-            int classes = matrix.Classes;
+            int classes = matrix.NumberOfClasses;
 
             PropertyDescriptor[] columns = new PropertyDescriptor[classes + 1];
 
@@ -152,7 +152,7 @@ namespace Accord.Controls
             {
                 if (Owner.Proportions)
                     return 1;
-                else return Owner.Matrix.Samples;
+                else return Owner.Matrix.NumberOfSamples;
             }
 
             if (RowIndex == -1)

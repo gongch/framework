@@ -1,7 +1,7 @@
 ﻿// Accord.NET Sample Applications
 // http://accord-framework.net
 //
-// Copyright © 2009-2014, César Souza
+// Copyright © 2009-2017, César Souza
 // All rights reserved. 3-BSD License:
 //
 //   Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,9 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 using Accord.Imaging;
-using AForge.Imaging.Filters;
+using Accord.Imaging.Filters;
 
-namespace Corners.Harris
+namespace SampleApp
 {
     public partial class MainForm : Form
     {
@@ -49,7 +49,7 @@ namespace Corners.Harris
         private void button1_Click(object sender, EventArgs e)
         {
             // Open a image
-            Bitmap lenna = Harris.Properties.Resources.lena512;
+            Bitmap lenna = Properties.Resources.lena512;
 
             double sigma = (double)numSigma.Value;
             float k = (float)numK.Value;

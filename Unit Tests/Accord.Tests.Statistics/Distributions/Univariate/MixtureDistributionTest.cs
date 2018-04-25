@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,17 +22,18 @@
 
 namespace Accord.Tests.Statistics
 {
-    using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Accord.Math;
+    using Accord.Statistics;
     using Accord.Statistics.Distributions.Fitting;
+    using Accord.Statistics.Distributions.Univariate;
+    using NUnit.Framework;
     using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class MixtureDistributionTest
     {
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             // Create a new mixture containing two Normal distributions
@@ -71,20 +72,20 @@ namespace Accord.Tests.Statistics
 
 
             Assert.AreEqual(3.5, mean);
-            Assert.AreEqual(3.4999998506015895, median);
-            Assert.AreEqual(3.25, var);
+            Assert.AreEqual(3.4999998506015895, median, 1e-10);
+            Assert.AreEqual(3.25, var, 1e-10);
             Assert.AreEqual(0.91373394208601633, chf, 1e-10);
-            Assert.AreEqual(0.59897597553494908, cdf);
-            Assert.AreEqual(0.14499174984363708, pmf1);
-            Assert.AreEqual(0.19590437513747333, pmf2);
-            Assert.AreEqual(0.13270883471234715, pmf3);
-            Assert.AreEqual(-1.8165661905848629, lpmf);
-            Assert.AreEqual(0.40541978256972522, hf);
-            Assert.AreEqual(0.40102402446505092, ccdf);
-            Assert.AreEqual(1.5866611690305092, icdf1);
-            Assert.AreEqual(3.1968506765456883, icdf2);
-            Assert.AreEqual(5.6437596300843076, icdf3);
-            Assert.AreEqual("Mixture(x; 0.5*N(x; μ = 5, σ² = 1) + 0.5*N(x; μ = 5, σ² = 1))", str);
+            Assert.AreEqual(0.59897597553494908, cdf, 1e-10);
+            Assert.AreEqual(0.14499174984363708, pmf1, 1e-10);
+            Assert.AreEqual(0.19590437513747333, pmf2, 1e-10);
+            Assert.AreEqual(0.13270883471234715, pmf3, 1e-10);
+            Assert.AreEqual(-1.8165661905848629, lpmf, 1e-10);
+            Assert.AreEqual(0.40541978256972522, hf, 1e-10);
+            Assert.AreEqual(0.40102402446505092, ccdf, 1e-10);
+            Assert.AreEqual(1.5866611690305092, icdf1, 1e-10);
+            Assert.AreEqual(3.1968506765456883, icdf2, 1e-10);
+            Assert.AreEqual(5.6437596300843076, icdf3, 1e-10);
+            Assert.AreEqual("Mixture(x; 0.5*N(x; μ = 2, σ² = 1) + 0.5*N(x; μ = 5, σ² = 1))", str);
 
             Assert.IsFalse(double.IsNaN(icdf1));
 
@@ -92,15 +93,15 @@ namespace Accord.Tests.Statistics
             var range2 = mix.GetRange(0.99);
             var range3 = mix.GetRange(0.01);
 
-            Assert.AreEqual(0.71839556342582434, range1.Min);
-            Assert.AreEqual(6.2816044312576365, range1.Max);
-            Assert.AreEqual(-0.053753308211290443, range2.Min);
-            Assert.AreEqual(7.0537533150666105, range2.Max);
-            Assert.AreEqual(-0.053753308211289402, range3.Min);
-            Assert.AreEqual(7.0537533150666105, range3.Max);
+            Assert.AreEqual(0.71839556342582434, range1.Min, 1e-10);
+            Assert.AreEqual(6.2816044312576365, range1.Max, 1e-10);
+            Assert.AreEqual(-0.053753308211290443, range2.Min, 1e-10);
+            Assert.AreEqual(7.0537533150666105, range2.Max, 1e-10);
+            Assert.AreEqual(-0.053753308211289402, range3.Min, 1e-10);
+            Assert.AreEqual(7.0537533150666105, range3.Max, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest1()
         {
             NormalDistribution[] components = new NormalDistribution[2];
@@ -115,7 +116,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(components, mixture.Components);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest2()
         {
             // Create a new mixture containing two Normal distributions
@@ -128,11 +129,11 @@ namespace Accord.Tests.Statistics
             double mean = mix.Mean;     // 3.5
 
             Assert.AreEqual(3.5, mean);
-            Assert.AreEqual(3.4999998506015895, median);
+            Assert.AreEqual(3.4999998506015895, median, 1e-10);
             Assert.AreEqual(3.25, var);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest()
         {
             double[] coefficients = { 0.50, 0.50 };
@@ -152,26 +153,26 @@ namespace Accord.Tests.Statistics
             target.Fit(values, options);
             var actual = target;
 
-            var mean1 = Accord.Statistics.Tools.Mean(part1);
-            var var1 = Accord.Statistics.Tools.Variance(part1);
+            var mean1 = Measures.Mean(part1);
+            var var1 = Measures.Variance(part1);
             Assert.AreEqual(mean1, actual.Components[0].Mean, 1e-6);
             Assert.AreEqual(var1, actual.Components[0].Variance, 1e-6);
 
-            var mean2 = Accord.Statistics.Tools.Mean(part2);
-            var var2 = Accord.Statistics.Tools.Variance(part2);
+            var mean2 = Measures.Mean(part2);
+            var var2 = Measures.Variance(part2);
             Assert.AreEqual(mean2, actual.Components[1].Mean, 1e-6);
             Assert.AreEqual(var2, actual.Components[1].Variance, 1e-5);
 
-            var expectedMean = Accord.Statistics.Tools.Mean(values);
+            var expectedMean = Measures.Mean(values);
             var actualMean = actual.Mean;
             Assert.AreEqual(expectedMean, actualMean, 1e-7);
 
-            var expectedVar = Accord.Statistics.Tools.Variance(values, false);
+            var expectedVar = Measures.Variance(values, false);
             var actualVar = actual.Variance;
             Assert.AreEqual(expectedVar, actualVar, 0.15);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest2()
         {
             double[] coefficients = { 0.50, 0.50 };
@@ -195,22 +196,22 @@ namespace Accord.Tests.Statistics
 
             target.Fit(values, weights, opt);
 
-            var mean1 = Accord.Statistics.Tools.Mean(part1);
-            var var1 = Accord.Statistics.Tools.Variance(part1);
+            var mean1 = Measures.Mean(part1);
+            var var1 = Measures.Variance(part1);
             Assert.AreEqual(mean1, target.Components[0].Mean, 1e-5);
             Assert.AreEqual(var1, target.Components[0].Variance, 1e-5);
 
-            var mean2 = Accord.Statistics.Tools.Mean(part2);
-            var var2 = Accord.Statistics.Tools.Variance(part2);
+            var mean2 = Measures.Mean(part2);
+            var var2 = Measures.Variance(part2);
             Assert.AreEqual(mean2, target.Components[1].Mean, 1e-5);
             Assert.AreEqual(var2, target.Components[1].Variance, 1e-5);
 
-            var expectedMean = Accord.Statistics.Tools.WeightedMean(values, weights);
+            var expectedMean = Measures.WeightedMean(values, weights);
             var actualMean = target.Mean;
             Assert.AreEqual(expectedMean, actualMean, 1e-5);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunction()
         {
             NormalDistribution[] components = new NormalDistribution[2];
@@ -229,7 +230,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionPerComponent()
         {
             NormalDistribution[] components = new NormalDistribution[2];
@@ -248,7 +249,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunction()
         {
             NormalDistribution[] components = new NormalDistribution[2];
@@ -268,7 +269,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionPerComponent()
         {
             NormalDistribution[] components = new NormalDistribution[2];
@@ -287,7 +288,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionPerComponent()
         {
             NormalDistribution[] components = new NormalDistribution[2];
@@ -306,7 +307,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod]
+        [Test]
         public void MixtureWeightsFitTest()
         {
             // Randomly initialize some mixture components
@@ -317,9 +318,7 @@ namespace Accord.Tests.Statistics
             // Create an initial mixture
             Mixture<NormalDistribution> mixture = new Mixture<NormalDistribution>(components);
 
-            // Now, suppose we have a weighted data
-            // set. Those will be the input points:
-
+            // Now, suppose we have a weighted data set. Those will be the input points:
             double[] points = { 0, 3, 1, 7, 3, 5, 1, 2, -1, 2, 7, 6, 8, 6 }; // (14 points)
 
             // And those are their respective unnormalized weights:
@@ -359,6 +358,32 @@ namespace Accord.Tests.Statistics
                         Assert.AreEqual(mixture.Coefficients[0], gmm.Gaussians[0].Proportion);
                         Assert.AreEqual(mixture.Coefficients[1], gmm.Gaussians[1].Proportion);
             */
+        }
+
+        [Test]
+        public void MixtureFitTest()
+        {
+            var samples1 = new NormalDistribution(mean: -2, stdDev: 0.5).Generate(100000);
+            var samples2 = new NormalDistribution(mean: +4, stdDev: 0.5).Generate(100000);
+
+            // Mix the samples from both distributions
+            var samples = samples1.Concatenate(samples2);
+
+            // Create a new mixture distribution with two Normal components
+            var mixture = new Mixture<NormalDistribution>(new[] { 0.2, 0.8 },
+                new NormalDistribution(-1),
+                new NormalDistribution(+1));
+
+            // Estimate the distribution
+            mixture.Fit(samples, new MixtureOptions
+            {
+                Iterations = 50,
+                Threshold = 0
+            });
+
+            var result = mixture.ToString("N2", System.Globalization.CultureInfo.InvariantCulture);
+
+            Assert.AreEqual("Mixture(x; 0.50*N(x; μ = -2.00, σ² = 0.25) + 0.50*N(x; μ = 4.00, σ² = 0.25))", result);
         }
     }
 }

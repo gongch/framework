@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
+#if !NETSTANDARD1_4
 namespace Accord.Statistics.Filters
 {
     using System;
@@ -32,7 +33,7 @@ namespace Accord.Statistics.Filters
     /// </summary>
     /// 
     [Serializable]
-    public class Grouping : BaseFilter<Grouping.Options>
+    public class Grouping : BaseFilter<Grouping.Options, Grouping>
     {
 
         [OptionalField]
@@ -116,7 +117,7 @@ namespace Accord.Statistics.Filters
                 if (Columns.Count == 0)
                 {
                     // No. Just generate assign groups at random
-                    groupIndices = Accord.Statistics.Tools.RandomGroups(data.Rows.Count, Proportion);
+                    groupIndices = Classes.Random(data.Rows.Count, Proportion);
                 }
 
                 else
@@ -213,7 +214,7 @@ namespace Accord.Statistics.Filters
         /// </summary>
         /// 
         [Serializable]
-        public class Options : ColumnOptionsBase
+        public class Options : ColumnOptionsBase<Grouping>
         {
             /// <summary>
             ///   Gets or sets the labels used for each class contained in the column.
@@ -248,3 +249,4 @@ namespace Accord.Statistics.Filters
 
     }
 }
+#endif

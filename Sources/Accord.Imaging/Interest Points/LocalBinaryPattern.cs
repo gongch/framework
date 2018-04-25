@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -27,8 +27,10 @@ namespace Accord.Imaging
     using System.Drawing;
     using System.Drawing.Imaging;
     using Accord.Math;
-    using AForge.Imaging;
-    using AForge.Imaging.Filters;
+    using Accord.Imaging;
+    using Accord.Imaging.Filters;
+    using System.Threading;
+    using Accord.Compat;
 
     /// <summary>
     ///   Local Binary Patterns.
@@ -54,14 +56,27 @@ namespace Accord.Imaging
     /// </para>
     /// </remarks>
     /// 
-    public class LocalBinaryPattern : IFeatureDetector<FeatureDescriptor>
+    /// <example>
+    /// <para>
+    ///   The first example shows how to extract LBP descriptors given an image.</para>
+    ///   <code source="Unit Tests\Accord.Tests.Imaging\LocalBinaryPatternsTest.cs" region="doc_apply" />
+    ///   <para><b>Input image:</b></para>
+    ///   <img src="..\images\imaging\wood_texture.jpg" width="320" height="240" />
+    ///   
+    /// <para>
+    ///   The second example shows how to use the LBP feature extractor as part of a
+    ///   Bag-of-Words model in order to perform texture image classification:</para>
+    ///   <code source="Unit Tests\Accord.Tests.Vision\Imaging\BagOfVisualWordsTest.cs" region="doc_feature_lbp" />
+    /// </example>
+    /// 
+    public class LocalBinaryPattern : BaseFeatureExtractor<FeatureDescriptor>
     {
         const int numberOfBins = 256;
 
         int cellSize = 6;  // size of the cell, in number of pixels
         int blockSize = 3; // size of the block, in number of cells
         bool normalize = true;
-        
+
         double epsilon = 1e-10;
 
 
@@ -70,20 +85,28 @@ namespace Accord.Imaging
 
 
         /// <summary>
-        ///   Gets the size of a cell, in pixels.
+        ///   Gets the size of a cell, in pixels. Default is 6.
         /// </summary>
         /// 
-        public int CellSize { get { return cellSize; } }
+        public int CellSize
+        {
+            get { return cellSize; }
+            set { cellSize = value; }
+        }
 
         /// <summary>
-        ///   Gets the size of a block, in pixels.
+        ///   Gets the size of a block, in pixels. Default is 3.
         /// </summary>
         /// 
-        public int BlockSize { get { return blockSize; } }
+        public int BlockSize
+        {
+            get { return blockSize; }
+            set { blockSize = value; }
+        }
 
         /// <summary>
         ///   Gets the set of local binary patterns computed for each
-        ///   pixel in the last call to to <see cref="ProcessImage(Bitmap)"/>.
+        ///   pixel in the last call to to <see cref="BaseFeatureExtractor{TFeature}.Transform(Bitmap)"/>.
         /// </summary>
         /// 
         public int[,] Patterns { get { return patterns; } }
@@ -123,35 +146,21 @@ namespace Accord.Imaging
             this.cellSize = cellSize;
             this.blockSize = blockSize;
             this.normalize = normalize;
+
+            base.SupportedFormats.UnionWith(new[] {
+                PixelFormat.Format8bppIndexed,
+                PixelFormat.Format24bppRgb,
+                PixelFormat.Format32bppRgb,
+                PixelFormat.Format32bppArgb });
         }
 
-
         /// <summary>
-        ///   Process image looking for interest points.
+        ///   This method should be implemented by inheriting classes to implement the 
+        ///   actual feature extraction, transforming the input image into a list of features.
         /// </summary>
         /// 
-        /// <param name="image">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found features points.</returns>
-        /// 
-        /// <exception cref="UnsupportedImageFormatException">
-        ///   The source image has incorrect pixel format.
-        /// </exception>
-        /// 
-        public unsafe List<double[]> ProcessImage(UnmanagedImage image)
+        protected override IEnumerable<FeatureDescriptor> InnerTransform(UnmanagedImage image)
         {
-
-            // check image format
-            if (
-                (image.PixelFormat != PixelFormat.Format8bppIndexed) &&
-                (image.PixelFormat != PixelFormat.Format24bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppArgb)
-                )
-            {
-                throw new UnsupportedImageFormatException("Unsupported pixel format of the source image.");
-            }
-
             // make sure we have grayscale image
             UnmanagedImage grayImage = null;
 
@@ -173,43 +182,54 @@ namespace Accord.Imaging
             int offset = stride - width;
 
             // 1. Calculate 8-pixel neighborhood binary patterns 
-            patterns = new int[height, width];
-
-            fixed (int* ptrPatterns = patterns)
+            if (patterns == null || height > patterns.GetLength(0) || width > patterns.GetLength(1))
             {
-                // Begin skipping first line
-                byte* src = (byte*)grayImage.ImageData.ToPointer() + stride;
-                int* neighbors = ptrPatterns + width;
+                patterns = new int[height, width];
+            }
+            else
+            {
+                System.Diagnostics.Debug.Write(String.Format("Reusing storage for patterns. " +
+                    "Need ({0}, {1}), have ({1}, {2})", height, width, patterns.Rows(), patterns.Columns()));
+            }
 
-                // for each line
-                for (int y = 1; y < height - 1; y++)
+            unsafe
+            {
+                fixed (int* ptrPatterns = patterns)
                 {
-                    // skip first column
-                    neighbors++; src++;
+                    // Begin skipping first line
+                    byte* src = (byte*)grayImage.ImageData.ToPointer() + stride;
+                    int* neighbors = ptrPatterns + width;
 
-                    // for each inner pixel in line (skipping first and last)
-                    for (int x = 1; x < width - 1; x++, src++, neighbors++)
+                    // for each line
+                    for (int y = 1; y < height - 1; y++)
                     {
-                        // Retrieve the pixel neighborhood
-                        byte a11 = src[+stride + 1], a12 = src[+1], a13 = src[-stride + 1];
-                        byte a21 = src[+stride + 0], a22 = src[0], a23 = src[-stride + 0];
-                        byte a31 = src[+stride - 1], a32 = src[-1], a33 = src[-stride - 1];
+                        // skip first column
+                        neighbors++; src++;
 
-                        int sum = 0;
-                        if (a22 < a11) sum += 1 << 0;
-                        if (a22 < a12) sum += 1 << 1;
-                        if (a22 < a13) sum += 1 << 2;
-                        if (a22 < a21) sum += 1 << 3;
-                        if (a22 < a23) sum += 1 << 4;
-                        if (a22 < a31) sum += 1 << 5;
-                        if (a22 < a32) sum += 1 << 6;
-                        if (a22 < a33) sum += 1 << 7;
+                        // for each inner pixel in line (skipping first and last)
+                        for (int x = 1; x < width - 1; x++, src++, neighbors++)
+                        {
+                            // Retrieve the pixel neighborhood
+                            byte a11 = src[+stride + 1], a12 = src[+1], a13 = src[-stride + 1];
+                            byte a21 = src[+stride + 0], a22 = src[0], a23 = src[-stride + 0];
+                            byte a31 = src[+stride - 1], a32 = src[-1], a33 = src[-stride - 1];
 
-                        *neighbors = sum;
+                            int sum = 0;
+                            if (a22 < a11) sum += 1 << 0;
+                            if (a22 < a12) sum += 1 << 1;
+                            if (a22 < a13) sum += 1 << 2;
+                            if (a22 < a21) sum += 1 << 3;
+                            if (a22 < a23) sum += 1 << 4;
+                            if (a22 < a31) sum += 1 << 5;
+                            if (a22 < a32) sum += 1 << 6;
+                            if (a22 < a33) sum += 1 << 7;
+
+                            *neighbors = sum;
+                        }
+
+                        // Skip last column
+                        neighbors++; src += offset + 1;
                     }
-
-                    // Skip last column
-                    neighbors++; src += offset + 1;
                 }
             }
 
@@ -226,7 +246,19 @@ namespace Accord.Imaging
             {
                 cellCountX = (int)Math.Floor(width / (double)cellSize);
                 cellCountY = (int)Math.Floor(height / (double)cellSize);
-                histograms = new int[cellCountX, cellCountY][];
+
+                if (histograms == null || cellCountX > histograms.Rows() || cellCountY > histograms.Columns())
+                {
+                    this.histograms = new int[cellCountX, cellCountY][];
+                    for (int i = 0; i < cellCountX; i++)
+                        for (int j = 0; j < cellCountY; j++)
+                            this.histograms[i, j] = new int[numberOfBins];
+                }
+                else
+                {
+                    System.Diagnostics.Debug.Write(String.Format("Reusing storage for histograms. " +
+                        "Need ({0}, {1}), have ({1}, {2})", cellCountX, cellCountY, histograms.Rows(), histograms.Columns()));
+                }
 
                 // For each cell
                 for (int i = 0; i < cellCountX; i++)
@@ -234,7 +266,7 @@ namespace Accord.Imaging
                     for (int j = 0; j < cellCountY; j++)
                     {
                         // Compute the histogram
-                        int[] histogram = new int[numberOfBins];
+                        int[] histogram = this.histograms[i, j];
 
                         int startCellX = i * cellSize;
                         int startCellY = j * cellSize;
@@ -243,21 +275,29 @@ namespace Accord.Imaging
                         for (int x = 0; x < cellSize; x++)
                             for (int y = 0; y < cellSize; y++)
                                 histogram[patterns[startCellY + y, startCellX + x]]++;
-
-                        histograms[i, j] = histogram;
                     }
                 }
             }
             else
             {
-                cellCountX = cellCountY = 1;
-                int[] histogram = new int[numberOfBins];
+                cellCountX = 1;
+                cellCountY = 1;
+
+                if (histograms == null)
+                {
+                    this.histograms = new int[,][] { { new int[numberOfBins] } };
+                }
+                else
+                {
+                    System.Diagnostics.Debug.Write(String.Format("Reusing storage for histograms. " +
+                        "Need ({0}, {1}), have ({1}, {2})", cellCountX, cellCountY, histograms.Rows(), histograms.Columns()));
+                }
+
+                int[] histogram = this.histograms[0, 0];
 
                 for (int i = 0; i < height; i++)
                     for (int j = 0; j < width; j++)
                         histogram[patterns[i, j]]++;
-
-                histograms = new int[,][] { { histogram } };
             }
 
             // 3. Group the cells into larger, normalized blocks
@@ -269,18 +309,19 @@ namespace Accord.Imaging
                 blocksCountX = (int)Math.Floor(cellCountX / (double)blockSize);
                 blocksCountY = (int)Math.Floor(cellCountY / (double)blockSize);
             }
-            else 
+            else
             {
                 blockSize = blocksCountX = blocksCountY = 1;
             }
 
-            List<double[]> blocks = new List<double[]>();
+
+            var blocks = new List<FeatureDescriptor>();
 
             for (int i = 0; i < blocksCountX; i++)
             {
                 for (int j = 0; j < blocksCountY; j++)
                 {
-                    double[] v = new double[blockSize * blockSize * numberOfBins];
+                    double[] block = new double[blockSize * blockSize * numberOfBins];
 
                     int startBlockX = i * blockSize;
                     int startBlockY = j * blockSize;
@@ -291,17 +332,18 @@ namespace Accord.Imaging
                     {
                         for (int y = 0; y < blockSize; y++)
                         {
-                            int[] histogram =
-                                histograms[startBlockX + x, startBlockY + y];
+                            int[] histogram = histograms[startBlockX + x, startBlockY + y];
 
                             // Copy all histograms to the block vector
                             for (int k = 0; k < histogram.Length; k++)
-                                v[c++] = histogram[k];
+                                block[c++] = histogram[k];
                         }
                     }
 
-                    double[] block = (normalize) ?
-                        v.Divide(v.Euclidean() + epsilon) : v;
+                    // TODO: Remove this block and instead propose a general architecture 
+                    //       for applying normalizations to descriptor blocks
+                    if (normalize)
+                        block.Divide(block.Euclidean() + epsilon, result: block);
 
                     blocks.Add(block);
                 }
@@ -310,85 +352,17 @@ namespace Accord.Imaging
             return blocks;
         }
 
-
-
         /// <summary>
-        ///   Process image looking for interest points.
+        /// Creates a new object that is a copy of the current instance.
         /// </summary>
         /// 
-        /// <param name="imageData">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found interest points.</returns>
-        /// 
-        /// <exception cref="UnsupportedImageFormatException">
-        ///   The source image has incorrect pixel format.
-        /// </exception>
-        /// 
-        public List<double[]> ProcessImage(BitmapData imageData)
+        protected override object Clone(ISet<PixelFormat> supportedFormats)
         {
-            return ProcessImage(new UnmanagedImage(imageData));
+            var clone = new LocalBinaryPattern(blockSize, cellSize, normalize);
+            clone.epsilon = epsilon;
+            clone.SupportedFormats = supportedFormats;
+            return clone;
         }
 
-        /// <summary>
-        ///   Process image looking for interest points.
-        /// </summary>
-        /// 
-        /// <param name="image">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found interest points.</returns>
-        /// 
-        /// <exception cref="UnsupportedImageFormatException">
-        ///   The source image has incorrect pixel format.
-        /// </exception>
-        /// 
-        public List<double[]> ProcessImage(Bitmap image)
-        {
-            // check image format
-            if (
-                (image.PixelFormat != PixelFormat.Format8bppIndexed) &&
-                (image.PixelFormat != PixelFormat.Format24bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppArgb)
-                )
-            {
-                throw new UnsupportedImageFormatException("Unsupported pixel format of the source");
-            }
-
-            // lock source image
-            BitmapData imageData = image.LockBits(
-                new Rectangle(0, 0, image.Width, image.Height),
-                ImageLockMode.ReadOnly, image.PixelFormat);
-
-            List<double[]> blocks;
-
-            try
-            {
-                // process the image
-                blocks = ProcessImage(new UnmanagedImage(imageData));
-            }
-            finally
-            {
-                // unlock image
-                image.UnlockBits(imageData);
-            }
-
-            return blocks;
-        }
-
-
-        List<FeatureDescriptor> IFeatureDetector<FeatureDescriptor, double[]>.ProcessImage(Bitmap image)
-        {
-            return ProcessImage(image).ConvertAll(p => new FeatureDescriptor(p));
-        }
-
-        List<FeatureDescriptor> IFeatureDetector<FeatureDescriptor, double[]>.ProcessImage(BitmapData imageData)
-        {
-            return ProcessImage(imageData).ConvertAll(p => new FeatureDescriptor(p));
-        }
-
-        List<FeatureDescriptor> IFeatureDetector<FeatureDescriptor, double[]>.ProcessImage(UnmanagedImage image)
-        {
-            return ProcessImage(image).ConvertAll(p => new FeatureDescriptor(p));
-        }
     }
 }

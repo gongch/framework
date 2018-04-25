@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -20,42 +20,18 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-using Accord.Math.Wavelets;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Accord.Math;
-namespace Accord.Tests.Wavelets
+namespace Accord.Tests.Math
 {
+    using Accord.Math.Wavelets;
+    using NUnit.Framework;
+    using Accord.Math;
 
-
-    /// <summary>
-    ///This is a test class for CDF97Test and is intended
-    ///to contain all CDF97Test Unit Tests
-    ///</summary>
-    [TestClass()]
+    
+    [TestFixture]
     public class CDF97Test
     {
 
-
-        private TestContext testContextInstance;
-
-        /// <summary>
-        ///Gets or sets the test context which provides
-        ///information about and functionality for the current test run.
-        ///</summary>
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-        [TestMethod()]
+        [Test]
         public void FWT97Test()
         {
             double[] x = new double[32];
@@ -102,7 +78,7 @@ namespace Accord.Tests.Wavelets
 
         }
 
-        [TestMethod()]
+        [Test]
         public void FWT2DTest()
         {
             double[,] x = 

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 namespace Accord.Statistics.Kernels
 {
     using System;
+    using Accord.Compat;
 
     /// <summary>
     ///   Infinite Spline Kernel function.
@@ -32,6 +33,10 @@ namespace Accord.Statistics.Kernels
     ///   The Spline kernel is given as a piece-wise cubic
     ///   polynomial, as derived in the works by Gunn (1998).
     /// </remarks>
+    /// 
+    /// <example>
+    /// <code source="Unit Tests\Accord.Tests.MachineLearning\Kernels\SplineTest.cs" region="doc_learn" />
+    /// </example>
     /// 
     [Serializable]
     public sealed class Spline : KernelBase, IKernel, ICloneable

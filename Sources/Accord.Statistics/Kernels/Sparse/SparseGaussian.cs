@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,7 +23,8 @@
 namespace Accord.Statistics.Kernels.Sparse
 {
     using System;
-    using AForge;
+    using Accord.Math.Distances;
+    using Accord.Compat;
 
     /// <summary>
     ///   Sparse Gaussian Kernel.
@@ -34,6 +35,9 @@ namespace Accord.Statistics.Kernels.Sparse
     ///   The Gaussian kernel requires tuning for the proper value of σ. Different approaches
     ///   to this problem includes the use of brute force (i.e. using a grid-search algorithm)
     ///   or a gradient ascent optimization.</para>
+    ///   
+    /// <para>
+    ///   For an example on how to create a sparse kernel, please see the <see cref="SparseLinear"/> page.</para>
     ///    
     /// <para>
     ///   References:
@@ -45,6 +49,7 @@ namespace Accord.Statistics.Kernels.Sparse
     /// </remarks>
     /// 
     [Serializable]
+    [Obsolete("Please use the Gaussian kernel with Sparse<double> instead.")]
     public sealed class SparseGaussian : KernelBase, IKernel, IDistance, IReverseDistance
     {
         private double sigma;
@@ -55,7 +60,16 @@ namespace Accord.Statistics.Kernels.Sparse
         ///   Constructs a new Sparse Gaussian Kernel
         /// </summary>
         /// 
-        /// <param name="sigma">The standard deviation for the Gaussian distribution.</param>
+        public SparseGaussian()
+            : this(1)
+        {
+        }
+
+        /// <summary>
+        ///   Constructs a new Sparse Gaussian Kernel
+        /// </summary>
+        /// 
+        /// <param name="sigma">The standard deviation for the Gaussian distribution. Default is 1.</param>
         /// 
         public SparseGaussian(double sigma)
         {
@@ -107,6 +121,7 @@ namespace Accord.Statistics.Kernels.Sparse
 
             if (x == y) 
                 return 1.0;
+#pragma warning disable 0618
 
             double norm = SparseLinear.SquaredEuclidean(x, y);
 
@@ -182,7 +197,7 @@ namespace Accord.Statistics.Kernels.Sparse
 
             double q1 = Math.Sqrt(distances[(int)Math.Ceiling(0.15 * distances.Length)] / 2.0);
             double q9 = Math.Sqrt(distances[(int)Math.Ceiling(0.85 * distances.Length)] / 2.0);
-            double qm = Math.Sqrt(Accord.Statistics.Tools.Median(distances, alreadySorted: true) / 2.0);
+            double qm = Math.Sqrt(Measures.Median(distances, alreadySorted: true) / 2.0);
 
             range = new DoubleRange(q1, q9);
 

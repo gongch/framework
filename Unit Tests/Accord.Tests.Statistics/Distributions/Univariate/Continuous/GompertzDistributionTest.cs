@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,30 +23,14 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Statistics.Testing;
 
-    [TestClass()]
+    [TestFixture]
     public class GompertzDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             var gompertz = new GompertzDistribution(eta: 4.2, b: 1.1);
@@ -90,9 +74,15 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.67295877422837591, range2.Max, 1e-6);
             Assert.AreEqual(0.0021727987201762976, range3.Min, 1e-6);
             Assert.AreEqual(0.67295877422837591, range3.Max, 1e-6);
+
+            Assert.AreEqual(0, gompertz.Support.Min);
+            Assert.AreEqual(double.PositiveInfinity, gompertz.Support.Max);
+
+            Assert.AreEqual(gompertz.InverseDistributionFunction(0), gompertz.Support.Min);
+            Assert.AreEqual(gompertz.InverseDistributionFunction(1), gompertz.Support.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest2()
         {
             var gompertz = new GompertzDistribution(eta: 0.2, b: 1.1);
@@ -127,7 +117,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual("Gompertz(x; η = 0.2, b = 1.1)", str);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest3()
         {
             try
@@ -145,7 +135,7 @@ namespace Accord.Tests.Statistics
             catch { }
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             var target = new GompertzDistribution(eta: 42, b: 4.2);

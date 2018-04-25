@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@ namespace Accord.Statistics.Testing.Power
 {
     using System;
     using Accord.Math.Optimization;
+    using Accord.Compat;
 
     /// <summary>
     ///   Base class for one sample power analysis methods. 
@@ -147,28 +148,19 @@ namespace Accord.Statistics.Testing.Power
             // Attempt to locate the optimal sample size
             // to attain the required power by locating
             // a zero in the difference function:
-
-            double sol = BrentSearch.FindRoot(n =>
+            var search = new BrentSearch(n =>
             {
                 Samples = n;
                 ComputePower();
 
-                return requiredPower - Power;
+                return Power;
             },
 
             lowerBound: 2,
             upperBound: 1e+4);
 
-
-            // Check it
-            Samples = sol;  
-            ComputePower(); 
-
-            double newPower = Power;
+            Samples = search.Find(requiredPower) ? search.Solution : double.NaN;
             Power = requiredPower;
-
-            if (Math.Abs(requiredPower - newPower) > 1e-5)
-                Samples = Double.NaN;
         }
 
         /// <summary>

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,30 +24,21 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Kernels;
     using Accord.Statistics.Kernels.Sparse;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class SparsePolynomialTest
     {
-
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
+        [Test]
+        public void FunctionTest2()
         {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
+            SparseLinearTest.SparseTest(new Polynomial(1), new SparsePolynomial(1));
+            SparseLinearTest.SparseTest(new Polynomial(0), new SparsePolynomial(0));
+            SparseLinearTest.SparseTest(new Polynomial(3), new SparsePolynomial(3));
         }
 
 
-
-        [TestMethod()]
+        [Test]
         public void FunctionTest()
         {
             Polynomial dense = new Polynomial(3);
@@ -76,7 +67,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistanceTest()
         {
             Polynomial dense = new Polynomial(3);

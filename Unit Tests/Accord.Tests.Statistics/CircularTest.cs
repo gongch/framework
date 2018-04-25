@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -26,11 +26,11 @@ namespace Accord.Tests.Statistics
     using Accord.Math;
     using Accord.Statistics;
     using AForge;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using System.Data;
 
-    [TestClass()]
+    [TestFixture]
     public class CircularTest
     {
 
@@ -46,7 +46,8 @@ namespace Accord.Tests.Statistics
         // Tests performed against the Circular Statistics Toolbox (Directional Statistics)
         // http://fr.mathworks.com/matlabcentral/fileexchange/10676-circular-statistics-toolbox--directional-statistics-
 
-        [TestMethod()]
+#if !NO_DATA_TABLE
+        [Test]
         public void WeightedKappaTest()
         {
             DataTable table = new DataTable();
@@ -71,8 +72,9 @@ namespace Accord.Tests.Statistics
             actualKappa = Circular.WeightedConcentration(angles, weights, actualMean);
             Assert.AreEqual(expectedKappa, actualKappa, 1e-6);
         }
+#endif
 
-        [TestMethod()]
+        [Test]
         public void KappaTest1()
         {
             double expected = 3.721646;
@@ -81,7 +83,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-6);
         }
 
-        [TestMethod()]
+        [Test]
         public void KappaTest()
         {
             double mean = Circular.Mean(angles);
@@ -92,7 +94,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-6);
         }
 
-        [TestMethod()]
+        [Test]
         public void MeanTest()
         {
             double expected = 2.0519609734450655614e-01;
@@ -101,7 +103,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void VarianceTest()
         {
             double expected = 1.4668557528213066465e-01;
@@ -110,7 +112,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void CircularDeviationTest()
         {
             /* angles = [ 0.003898633 5.956808760 0.318487983 5.887227832 0.641802182, 4.640345741, 0.931996171, 0.426819547, 0.624824460, 0.247553652, 6.282827901, 0.313780766,  0.093206440, 0.392279489, 0.601228848 ]
@@ -129,7 +131,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void StandardDeviationTest()
         {
             double expected = 5.6325338695100524156e-01;
@@ -138,7 +140,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistanceTest()
         {
             double x = 0.15;
@@ -150,7 +152,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void SkewnessTest()
         {
             double expected = 1.4938580058598621703e-01;
@@ -159,7 +161,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void KurtosisTest()
         {
             double expected = 6.4794232277921437468e-01;
@@ -168,7 +170,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             double expected = 3.1378076599999993324e-01;
@@ -177,7 +179,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest_Odd()
         {
             double expected = 3.1613437449999998163e-01;
@@ -186,7 +188,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void QuartilesTest()
         {
             DoubleRange range;
@@ -196,15 +198,15 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.60122884799999998, range.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void StandardErrorTest()
         {
             double actual = Circular.StandardError(angles, 0.05);
 
-            Assert.AreEqual(3.5294262881192373094e-01, actual);
+            Assert.AreEqual(3.5294262881192373094e-01, actual, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void ClockTest()
         {
             double[] hours =
@@ -233,7 +235,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2, d, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void ClockTest2()
         {
             double[] hours =
@@ -262,6 +264,25 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(9.5, quartiles.Max);
             Assert.AreEqual(-1, d1, 1e-15);
             Assert.AreEqual(+1, d2, 1e-15);
+        }
+
+        [Test]
+        public void constant_test()
+        {
+            double[] hours =
+            {
+                0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1
+            };
+
+            double mean = Circular.Mean(hours, 0.1);
+            double stdDev = Circular.StandardDeviation(hours, 0);
+            double var = Circular.Variance(hours, 0);
+            double med = Circular.Median(hours, 0.1);
+
+            Assert.AreEqual(0, mean, 1e-15);
+            Assert.AreEqual(Double.NaN, stdDev, 1e-14);
+            Assert.AreEqual(Double.NaN, var, 1e-14);
+            Assert.AreEqual(0, med);
         }
 
     }

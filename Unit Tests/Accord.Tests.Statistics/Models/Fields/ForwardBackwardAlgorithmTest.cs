@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 namespace Accord.Tests.Statistics.Models.Fields
 {
     using Accord.Statistics.Models.Fields;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Statistics.Models.Fields.Functions;
     using Accord.Statistics.Models.Markov;
     using Accord.Math;
@@ -34,28 +34,11 @@ namespace Accord.Tests.Statistics.Models.Fields
     using Accord.Statistics.Models.Markov.Learning;
     using Accord.Statistics.Distributions.Fitting;
 
-    [TestClass()]
+    [TestFixture]
     public class ForwardBackwardAlgorithmTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void BackwardTest()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -115,7 +98,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void BackwardTest2()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -148,7 +131,7 @@ namespace Accord.Tests.Statistics.Models.Fields
                 Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void ForwardTest()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -202,7 +185,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void ForwardTest2()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -257,7 +240,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void ForwardTest3()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -293,7 +276,7 @@ namespace Accord.Tests.Statistics.Models.Fields
                 Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void ForwardScalingTest()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -364,7 +347,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void ForwardScalingTest2()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -386,7 +369,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void ForwardBackwardTest()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -412,7 +395,7 @@ namespace Accord.Tests.Statistics.Models.Fields
 
 
 
-        [TestMethod()]
+        [Test]
         public void LogBackwardTest()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -441,7 +424,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void LogBackwardTest2()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -463,7 +446,7 @@ namespace Accord.Tests.Statistics.Models.Fields
                 Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void LogForwardTest()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -491,7 +474,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void LogForwardTest2()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.
@@ -519,7 +502,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void LogForwardTest3()
         {
             MultivariateNormalDistribution density = new MultivariateNormalDistribution(3);
@@ -558,7 +541,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             Assert.IsFalse(double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void ForwardTest4()
         {
             var hmmc = Accord.Tests.Statistics.Models.Fields.
@@ -588,7 +571,7 @@ namespace Accord.Tests.Statistics.Models.Fields
 
         }
 
-        [TestMethod()]
+        [Test]
         public void LogForwardTest4()
         {
             var hmmc = Accord.Tests.Statistics.Models.Fields.
@@ -612,8 +595,8 @@ namespace Accord.Tests.Statistics.Models.Fields
                         .ForwardBackwardAlgorithm.LogForward(hmm, observations, out expectedLogLikelihood);
 
                     double actualLogLikelihood;
-                    double[,] actual = Accord.Statistics.Models.Fields.
-                        ForwardBackwardAlgorithm.LogForward(function.Factors[0], observations, 0, out actualLogLikelihood);
+                    double[,] actual = Accord.Statistics.Models.Fields
+                        .ForwardBackwardAlgorithm.LogForward(function.Factors[0], observations, 0, out actualLogLikelihood);
 
 
                     Assert.IsTrue(expected.IsEqual(actual, 1e-10));
@@ -624,7 +607,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void LogForwardBackwardTest()
         {
             HiddenMarkovModel hmm = Accord.Tests.Statistics.Models.Markov.

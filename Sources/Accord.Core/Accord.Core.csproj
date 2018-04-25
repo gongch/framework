@@ -4,60 +4,41 @@
     <ProjectGuid>{A177A90C-8207-466A-AF70-F2B8452A42AC}</ProjectGuid>
     <RootNamespace>Accord</RootNamespace>
     <AssemblyName>Accord</AssemblyName>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>Accord.snk</AssemblyOriginatorKeyFile>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
-    <MapFileExtensions>true</MapFileExtensions>
-    <CodeAnalysisRuleSet>..\Accord.NET.ruleset</CodeAnalysisRuleSet>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <FileAlignment>4096</FileAlignment>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
   </PropertyGroup>
+  <Import Project="..\Accord.NET.targets" />
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <OutputPath>bin\Debug\</OutputPath>
     <DebugType>Full</DebugType>
     <Optimize>False</Optimize>
-    <RunCodeAnalysis>False</RunCodeAnalysis>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <OutputPath>..\..\Debug\</OutputPath>
+    <OutputPath>$(SolutionDir)..\Debug\</OutputPath>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'NET35|AnyCPU' ">
-    <OutputPath>..\..\Release\net35</OutputPath>
-    <DefineConstants>TRACE;CODE_ANALYSIS;NET35</DefineConstants>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'net35|AnyCPU' ">
+    <DefineConstants>TRACE;NET35</DefineConstants>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
-    <DocumentationFile>..\..\Release\net35\Accord.XML</DocumentationFile>
-    <CodeAnalysisLogFile>..\..\Release\net35\Accord.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'NET40|AnyCPU' ">
-    <OutputPath>..\..\Release\net40</OutputPath>
-    <DefineConstants>TRACE;CODE_ANALYSIS;NET40</DefineConstants>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'net40|AnyCPU' ">
+    <DefineConstants>TRACE;NET40</DefineConstants>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <DocumentationFile>..\..\Release\net40\Accord.XML</DocumentationFile>
-    <CodeAnalysisLogFile>..\..\Release\net40\Accord.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'NET45|AnyCPU'">
-    <OutputPath>..\..\Release\net45</OutputPath>
-    <DefineConstants>TRACE;CODE_ANALYSIS;NET45</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'net45|AnyCPU'">
+    <DefineConstants>TRACE;NET45</DefineConstants>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DocumentationFile>..\..\Release\net45\Accord.XML</DocumentationFile>
-    <CodeAnalysisLogFile>..\..\Release\net45\Accord.dll.CodeAnalysisLog.xml</CodeAnalysisLogFile>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'net46|AnyCPU'">
+    <DefineConstants>TRACE;NET46</DefineConstants>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'net462|AnyCPU' ">
+    <DefineConstants>TRACE;NET462</DefineConstants>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'mono|AnyCPU'">
+    <DefineConstants>TRACE;MONO</DefineConstants>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -67,6 +48,68 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AForge.Core\Delegates.cs" />
+    <Compile Include="AForge.Core\DoublePoint.cs" />
+    <Compile Include="Attributes\FormatDecoderAttribute.cs" />
+    <Compile Include="Attributes\SourceTypeAttribute.cs" />
+    <Compile Include="Attributes\SerializationBinderAttribute.cs" />
+    <Compile Include="Attributes\SurrogateSelectorAttribute.cs" />
+    <Compile Include="Collections\BinaryNode.cs" />
+    <Compile Include="Collections\BinaryTree.cs" />
+    <Compile Include="Collections\ITreeNode.cs" />
+    <Compile Include="Collections\PriorityQueue.cs" />
+    <Compile Include="Collections\PriorityQueueNode.cs" />
+    <Compile Include="Collections\OrderedDictionary`2.cs" />
+    <Compile Include="Collections\Tree.cs" />
+    <Compile Include="Collections\TreeNode.cs" />
+    <Compile Include="Collections\TreeTraversal.cs" />
+    <Compile Include="Compatibility\ConcurrentDictionary.cs" />
+    <Compile Include="Compatibility\Dummy.cs" />
+    <Compile Include="Compatibility\EnumerableEx.cs" />
+    <Compile Include="Compatibility\Stream.cs" />
+    <Compile Include="Compatibility\EnvironmentEx.cs" />
+    <Compile Include="Compatibility\TypeExtensions.cs" />
+    <Compile Include="Debug.cs" />
+    <Compile Include="Features\IFeatureDescriptor.cs" />
+    <Compile Include="Features\IFeatureExtractor.cs" />
+    <Compile Include="InterlockedEx.cs" />
+    <Compile Include="MachineLearning\Classifiers\IClassifier.cs" />
+    <Compile Include="MachineLearning\Classifiers\Multiclass\IMulticlassClassifier.cs" />
+    <Compile Include="MachineLearning\Classifiers\Multiclass\IMulticlassScoreClassifier.cs" />
+    <Compile Include="MachineLearning\Classifiers\Multiclass\IMulticlassLikelihoodClassifier.cs" />
+    <Compile Include="MachineLearning\Classifiers\Multilabel\IMultilabelClassifier.cs" />
+    <Compile Include="MachineLearning\Classifiers\Multilabel\IMultilabelScoreClassifier.cs" />
+    <Compile Include="MachineLearning\Classifiers\Multilabel\IMultilabelLikelihoodClassifier.cs" />
+    <Compile Include="MachineLearning\Classifiers\Multiclass\Binary\IBinaryClassifier.cs" />
+    <Compile Include="MachineLearning\Classifiers\Multiclass\Binary\IBinaryScoreClassifier.cs" />
+    <Compile Include="MachineLearning\Classifiers\Multiclass\Binary\IBinaryLikelihoodClassifier.cs" />
+    <Compile Include="MachineLearning\Classifiers\Tagging\ITagger.cs" />
+    <Compile Include="MachineLearning\Classifiers\Tagging\ILikelihoodTagger.cs" />
+    <Compile Include="MachineLearning\Classifiers\Tagging\IScoreTagger.cs" />
+    <Compile Include="MachineLearning\IParallel.cs" />
+    <Compile Include="MachineLearning\ISupportsCancellation.cs" />
+    <Compile Include="MachineLearning\ITransform.cs" />
+    <Compile Include="MachineLearning\Regression\IMultipleRegression.cs" />
+    <Compile Include="MachineLearning\Regression\IRegression.cs" />
+    <Compile Include="MachineLearning\Unsupervised\IGenerative.cs" />
+    <Compile Include="Math\RationalConverter.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\VersionInfo.cs" />
+    <Compile Include="Ranges\ByteRange.cs" />
+    <Compile Include="Ranges\DoubleRange.cs" />
+    <Compile Include="AForge.Core\EventArgs.cs" />
+    <Compile Include="AForge.Core\Exceptions.cs" />
+    <Compile Include="AForge.Core\IntPoint.cs" />
+    <Compile Include="Ranges\IntRange.cs" />
+    <Compile Include="AForge.Core\Point.cs" />
+    <Compile Include="AForge.Core\PolishExpression.cs" />
+    <Compile Include="Ranges\Range.cs" />
+    <Compile Include="AForge.Core\SystemTools.cs" />
+    <Compile Include="AForge.Core\ThreadSafeRandom.cs" />
     <Compile Include="Attributes\RealAttribute.cs" />
     <Compile Include="Attributes\IntegerAttribute.cs" />
     <Compile Include="Cast.cs" />
@@ -74,6 +117,8 @@
     <Compile Include="Collections\KeyValuePairComparer`2.cs" />
     <Compile Include="Collections\TwoWayDictionary.cs" />
     <Compile Include="Compatibility\CancellationToken.cs" />
+    <Compile Include="Compatibility\Complex.cs" />
+    <Compile Include="Compatibility\ConcurrentBag.cs" />
     <Compile Include="Compatibility\ConcurrentStack.cs" />
     <Compile Include="Compatibility\AggregateException.cs" />
     <Compile Include="Compatibility\IReadOnlyCollection.cs" />
@@ -93,25 +138,28 @@
     <Compile Include="Exceptions\SingularMatrixException.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\VersionInfo.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>VersionInfo.tt</DependentUpon>
-    </Compile>
-    <Compile Include="Collections\ReadOnlyOrderedDictionary.cs" />
+    <Compile Include="Collections\ReadOnlyKeyedCollection.cs" />
     <Compile Include="Collections\ReadOnlyDictionary.cs" />
     <Compile Include="Collections\RedBlackTreeDictionary`2.cs" />
     <Compile Include="Collections\RedBlackTreeNode.cs" />
     <Compile Include="Collections\RedBlackTree`1.cs" />
+    <Compile Include="Ranges\IRange`1.cs" />
+    <Compile Include="Serializer.cs" />
+    <Compile Include="Math\Rational.cs" />
+    <Compile Include="SerializerCompression.cs" />
+    <Compile Include="Hyperrectangle.cs" />
+    <Compile Include="Sparse.cs" />
+    <Compile Include="Sparse`1.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Accord.dll.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Accord.snk" />
     <None Include="Accord.Core.cd" />
-    <None Include="Properties\VersionInfo.tt">
-      <SubType>Code</SubType>
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>VersionInfo.cs</LastGenOutput>
-    </None>
+    <None Include="MachineLearning\Classifiers\Multiclass\Binary\Binary.cd" />
+    <None Include="MachineLearning\Classifiers\Multiclass\Multiclass.cd" />
+    <None Include="MachineLearning\Classifiers\Multilabel\Multilabel.cd" />
   </ItemGroup>
   <ItemGroup>
     <CodeAnalysisDictionary Include="Properties\CustomDictionary.xml" />
@@ -135,6 +183,12 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

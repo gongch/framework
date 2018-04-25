@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,6 +25,9 @@ namespace Accord.Statistics.Distributions.Multivariate
     using System;
     using Accord.Math;
     using Accord.Statistics.Distributions.Fitting;
+    using System.Text;
+    using Accord.Math.Random;
+    using Accord.Compat;
 
     /// <summary>
     ///   Joint distribution assuming independence between vector components.
@@ -126,15 +129,84 @@ namespace Accord.Statistics.Distributions.Multivariate
     /// </example>
     /// 
     [Serializable]
-    public class Independent<TDistribution> : MultivariateContinuousDistribution
+    public class Independent<TDistribution> : MultivariateContinuousDistribution,
+        ISampleableDistribution<double[]>,
+        IFittableDistribution<double[], IndependentOptions>
         where TDistribution : IUnivariateDistribution
     {
-
         private TDistribution[] components;
 
         private double[] mean;
         private double[] variance;
         private double[,] covariance;
+
+        /// <summary>
+        ///   Initializes a new instance of the <see cref="Independent&lt;TDistribution&gt;"/> class.
+        /// </summary>
+        /// 
+        /// <param name="dimensions">The number of independent component distributions.</param>
+        /// 
+        public Independent(int dimensions)
+            : base(dimensions)
+        {
+            try
+            {
+                this.components = new TDistribution[dimensions];
+                for (int i = 0; i < components.Length; i++)
+                    components[i] = Activator.CreateInstance<TDistribution>();
+            }
+            catch
+            {
+                throw new ArgumentException("The component distribution needs specific parameters that need to be" +
+                    "given to its constructor. Please specify in the 'initializer' argument of this constructor" +
+                    "how the component distributions should be created.");
+            }
+        }
+
+        /// <summary>
+        ///   Initializes a new instance of the <see cref="Independent&lt;TDistribution&gt;"/> class.
+        /// </summary>
+        /// 
+        /// <param name="dimensions">The number of independent component distributions.</param>
+        /// <param name="initializer">A function that creates a new distribution for each component index.</param>
+        /// 
+        public Independent(int dimensions, Func<TDistribution> initializer)
+            : base(dimensions)
+        {
+            this.components = new TDistribution[dimensions];
+            for (int i = 0; i < components.Length; i++)
+                components[i] = initializer();
+        }
+
+        /// <summary>
+        ///   Initializes a new instance of the <see cref="Independent&lt;TDistribution&gt;"/> class.
+        /// </summary>
+        /// 
+        /// <param name="dimensions">The number of independent component distributions.</param>
+        /// <param name="initializer">A function that creates a new distribution for each component index.</param>
+        /// 
+        public Independent(int dimensions, Func<int, TDistribution> initializer)
+            : base(dimensions)
+        {
+            this.components = new TDistribution[dimensions];
+            for (int i = 0; i < components.Length; i++)
+                components[i] = initializer(i);
+        }
+
+        /// <summary>
+        ///   Initializes a new instance of the <see cref="Independent&lt;TDistribution&gt;"/> class.
+        /// </summary>
+        /// 
+        /// <param name="dimensions">The number of independent component distributions.</param>
+        /// <param name="component">A base component which will be cloned to all dimensions.</param>
+        /// 
+        public Independent(int dimensions, TDistribution component)
+            : base(dimensions)
+        {
+            this.components = new TDistribution[dimensions];
+            for (int i = 0; i < this.components.Length; i++)
+                this.components[i] = (TDistribution)component.Clone();
+        }
 
         /// <summary>
         ///   Initializes a new instance of the <see cref="Independent&lt;TDistribution&gt;"/> class.
@@ -149,7 +221,17 @@ namespace Accord.Statistics.Distributions.Multivariate
         }
 
         /// <summary>
-        ///   Gets the component distributions of the joint.
+        ///   Gets or sets the components of this joint distribution.
+        /// </summary>
+        /// 
+        public TDistribution this[int i]
+        {
+            get { return components[i]; }
+            set { components[i] = value; }
+        }
+
+        /// <summary>
+        ///   Gets the components of this joint distribution.
         /// </summary>
         /// 
         public TDistribution[] Components
@@ -237,12 +319,11 @@ namespace Accord.Statistics.Distributions.Multivariate
         ///   probability that a given value <c>x</c> will occur.
         /// </remarks>
         /// 
-        public override double DistributionFunction(params double[] x)
+        protected internal override double InnerDistributionFunction(params double[] x)
         {
             double p = 1;
             for (int i = 0; i < components.Length; i++)
                 p *= components[i].DistributionFunction(x[i]);
-
             return p;
         }
 
@@ -266,7 +347,7 @@ namespace Accord.Statistics.Distributions.Multivariate
         /// probability that a given value <c>x</c> will occur.
         /// </remarks>
         /// 
-        public override double ProbabilityDensityFunction(params double[] x)
+        protected internal override double InnerProbabilityDensityFunction(params double[] x)
         {
             return Math.Exp(LogProbabilityDensityFunction(x));
         }
@@ -286,14 +367,14 @@ namespace Accord.Statistics.Distributions.Multivariate
         ///   occurring in the current distribution.
         /// </returns>
         /// 
-        public override double LogProbabilityDensityFunction(params double[] x)
+        protected internal override double InnerLogProbabilityDensityFunction(params double[] x)
         {
             double p = 0;
             for (int i = 0; i < components.Length; i++)
                 p += components[i].LogProbabilityFunction(x[i]);
-
             return p;
         }
+
 
         /// <summary>
         ///   Fits the underlying distribution to a given set of observations.
@@ -345,10 +426,11 @@ namespace Accord.Statistics.Distributions.Multivariate
         /// 
         public void Fit(double[][] observations, double[] weights, IndependentOptions options)
         {
-            observations = observations.Transpose();
-
             if (options != null)
             {
+                if (!options.Transposed)
+                    observations = observations.Transpose();
+
                 if (options.InnerOptions != null)
                 {
                     for (int i = 0; i < components.Length; i++)
@@ -362,13 +444,47 @@ namespace Accord.Statistics.Distributions.Multivariate
             }
             else
             {
+                observations = observations.Transpose();
                 for (int i = 0; i < components.Length; i++)
                     components[i].Fit(observations[i], weights, null);
             }
 
+            Reset();
+        }
+
+        /// <summary>
+        ///   Resets cached values (should be called after re-estimation).
+        /// </summary>
+        /// 
+        protected void Reset()
+        {
             mean = null;
             variance = null;
             covariance = null;
+        }
+
+        /// <summary>
+        /// Generates a random vector of observations from the current distribution.
+        /// </summary>
+        /// 
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        /// 
+        /// <returns>
+        /// A random vector of observations drawn from this distribution.
+        /// </returns>
+        /// 
+        public override double[][] Generate(int samples, double[][] result, Random source)
+        {
+            var gen = components.Apply(x => (ISampleableDistribution<double>)x);
+
+            for (int i = 0; i < result.Length; i++)
+                for (int j = 0; j < gen.Length; j++)
+                    result[i][j] = gen[j].Generate(source);
+
+            return result;
         }
 
         /// <summary>
@@ -389,19 +505,43 @@ namespace Accord.Statistics.Distributions.Multivariate
         }
 
         /// <summary>
-        ///   Returns a <see cref="System.String" /> that represents this instance.
+        ///   Returns a <see cref="System.String"/> that represents this instance.
         /// </summary>
         /// 
-        /// <param name="format">The format.</param>
-        /// <param name="formatProvider">The format provider.</param>
-        /// 
         /// <returns>
-        ///   A <see cref="System.String" /> that represents this instance.
+        ///   A <see cref="System.String"/> that represents this instance.
         /// </returns>
         /// 
         public override string ToString(string format, IFormatProvider formatProvider)
         {
-            return String.Format(formatProvider, "Independent(X)");
+            StringBuilder sb = new StringBuilder();
+            sb.Append("Independent(");
+            for (int i = 0; i < components.Length; i++)
+            {
+                sb.Append("x" + i);
+
+                if (i < components.Length - 1)
+                    sb.Append(", ");
+            }
+
+            sb.Append("; ");
+
+            for (int i = 0; i < components.Length; i++)
+            {
+                var fmt = components[i] as IFormattable;
+
+                String componentText = fmt
+                    .ToString(format, formatProvider)
+                    .Replace("(x", "(x" + i);
+
+                sb.AppendFormat(componentText);
+
+                if (i < components.Length - 1)
+                    sb.Append(" + ");
+            }
+            sb.Append(")");
+
+            return sb.ToString();
         }
     }
 }

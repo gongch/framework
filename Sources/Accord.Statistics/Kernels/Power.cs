@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 namespace Accord.Statistics.Kernels
 {
     using System;
+    using Accord.Compat;
 
     /// <summary>
     ///   Power Kernel, also known as the (Unrectified) Triangular Kernel.
@@ -95,7 +96,7 @@ namespace Accord.Statistics.Kernels
                 norm += d * d;
             }
 
-            return -System.Math.Pow(norm, degree);
+            return -System.Math.Pow(norm, degree / 2.0);
         }
 
         /// <summary>

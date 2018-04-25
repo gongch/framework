@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -20,23 +20,22 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-namespace Accord.Tests.Math
+namespace Accord.Tests.Imaging
 {
     using System.Collections.Generic;
     using Accord.Math;
     using AForge;
     using System.Linq;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Math.Geometry;
-    using AForge.Math.Geometry;
     using Accord.Imaging.Filters;
 
-    [TestClass()]
+    [TestFixture]
     public class ConvexHullDefectsTest
     {
 
 
-        [TestMethod()]
+        [Test]
         public void FindTest()
         {
             List<IntPoint> contour = new List<IntPoint>();
@@ -59,7 +58,7 @@ namespace Accord.Tests.Math
                 add(contour, i + max / 2, max / 2 - i);
 
             PointsMarker marker = new PointsMarker(contour);
-            var bitmap = AForge.Imaging.Image.CreateGrayscaleImage(max + 1, max + 1);
+            var bitmap = Accord.Imaging.Image.CreateGrayscaleImage(max + 1, max + 1);
             bitmap = marker.Apply(bitmap);
             // Accord.Controls.ImageBox.Show(bitmap);
 

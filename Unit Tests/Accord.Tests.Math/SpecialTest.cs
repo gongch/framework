@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,30 +23,15 @@
 namespace Accord.Tests.Math
 {
     using Accord.Math;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
+    using System;
 
-    [TestClass()]
+    [TestFixture]
     public class SpecialTest
     {
 
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void BinomialTest()
         {
             int n = 63;
@@ -67,7 +52,7 @@ namespace Accord.Tests.Math
         }
 
 
-        [TestMethod()]
+        [Test]
         public void Log1pTest()
         {
             double precision = 1e-16;
@@ -88,7 +73,7 @@ namespace Accord.Tests.Math
         }
 
 
-        [TestMethod()]
+        [Test]
         public void FactorialTest()
         {
             int n = 3;
@@ -102,7 +87,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(expected, actual, 1e27);
         }
 
-        [TestMethod()]
+        [Test]
         public void LnFactorialTest()
         {
             int n = 4;
@@ -116,7 +101,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(expected, actual, 0.0000000001);
         }
 
-        [TestMethod()]
+        [Test]
         public void EpsilonTest()
         {
             double x = 0.5;
@@ -135,7 +120,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void BinomialTest2()
         {
             int n = 6;
@@ -152,7 +137,7 @@ namespace Accord.Tests.Math
         }
 
 
-        [TestMethod()]
+        [Test]
         public void InverseErfTest()
         {
             for (int i = 0; i < 100; i++)
@@ -168,7 +153,7 @@ namespace Accord.Tests.Math
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void InverseErfcTest()
         {
             for (int i = 0; i < 100; i++)
@@ -182,6 +167,53 @@ namespace Accord.Tests.Math
                 Assert.IsFalse(double.IsNaN(expected));
                 Assert.IsFalse(double.IsNaN(actual));
             }
+        }
+
+        [Test]
+        public void LogSumTest()
+        {
+            double a, e;
+
+            a = Math.Exp(Special.LogSum(Math.Log(0.1), Math.Log(0.001)));
+            e = 0.101;
+            Assert.AreEqual(a, e, 1e-10);
+
+            a = Math.Exp(Special.LogSum(Math.Log(10), Math.Log(1000)));
+            e = 1010;
+            Assert.AreEqual(a, e, 1e-10);
+
+            a = Math.Exp(Special.LogSum(Math.Log(5), Math.Log(42)));
+            e = 47;
+            Assert.AreEqual(a, e, 1e-10);
+
+            a = Math.Exp(Special.LogSum(Math.Log(1), Math.Log(1)));
+            e = 2;
+            Assert.AreEqual(a, e, 1e-10);
+
+            double direct = Math.Exp(1.6793491276384929E-12) + Math.Exp(0.014072312433917435);
+            a = Math.Exp(Special.LogSum(1.6793491276384929E-12, 0.014072312433917435));
+            e = 2.0141717935194383;
+            Assert.AreEqual(a, e, 1e-10);
+
+            double diff = Math.Abs(direct - e);
+            Assert.AreEqual(4.4408920985006262E-16, diff);
+        }
+
+        [Test]
+        public void SoftmaxTest()
+        {
+            Func<double, double> e = (z) => System.Math.Exp(z);
+
+            double[] x = { 1.6793491276384929E-12, 0.014072312433917435 };
+            double[] expected = new[]
+            {
+                e(x[0] - Special.LogSum(x[0], x[1])),
+                e(x[1] - Special.LogSum(x[0], x[1]))
+            };
+
+            double[] actual = Special.Softmax(x);
+
+            Assert.IsTrue(expected.IsEqual(actual, 1e-10));
         }
     }
 }

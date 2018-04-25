@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -33,30 +33,13 @@ namespace Accord.Tests.Statistics
     using Accord.Statistics.Models.Markov;
     using Accord.Statistics.Models.Markov.Learning;
     using Accord.Statistics.Models.Markov.Topology;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class GenericHiddenMarkovModelTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             double[,] A;
@@ -72,8 +55,8 @@ namespace Accord.Tests.Statistics
 
             pi = new double[] { 1, 0 };
 
-            var logA = Matrix.Log(A);
-            var logPi = Matrix.Log(pi);
+            var logA = A.Log();
+            var logPi = pi.Log();
 
             Assert.AreEqual(2, hmm.States);
             Assert.AreEqual(1, hmm.Dimension);
@@ -93,8 +76,8 @@ namespace Accord.Tests.Statistics
 
             pi = new double[] { 1, 0 };
 
-            logA = Matrix.Log(A);
-            logPi = Matrix.Log(pi);
+            logA = A.Log();
+            logPi = pi.Log();
 
             Assert.AreEqual(2, hmm.States);
             Assert.AreEqual(1, hmm.Dimension);
@@ -122,8 +105,8 @@ namespace Accord.Tests.Statistics
 
             hmm = new HiddenMarkovModel<GeneralDiscreteDistribution>(A, B, pi);
 
-            logA = Matrix.Log(A);
-            logPi = Matrix.Log(pi);
+            logA = A.Log();
+            logPi = pi.Log();
 
             Assert.AreEqual(2, hmm.States);
             Assert.AreEqual(1, hmm.Dimension);
@@ -132,7 +115,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(B, hmm.Emissions);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest2()
         {
 
@@ -158,10 +141,10 @@ namespace Accord.Tests.Statistics
 
                 Assert.AreEqual(n.Dimension, hmm.Dimension);
 
-                Assert.AreNotEqual(n.Covariance, distribution.Covariance);
+                Assert.AreNotSame(n.Covariance, distribution.Covariance);
                 Assert.IsTrue(n.Covariance.IsEqual(distribution.Covariance));
 
-                Assert.AreNotEqual(n.Mean, distribution.Mean);
+                Assert.AreNotSame(n.Mean, distribution.Mean);
                 Assert.IsTrue(n.Mean.IsEqual(distribution.Mean));
             }
 
@@ -176,7 +159,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(logPi.IsEqual(hmm.Probabilities));
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest3()
         {
             double[,] A = new double[,]
@@ -203,8 +186,8 @@ namespace Accord.Tests.Statistics
                 Assert.AreEqual(b, e);
             }
 
-            A = Matrix.Log(A);
-            pi = Matrix.Log(pi);
+            A = A.Log();
+            pi = pi.Log();
             Assert.AreEqual(2, hmm.States);
             Assert.AreEqual(2, hmm.Dimension);
             Assert.AreEqual(2, hmm.Emissions.Length);
@@ -212,13 +195,13 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(pi.IsEqual(hmm.Probabilities));
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest_RandomEquals()
         {
-            Accord.Math.Tools.SetupGenerator(0);
+            Accord.Math.Random.Generator.Seed = 0;
             var dhmm = new HiddenMarkovModel(10, 50, true);
 
-            Accord.Math.Tools.SetupGenerator(0);
+            Accord.Math.Random.Generator.Seed = 0;
             var chmm = HiddenMarkovModel.CreateGeneric(10, 50, true);
 
             for (int i = 0; i < dhmm.Probabilities.Length; i++)
@@ -230,10 +213,10 @@ namespace Accord.Tests.Statistics
 
             for (int i = 0; i < dhmm.States; i++)
                 for (int j = 0; j < dhmm.Symbols; j++)
-                    Assert.AreEqual(dhmm.Emissions[i, j], Math.Log(chmm.Emissions[i][j]), 1e-10);
+                    Assert.AreEqual(dhmm.Emissions[i, j], chmm.Emissions[i][j], 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void DecodeTest()
         {
 
@@ -282,7 +265,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(path[2], 0);
         }
 
-        [TestMethod()]
+        [Test]
         public void DecodeIntegersTest()
         {
             double[,] transitions = 
@@ -315,7 +298,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(path[2], 0);
         }
 
-        [TestMethod()]
+        [Test]
         public void DecodeTest2()
         {
             double[,] transitions = 
@@ -349,7 +332,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(path[2], 0);
         }
 
-        [TestMethod()]
+        [Test]
         public void DecodeTest3()
         {
             double[,] transitions = 
@@ -386,7 +369,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void DecodeTest4()
         {
             var density = new MultivariateNormalDistribution(3);
@@ -407,7 +390,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void DecodeTest5()
         {
             var density = new MultivariateNormalDistribution(3);
@@ -427,7 +410,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void LearnTest5()
         {
 
@@ -498,7 +481,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1, hmm.Dimension);
         }
 
-        [TestMethod()]
+        [Test]
         public void LearnIntegersTest5()
         {
 
@@ -516,6 +499,11 @@ namespace Accord.Tests.Statistics
             };
 
             var hmm = HiddenMarkovModel.CreateGeneric(3, 6);
+
+            Assert.AreEqual(3, hmm.States);
+            Assert.AreEqual(3, hmm.Emissions.Length);
+            for (int i = 0; i < 3; i++)
+                Assert.AreEqual(6, hmm.Emissions[i].Length);
 
             var teacher = new BaumWelchLearning<GeneralDiscreteDistribution>(hmm) { Iterations = 100, Tolerance = 0 };
             double ll = teacher.Run(sequences);
@@ -570,7 +558,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void LearnTest3()
         {
 
@@ -627,7 +615,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1, hmm.Dimension);
         }
 
-        [TestMethod()]
+        [Test]
         public void LearnTest6()
         {
             // Continuous Markov Models can operate using any
@@ -699,7 +687,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(l2 > l3 && l2 > l4);
         }
 
-        [TestMethod()]
+        [Test]
         public void LearnTest7()
         {
             // Create continuous sequences. In the sequences below, there
@@ -749,7 +737,7 @@ namespace Accord.Tests.Statistics
             //
             int[] states = model.Decode(new[] { 0.1, 5.2, 0.3, 6.7, 0.1, 6.0 });
 
-            Assert.IsTrue(states.IsEqual(0, 1, 0, 1, 0, 1));
+            Assert.IsTrue(states.IsEqual(new[] { 0, 1, 0, 1, 0, 1 }));
 
             Assert.AreEqual(1.496360383340358, likelihood, 1e-10);
             Assert.AreEqual(0.8798587580029778, a1, 1e-10);
@@ -778,7 +766,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2, model.Transitions.GetLength(0));
             Assert.AreEqual(2, model.Transitions.GetLength(1));
 
-            var A = Matrix.Exp(model.Transitions);
+            var A = model.Transitions.Exp();
             Assert.AreEqual(0, A[0, 0], 1e-16);
             Assert.AreEqual(1, A[0, 1], 1e-16);
             Assert.AreEqual(1, A[1, 0], 1e-16);
@@ -787,7 +775,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(A.HasNaN());
         }
 
-        [TestMethod()]
+        [Test]
         public void LearnTest8()
         {
             // Create continuous sequences. In the sequence below, there
@@ -847,7 +835,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(state1.Variance < 1e-30);
             Assert.IsTrue(state2.Variance < 1e-30);
 
-            var A = Matrix.Exp(model.Transitions);
+            var A = model.Transitions.Exp();
             Assert.AreEqual(2, A.GetLength(0));
             Assert.AreEqual(2, A.GetLength(1));
             Assert.AreEqual(0, A[0, 0]);
@@ -856,7 +844,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0, A[1, 1]);
         }
 
-        [TestMethod()]
+        [Test]
         public void LearnTest9()
         {
             var observations = new double[][][]
@@ -1012,7 +1000,7 @@ namespace Accord.Tests.Statistics
                 Assert.IsFalse(Double.IsNaN(value));
         }
 
-        [TestMethod()]
+        [Test]
         public void LearnTest10()
         {
             // Create sequences of vector-valued observations. In the
@@ -1084,7 +1072,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2.1031924118199194E-89, a3);
         }
 
-        [TestMethod()]
+        [Test]
         public void LearnTest10_Independent()
         {
             // Let's say we have 2 meteorological sensors gathering data
@@ -1149,10 +1137,9 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void LearnTest11()
         {
-
             // Suppose we have a set of six sequences and we would like to
             // fit a hidden Markov model with mixtures of Normal distributions
             // as the emission densities. 
@@ -1224,10 +1211,9 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(Double.IsNaN(a3));
         }
 
-        [TestMethod()]
+        [Test]
         public void LearnTest12()
         {
-
             // Suppose we have a set of six sequences and we would like to
             // fit a hidden Markov model with mixtures of Normal distributions
             // as the emission densities. 
@@ -1300,7 +1286,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(Double.IsNaN(a3));
         }
 
-        [TestMethod()]
+        [Test]
         public void LearnTest_EmptySequence()
         {
             double[][] sequences =
@@ -1339,7 +1325,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void LearnTest13()
         {
             var observations = new double[][][]
@@ -1403,28 +1389,6 @@ namespace Accord.Tests.Statistics
             checkDegenerate(observations, 3);
         }
 
-        [TestMethod()]
-        public void BigSampleLearnTest13()
-        {
-            Accord.Math.Tools.SetupGenerator(0);
-
-            var list = new List<double[][]>();
-
-            for (int i = 0; i < 1000000; i++)
-            {
-                list.Add(new double[][]
-                {
-                    new double[] { 2, 1 },
-                    new double[] { 5, 2 },
-                    new double[] { 10, 3 },
-                });
-            }
-
-            checkDegenerate(list.ToArray(), 3);
-        }
-
-
-
         private static void checkDegenerate(double[][][] observations, int states)
         {
             bool thrown = false;
@@ -1473,7 +1437,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void FittingOptionsTest()
         {
             // Create a degenerate problem
@@ -1543,7 +1507,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void PredictTest()
         {
             double[][] sequences = new double[][] 
@@ -1630,7 +1594,7 @@ namespace Accord.Tests.Statistics
 
         }
 
-        [TestMethod()]
+        [Test]
         public void PredictTest2()
         {
             // Create continuous sequences. In the sequence below, there
@@ -1689,7 +1653,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0, d2.Coefficients[1]);
         }
 
-        [TestMethod()]
+        [Test]
         public void PredictTest3()
         {
             // We will try to create a Hidden Markov Model which
@@ -1727,12 +1691,11 @@ namespace Accord.Tests.Statistics
 
             double prediction = hmm.Predict(input, out mixture);
 
+            Assert.AreEqual(5, prediction);
 
             // At this point, prediction probabilities
             // should be equilibrated around 3, 4 and 5
             Assert.AreEqual(4, mixture.Mean, 0.1);
-            Assert.IsFalse(double.IsNaN(mixture.Mean));
-
 
             double[] input2 = { 1 };
 
@@ -1742,7 +1705,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2, prediction);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest()
         {
             double[,] A;
@@ -1778,7 +1741,7 @@ namespace Accord.Tests.Statistics
 
         }
 
-        [TestMethod()]
+        [Test]
         public void PosteriorTest1()
         {
             // Example from http://ai.stanford.edu/~serafim/CS262_2007/notes/lecture5.pdf
@@ -1813,7 +1776,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.00000000015756235243, py, 1e-16);
 
 
-            Accord.Math.Tools.SetupGenerator(0);
+            Accord.Math.Random.Generator.Seed = 0;
             var u = new UniformDiscreteDistribution(0, 6);
 
             int[] sequence = u.Generate(1000);

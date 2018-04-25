@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,35 +23,22 @@
 namespace Accord.Tests.Vision
 {
     using Accord.Vision.Tracking;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Drawing;
-    using AForge.Imaging;
+    using Accord.Imaging;
+    using Accord.Tests.Vision.Properties;
+#if NO_BITMAP
+    using Resources = Accord.Tests.Vision.Properties.Resources_Standard;
+#endif
 
-    [TestClass()]
+    [TestFixture]
     public class TrackerTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test, Category("Random")]
         public void ProcessFrame()
         {
-            Bitmap frame = Properties.Resources.lena_color_small;
+            Bitmap frame = Accord.Imaging.Image.Clone(Resources.lena_color_small);
             Rectangle trackedArea = new Rectangle(0, 0, 50, 50);
 
             UnmanagedImage uframe = UnmanagedImage.FromManagedImage(frame);
@@ -76,7 +63,7 @@ namespace Accord.Tests.Vision
             to = target.TrackingObject;
             window = target.SearchWindow;
 
-            Assert.AreEqual(0.9188701900796201, to.Angle, 0.001);
+            Assert.AreEqual(0.9188701900796201, to.Angle, 0.001); // Mono outputs 1.0796061754226685d
             Assert.AreEqual((int)47.57993716803177, to.Rectangle.Width, 0.01);
             Assert.AreEqual((int)57.3831709184114, to.Rectangle.Height, 0.05);
 

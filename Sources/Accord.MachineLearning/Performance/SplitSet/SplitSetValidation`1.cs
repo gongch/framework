@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -26,32 +26,32 @@ namespace Accord.MachineLearning
     using System.Collections.Generic;
     using System.Linq;
     using Accord.Math;
+    using Accord.Statistics;
+    using Accord.MachineLearning.Performance;
+    using Accord.Compat;
 
     /// <summary>
-    ///   Fitting function delegate.
+    ///   Obsolete. Please use <see cref="SplitSetValidation{TModel, TInput, TOutput}"/> instead.
     /// </summary>
     /// 
+    [Obsolete("Please refer to SplitSetValidation<TModel, TInput> instead.")]
     public delegate SplitSetStatistics<TModel> SplitValidationFittingFunction<TModel>(int[] trainingSamples)
         where TModel : class;
 
     /// <summary>
-    ///   Evaluating function delegate.
+    ///   Obsolete. Please use <see cref="SplitSetValidation{TModel, TInput, TOutput}"/> instead.
     /// </summary>
     /// 
+    [Obsolete("Please refer to SplitSetValidation<TModel, TInput> instead.")]
     public delegate SplitSetStatistics<TModel> SplitValidationEvaluateFunction<TModel>(int[] validationSamples, TModel model)
         where TModel : class;
 
     /// <summary>
-    ///   Split-Set Validation.
+    ///   Obsolete. Please use <see cref="SplitSetValidation{TModel, TInput, TOutput}"/> instead.
     /// </summary>
     /// 
-    /// <typeparam name="TModel">The type of the model being analyzed.</typeparam>
-    /// 
-    /// <seealso cref="Bootstrap"/>
-    /// <seealso cref="CrossValidation{T}"/>
-    /// <seealso cref="SplitSetValidation"/>
-    /// 
     [Serializable]
+    [Obsolete("Please use SplitSetValidation<TModel, TInput> instead.")]
     public class SplitSetValidation<TModel> where TModel : class
     {
 
@@ -132,7 +132,7 @@ namespace Accord.MachineLearning
         {
             this.Proportion = proportion;
             this.IsStratified = false;
-            this.Indices = Accord.Statistics.Tools.RandomGroups(size, proportion);
+            this.Indices = Classes.Random(size, proportion);
 
             this.ValidationSet = Indices.Find(x => x == 0);
             this.TrainingSet = Indices.Find(x => x == 1);

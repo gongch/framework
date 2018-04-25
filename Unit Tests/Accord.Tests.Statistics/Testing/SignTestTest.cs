@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,13 +23,13 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Testing;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using Accord.Statistics.Distributions.Univariate;
     using Accord.Math;
     using Accord.Statistics;
 
-    [TestClass()]
+    [TestFixture]
     public class SignTestTest
     {
 
@@ -51,7 +51,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void SignTestConstructorTest()
         {
             // Example from http://www.unm.edu/~marcusj/1Samplesign.pdf
@@ -73,7 +73,7 @@ namespace Accord.Tests.Statistics
 
         }
 
-        [TestMethod()]
+        [Test]
         public void SignTestConstructorTest2()
         {
             // This example has been adapted from the Wikipedia's page about

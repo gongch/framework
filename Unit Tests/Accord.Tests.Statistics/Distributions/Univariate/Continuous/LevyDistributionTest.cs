@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -27,30 +27,13 @@ namespace Accord.Tests.Statistics
     using Accord.Statistics;
     using Accord.Statistics.Distributions.Multivariate;
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class LevyDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             var levy = new LevyDistribution(location: 1, scale: 4.2);
@@ -110,7 +93,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(26737.630417446126, range3.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest2()
         {
             var levy = new LevyDistribution(location: 0, scale: 2.4);
@@ -171,7 +154,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void MedianTest1()
         {
             // plevy(5.2754624119625602, m=0, s=2.4)
@@ -189,7 +172,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(Double.IsNaN(p));
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest2()
         {
             // plevy(7.2754624119625602, m=2, s=2.4)

@@ -1,7 +1,7 @@
 // Accord.NET Sample Applications
 // http://accord-framework.net
 //
-// Copyright © 2009-2014, César Souza
+// Copyright © 2009-2017, César Souza
 // All rights reserved. 3-BSD License:
 //
 //   Redistribution and use in source and binary forms, with or without
@@ -43,10 +43,11 @@ using System.Threading;
 using System.Windows.Forms;
 using Accord.Neuro.Learning;
 using AForge;
-using AForge.Controls;
-using AForge.Neuro;
+using Accord.Controls;
+using Accord.Neuro;
+using Accord;
 
-namespace Samples.Rprop
+namespace SampleApp
 {
     public class XorProblem : System.Windows.Forms.Form
     {
@@ -86,12 +87,8 @@ namespace Samples.Rprop
         private volatile bool needToStop = false;
 
 
-        // Constructor
         public XorProblem()
         {
-            //
-            // Required for Windows Form Designer support
-            //
             InitializeComponent();
 
             // update controls
@@ -142,7 +139,7 @@ namespace Samples.Rprop
             this.label1 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.errorChart = new AForge.Controls.Chart();
+            this.errorChart = new Accord.Controls.Chart();
             this.saveFilesCheck = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -319,8 +316,6 @@ namespace Samples.Rprop
             // 
             this.errorChart.Location = new System.Drawing.Point(16, 29);
             this.errorChart.Name = "errorChart";
-            this.errorChart.RangeX = ((AForge.Range)(resources.GetObject("errorChart.RangeX")));
-            this.errorChart.RangeY = ((AForge.Range)(resources.GetObject("errorChart.RangeY")));
             this.errorChart.Size = new System.Drawing.Size(320, 300);
             this.errorChart.TabIndex = 2;
             this.errorChart.Text = "chart1";
@@ -341,6 +336,7 @@ namespace Samples.Rprop
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "XorProblem";
             this.Text = "XOR Problem (Resilient Backpropagation)";

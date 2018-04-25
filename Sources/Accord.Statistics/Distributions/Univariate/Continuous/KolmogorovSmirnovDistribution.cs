@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 // Copyright © Richard Simard, 2010
@@ -29,7 +29,8 @@ namespace Accord.Statistics.Distributions.Univariate
 {
     using System;
     using Accord.Math;
-    using AForge;
+    using Accord.Math.Differentiation;
+    using Accord.Compat;
 
     /// <summary>
     ///   Kolmogorov-Smirnov distribution.
@@ -146,7 +147,7 @@ namespace Accord.Statistics.Distributions.Univariate
         /// </summary>
         /// 
         /// <value>
-        ///   A <see cref="AForge.DoubleRange" /> containing
+        ///   A <see cref="DoubleRange" /> containing
         ///   the support interval for this distribution.
         /// </value>
         /// 
@@ -227,7 +228,7 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   See <see cref="KolmogorovSmirnovDistribution"/>.
         /// </example>
         /// 
-        public override double DistributionFunction(double x)
+        protected internal override double InnerDistributionFunction(double x)
         {
             return CumulativeFunction(NumberOfSamples, x);
         }
@@ -236,20 +237,10 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   Not supported.
         /// </summary>
         /// 
-        public override double ProbabilityDensityFunction(double x)
+        protected internal override double InnerProbabilityDensityFunction(double x)
         {
             throw new NotSupportedException();
         }
-
-        /// <summary>
-        ///   Not supported.
-        /// </summary>
-        /// 
-        public override double LogProbabilityDensityFunction(double x)
-        {
-            throw new NotSupportedException();
-        }
-
 
         /// <summary>
         ///   Gets the complementary cumulative distribution function
@@ -267,7 +258,7 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   See <see cref="KolmogorovSmirnovDistribution"/>.
         /// </example>
         /// 
-        public override double ComplementaryDistributionFunction(double x)
+        protected internal override double InnerComplementaryDistributionFunction(double x)
         {
             return ComplementaryDistributionFunction(NumberOfSamples, x);
         }
@@ -906,7 +897,7 @@ namespace Accord.Statistics.Distributions.Univariate
             matrixPower(A, eA, V, ref eV, m, n / 2, B);
 
 
-            V.Multiply(V, result: B);
+            Matrix.Dot(V, V, result: B);
 
             int eB = 2 * eV;
             if (B[m / 2, m / 2] > 1.0e140)
@@ -926,7 +917,7 @@ namespace Accord.Statistics.Distributions.Univariate
             }
             else
             {
-                A.Multiply(B, result: V);
+                Matrix.Dot(A, B, result: V);
                 eV = eA + eB;
             }
 

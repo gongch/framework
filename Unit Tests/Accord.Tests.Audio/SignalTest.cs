@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,29 +23,20 @@
 namespace Accord.Tests.Audio
 {
     using Accord.Audio;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Audio.Windows;
     using Accord.Math;
+    using System.IO;
+    using Accord.DataSets;
 
-    [TestClass()]
+    [TestFixture]
     public class SignalTest
     {
-
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
+        public static FileStream GetSignal(string resourceName)
         {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
+            string fileName = Path.Combine(TestContext.CurrentContext.TestDirectory, "Resources", resourceName);
+            return new FileStream(fileName, FileMode.Open, FileAccess.Read);
         }
-
 
         private float[,] data = 
         {
@@ -57,7 +48,7 @@ namespace Accord.Tests.Audio
             { -0.22f, 0.2f  },
         };
 
-        [TestMethod()]
+        [Test]
         public void GetEnergyTest()
         {
             Signal target = Signal.FromArray(data, 8000);
@@ -67,7 +58,26 @@ namespace Accord.Tests.Audio
             Assert.AreEqual(expected, actual, 1e-4);
         }
 
-        [TestMethod()]
+        [Test]
+        public void GetEnergyTest_doc()
+        {
+            string basePath = Path.Combine(NUnit.Framework.TestContext.CurrentContext.TestDirectory, "energy");
+
+            #region doc_energy
+            // Let's say we would like to compute the energy of an audio signal. For this,
+            // we will take an example signal from the Free Spoken Digits Dataset (FSDD):
+            FreeSpokenDigitsDataset fsdd = new FreeSpokenDigitsDataset(basePath);
+            Signal signal = fsdd.GetSignal(digit: 3, speaker: "jackson", index: 0);
+
+            // The energy is defined as the sum of squared values in all 
+            // channels of the audio signal. In this case, it should be:
+            double energy = signal.GetEnergy(); // 19.448728048242629
+            #endregion
+
+            Assert.AreEqual(19.448728048242629, energy, 1e-10);
+        }
+
+        [Test]
         public void SignalConstructorTest()
         {
             Signal target = Signal.FromArray(data, 8000);
@@ -78,7 +88,7 @@ namespace Accord.Tests.Audio
         }
 
 
-        [TestMethod()]
+        [Test]
         public void GetSampleTest()
         {
             float[,] data = (float[,])this.data.Clone();
@@ -101,8 +111,7 @@ namespace Accord.Tests.Audio
 
         }
 
-
-        [TestMethod()]
+        [Test]
         public void RectangularWindowTest()
         {
             int length = 3;

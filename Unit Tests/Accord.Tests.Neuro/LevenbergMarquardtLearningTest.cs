@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -27,20 +27,19 @@ namespace Accord.Tests.Neuro
     using Accord.Neuro;
     using Accord.Neuro.Learning;
     using AForge;
-    using AForge.Neuro;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using System.IO;
 
-    [TestClass()]
+    [TestFixture]
     public class LevenbergMarquardtLearningTest
     {
 
-        [TestMethod()]
+        [Test]
         public void MulticlassTest1()
         {
             Accord.Math.Tools.SetupGenerator(0);
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
+            // Neuron.RandGenerator = new ThreadSafeRandom(0);
 
 
             int numberOfInputs = 3;
@@ -97,7 +96,7 @@ namespace Accord.Tests.Neuro
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void RunEpochTest1()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -118,7 +117,7 @@ namespace Accord.Tests.Neuro
                 new double[] { -1 }
             };
 
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
+            // Neuron.RandGenerator = new ThreadSafeRandom(0);
 
             ActivationNetwork network = new ActivationNetwork(
                    new BipolarSigmoidFunction(2), 2, 2, 1);
@@ -134,7 +133,7 @@ namespace Accord.Tests.Neuro
                 Assert.AreEqual(network.Compute(input[i])[0], output[i][0], 0.1);
         }
 
-        [TestMethod()]
+        [Test]
         public void RunEpochTest2()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -155,7 +154,7 @@ namespace Accord.Tests.Neuro
                 new double[] { -1 }
             };
 
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
+            // Neuron.RandGenerator = new ThreadSafeRandom(0);
             ActivationNetwork network = new ActivationNetwork(
                    new BipolarSigmoidFunction(2), 2, 2, 1);
 
@@ -170,15 +169,16 @@ namespace Accord.Tests.Neuro
                 Assert.AreEqual(network.Compute(input[i])[0], output[i][0], 0.1);
         }
 
-        [TestMethod()]
+        [Test]
         public void RunEpochTest3()
         {
             double[,] dataset = yinyang;
 
-            double[][] input = dataset.GetColumns(0, 1).ToArray();
-            double[][] output = dataset.GetColumn(2).ToArray();
+            double[][] input = dataset.GetColumns(new[] { 0, 1 }).ToJagged();
+            double[][] output = dataset.GetColumn(2).ToJagged();
 
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
+            // Neuron.RandGenerator = new ThreadSafeRandom(0);
+            Accord.Math.Random.Generator.Seed = 0;
 
             ActivationNetwork network = new ActivationNetwork(
                    new BipolarSigmoidFunction(2), 2, 5, 1);
@@ -201,7 +201,7 @@ namespace Accord.Tests.Neuro
                 Assert.AreEqual(Math.Sign(output[i][0]), Math.Sign(actual[i][0]));
         }
 
-        [TestMethod()]
+        [Test]
         public void RunEpochTest4()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -216,7 +216,7 @@ namespace Accord.Tests.Neuro
                 new double[] { 0 },
             };
 
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
+            // Neuron.RandGenerator = new ThreadSafeRandom(0);
             ActivationNetwork network = new ActivationNetwork(
                    new BipolarSigmoidFunction(2), 2, 1);
 
@@ -231,7 +231,7 @@ namespace Accord.Tests.Neuro
                 Assert.AreEqual(network.Compute(input[i])[0], output[i][0], 0.1);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             // Four training samples of the xor function
@@ -285,7 +285,7 @@ namespace Accord.Tests.Neuro
 
 
 
-        [TestMethod()]
+        [Test]
         public void JacobianByChainRuleTest()
         {
             // Network with one hidden layer: 2-2-1
@@ -307,7 +307,7 @@ namespace Accord.Tests.Neuro
                 new double[] { -1 }
             };
 
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
+            // Neuron.RandGenerator = new ThreadSafeRandom(0);
 
             ActivationNetwork network = new ActivationNetwork(
                    new BipolarSigmoidFunction(2), 2, 2, 1);
@@ -325,11 +325,8 @@ namespace Accord.Tests.Neuro
             teacher1.RunEpoch(input, output);
             teacher2.RunEpoch(input, output);
 
-            PrivateObject privateTeacher1 = new PrivateObject(teacher1);
-            PrivateObject privateTeacher2 = new PrivateObject(teacher2);
-
-            var jacobian1 = (float[][])privateTeacher1.GetField("jacobian");
-            var jacobian2 = (float[][])privateTeacher2.GetField("jacobian");
+            var jacobian1 = teacher1.Jacobian;
+            var jacobian2 = teacher2.Jacobian;
 
 
 
@@ -348,7 +345,7 @@ namespace Accord.Tests.Neuro
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void JacobianByChainRuleTest2()
         {
             // Network with two hidden layers: 2-4-3-1
@@ -370,7 +367,7 @@ namespace Accord.Tests.Neuro
                 new double[] {-1 }
             };
 
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
+            // Neuron.RandGenerator = new ThreadSafeRandom(0);
 
             ActivationNetwork network = new ActivationNetwork(
                    new BipolarSigmoidFunction(2), 2, 4, 3, 1);
@@ -388,11 +385,8 @@ namespace Accord.Tests.Neuro
             teacher1.RunEpoch(input, output);
             teacher2.RunEpoch(input, output);
 
-            PrivateObject privateTeacher1 = new PrivateObject(teacher1);
-            PrivateObject privateTeacher2 = new PrivateObject(teacher2);
-
-            var jacobian1 = (float[][])privateTeacher1.GetField("jacobian");
-            var jacobian2 = (float[][])privateTeacher2.GetField("jacobian");
+            var jacobian1 = teacher1.Jacobian;
+            var jacobian2 = teacher2.Jacobian;
 
 
             for (int i = 0; i < jacobian1.Length; i++)
@@ -411,7 +405,7 @@ namespace Accord.Tests.Neuro
 
         }
 
-        [TestMethod()]
+        [Test]
         public void JacobianByChainRuleTest3()
         {
             // Network with 3 hidden layers: 2-4-3-4-1
@@ -434,7 +428,7 @@ namespace Accord.Tests.Neuro
                 new double[] {-1 }
             };
 
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
+            // Neuron.RandGenerator = new ThreadSafeRandom(0);
 
             ActivationNetwork network = new ActivationNetwork(
                    new BipolarSigmoidFunction(2), 2, 4, 3, 4, 1);
@@ -452,11 +446,8 @@ namespace Accord.Tests.Neuro
             teacher1.RunEpoch(input, output);
             teacher2.RunEpoch(input, output);
 
-            PrivateObject privateTeacher1 = new PrivateObject(teacher1);
-            PrivateObject privateTeacher2 = new PrivateObject(teacher2);
-
-            var jacobian1 = (float[][])privateTeacher1.GetField("jacobian");
-            var jacobian2 = (float[][])privateTeacher2.GetField("jacobian");
+            var jacobian1 = teacher1.Jacobian;
+            var jacobian2 = teacher2.Jacobian;
 
 
             for (int i = 0; i < jacobian1.Length; i++)
@@ -466,7 +457,7 @@ namespace Accord.Tests.Neuro
                     double j1 = jacobian1[i][j];
                     double j2 = jacobian2[i][j];
 
-                    Assert.AreEqual(j1, j2, 1e-4);
+                    Assert.AreEqual(j1, j2, 1e-3);
 
                     Assert.IsFalse(Double.IsNaN(j1));
                     Assert.IsFalse(Double.IsNaN(j2));
@@ -475,7 +466,7 @@ namespace Accord.Tests.Neuro
 
         }
 
-        [TestMethod()]
+        [Test]
         public void JacobianByChainRuleTest4()
         {
             // Network with no hidden layers: 3-1
@@ -496,7 +487,8 @@ namespace Accord.Tests.Neuro
                 new double[] {-1 }
             };
 
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
+            // Neuron.RandGenerator = new ThreadSafeRandom(0);
+            Accord.Math.Random.Generator.Seed = 0;
 
             ActivationNetwork network = new ActivationNetwork(
                    new BipolarSigmoidFunction(2), 2, 1);
@@ -514,11 +506,8 @@ namespace Accord.Tests.Neuro
             teacher1.RunEpoch(input, output);
             teacher2.RunEpoch(input, output);
 
-            PrivateObject privateTeacher1 = new PrivateObject(teacher1);
-            PrivateObject privateTeacher2 = new PrivateObject(teacher2);
-
-            var jacobian1 = (float[][])privateTeacher1.GetField("jacobian");
-            var jacobian2 = (float[][])privateTeacher2.GetField("jacobian");
+            var jacobian1 = teacher1.Jacobian;
+            var jacobian2 = teacher2.Jacobian;
 
 
             for (int i = 0; i < jacobian1.Length; i++)
@@ -528,7 +517,7 @@ namespace Accord.Tests.Neuro
                     double j1 = jacobian1[i][j];
                     double j2 = jacobian2[i][j];
 
-                    Assert.AreEqual(j1, j2, 1e-5);
+                    Assert.AreEqual(j1, j2, 1e-4);
 
                     Assert.IsFalse(Double.IsNaN(j1));
                     Assert.IsFalse(Double.IsNaN(j2));
@@ -536,7 +525,7 @@ namespace Accord.Tests.Neuro
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void JacobianByChainRuleTest_MultipleOutput()
         {
             // Network with no hidden layers: 3-4
@@ -571,7 +560,8 @@ namespace Accord.Tests.Neuro
             double[][] output = Accord.Statistics.Tools
                 .Expand(labels, numberOfClasses, -1, 1);
 
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
+            // Neuron.RandGenerator = new ThreadSafeRandom(0);
+            Accord.Math.Random.Generator.Seed = 0;
 
             ActivationNetwork network = new ActivationNetwork(
                    new BipolarSigmoidFunction(2), numberOfInputs, numberOfClasses);
@@ -589,11 +579,8 @@ namespace Accord.Tests.Neuro
             teacher1.RunEpoch(input, output);
             teacher2.RunEpoch(input, output);
 
-            PrivateObject privateTeacher1 = new PrivateObject(teacher1);
-            PrivateObject privateTeacher2 = new PrivateObject(teacher2);
-
-            var jacobian1 = (float[][])privateTeacher1.GetField("jacobian");
-            var jacobian2 = (float[][])privateTeacher2.GetField("jacobian");
+            var jacobian1 = teacher1.Jacobian;
+            var jacobian2 = teacher2.Jacobian;
 
 
             for (int i = 0; i < jacobian1.Length; i++)
@@ -612,7 +599,7 @@ namespace Accord.Tests.Neuro
         }
 
 
-        [TestMethod()]
+        [Test]
         public void BlockHessianTest1()
         {
             // Network with no hidden layers: 3-1
@@ -634,9 +621,6 @@ namespace Accord.Tests.Neuro
                 new double[] { 1 },
                 new double[] {-1 }
             };
-
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
-
 
             ActivationNetwork network = new ActivationNetwork(
                    new BipolarSigmoidFunction(2), 2, 1);
@@ -691,22 +675,23 @@ namespace Accord.Tests.Neuro
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ZeroLambdaTest()
         {
+            Accord.Math.Random.Generator.Seed = 0;
             double[,] data = null;
 
             // open selected file
             using (TextReader stream = new StringReader(Properties.Resources.ZeroLambda))
             using (CsvReader reader = new CsvReader(stream, false))
             {
-                data = reader.ToTable().ToMatrix();
+                data = reader.ToTable().ToMatrix(System.Globalization.CultureInfo.InvariantCulture);
             }
 
             // number of learning samples
             int samples = data.GetLength(0);
 
-            var ranges = data.Range(dimension: 0);
+            var ranges = data.GetRange(dimension: 0);
 
             Assert.AreEqual(2, ranges.Length);
 
@@ -732,14 +717,19 @@ namespace Accord.Tests.Neuro
                 output[i][0] = (data[i, 1] - yMin) * yFactor - 0.85; // set output
             }
 
+            // Neuron.RandGenerator = new ThreadSafeRandom(0);
+            Accord.Math.Random.Generator.Seed = 0;
+
             // create multi-layer neural network
-            ActivationNetwork network = new ActivationNetwork(
+            var network = new ActivationNetwork(
                 new BipolarSigmoidFunction(5),
                 1, 12, 1);
 
             // create teacher
-            LevenbergMarquardtLearning teacher = new LevenbergMarquardtLearning(network, true);
-
+            var teacher = new LevenbergMarquardtLearning(network, true);
+#if MONO
+            teacher.ParallelOptions.MaxDegreeOfParallelism = 1;
+#endif
             teacher.LearningRate = 1;
 
             // iterations

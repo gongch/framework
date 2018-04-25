@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ namespace Accord.Statistics.Distributions.Univariate
     using System;
     using Accord.Math;
     using Accord.Statistics.Distributions.Fitting;
-    using AForge;
+    using Accord.Compat;
 
     /// <summary>
     ///   Exponential distribution.
@@ -195,7 +195,7 @@ namespace Accord.Statistics.Distributions.Univariate
         /// </summary>
         /// 
         /// <value>
-        ///   A <see cref="AForge.DoubleRange" /> containing
+        ///   A <see cref="DoubleRange" /> containing
         ///   the support interval for this distribution.
         /// </value>
         /// 
@@ -219,7 +219,7 @@ namespace Accord.Statistics.Distributions.Univariate
             get
             {
                 double median = Math.Log(2) / lambda;
-                System.Diagnostics.Debug.Assert(median == base.Median);
+                Accord.Diagnostics.Debug.Assert(median == base.Median);
                 return median;
             }
         }
@@ -270,7 +270,7 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   The Exponential CDF is defined as CDF(x) = 1 - exp(-λ*x).</para>
         /// </remarks>
         /// 
-        public override double DistributionFunction(double x)
+        protected internal override double InnerDistributionFunction(double x)
         {
             return 1.0 - Math.Exp(-lambda * x);
         }
@@ -296,7 +296,7 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   The Exponential PDF is defined as PDF(x) = λ * exp(-λ*x).</para>
         /// </remarks>
         /// 
-        public override double ProbabilityDensityFunction(double x)
+        protected internal override double InnerProbabilityDensityFunction(double x)
         {
             return lambda * Math.Exp(-lambda * x);
         }
@@ -318,9 +318,9 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   probability that a given value <c>x</c> will occur.
         /// </remarks>
         /// 
-        /// <seealso cref="ProbabilityDensityFunction"/>
+        /// <seealso cref="UnivariateContinuousDistribution.ProbabilityDensityFunction(double)"/>
         /// 
-        public override double LogProbabilityDensityFunction(double x)
+        protected internal override double InnerLogProbabilityDensityFunction(double x)
         {
             return lnlambda - lambda * x;
         }
@@ -341,10 +341,10 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   The Exponential ICDF is defined as ICDF(p) = -ln(1-p)/λ.</para>
         /// </remarks>
         /// 
-        public override double InverseDistributionFunction(double p)
+        protected internal override double InnerInverseDistributionFunction(double p)
         {
-            double icdf = -Math.Log(1 - p) / lambda;
-            System.Diagnostics.Debug.Assert(icdf.IsRelativelyEqual(base.InverseDistributionFunction(p), 1e-6));
+            double icdf = -Math.Log(1.0 - p) / lambda;
+            Accord.Diagnostics.Debug.Assert(icdf.IsEqual(base.InnerInverseDistributionFunction(p), 1e-6));
             return icdf;
         }
 
@@ -380,11 +380,11 @@ namespace Accord.Statistics.Distributions.Univariate
 
             if (weights == null)
             {
-                lambda = 1.0 / Accord.Statistics.Tools.Mean(observations);
+                lambda = 1.0 / Measures.Mean(observations);
             }
             else
             {
-                lambda = 1.0 / Accord.Statistics.Tools.WeightedMean(observations, weights);
+                lambda = 1.0 / Measures.WeightedMean(observations, weights);
             }
 
             init(lambda);
@@ -431,23 +431,29 @@ namespace Accord.Statistics.Distributions.Univariate
         /// </summary>
         /// 
         /// <param name="samples">The number of samples to generate.</param>
-        /// 
+        /// <param name="result">The location where to store the samples.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///   
         /// <returns>A random vector of observations drawn from this distribution.</returns>
         /// 
-        public override double[] Generate(int samples)
+        public override double[] Generate(int samples, double[] result, Random source)
         {
-            return Random(lambda, samples);
+            return Random(lambda, samples, result, source);
         }
 
         /// <summary>
         ///   Generates a random observation from the current distribution.
         /// </summary>
         /// 
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///   
         /// <returns>A random observations drawn from this distribution.</returns>
         /// 
-        public override double Generate()
+        public override double Generate(Random source)
         {
-            return Random(lambda);
+            return Random(lambda, source);
         }
 
         /// <summary>
@@ -462,15 +468,63 @@ namespace Accord.Statistics.Distributions.Univariate
         /// 
         public static double[] Random(double lambda, int samples)
         {
-            double[] r = new double[samples];
-            for (int i = 0; i < r.Length; i++)
-            {
-                double u = Accord.Math.Tools.Random.NextDouble();
-                r[i] = -Math.Log(u) / lambda;
-            }
-
-            return r;
+            return Random(lambda, samples, new double[samples], Accord.Math.Random.Generator.Random);
         }
+
+        /// <summary>
+        ///   Generates a random vector of observations from the 
+        ///   Exponential distribution with the given parameters.
+        /// </summary>
+        /// 
+        /// <param name="lambda">The rate parameter lambda.</param>
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///
+        /// <returns>An array of double values sampled from the specified Exponential distribution.</returns>
+        /// 
+        public static double[] Random(double lambda, int samples, Random source)
+        {
+            return Random(lambda, samples, new double[samples], source);
+        }
+
+
+        /// <summary>
+        ///   Generates a random vector of observations from the 
+        ///   Exponential distribution with the given parameters.
+        /// </summary>
+        /// 
+        /// <param name="lambda">The rate parameter lambda.</param>
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        ///
+        /// <returns>An array of double values sampled from the specified Exponential distribution.</returns>
+        /// 
+        public static double[] Random(double lambda, int samples, double[] result)
+        {
+            return Random(lambda, samples, result, Accord.Math.Random.Generator.Random);
+        }
+
+        /// <summary>
+        ///   Generates a random vector of observations from the 
+        ///   Exponential distribution with the given parameters.
+        /// </summary>
+        /// 
+        /// <param name="lambda">The rate parameter lambda.</param>
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///
+        /// <returns>An array of double values sampled from the specified Exponential distribution.</returns>
+        /// 
+        public static double[] Random(double lambda, int samples, double[] result, Random source)
+        {
+            for (int i = 0; i < result.Length; i++)
+                result[i] = -Math.Log(source.NextDouble()) / lambda;
+            return result;
+        }
+
 
         /// <summary>
         ///   Generates a random observation from the 
@@ -483,8 +537,22 @@ namespace Accord.Statistics.Distributions.Univariate
         /// 
         public static double Random(double lambda)
         {
-            double u = Accord.Math.Tools.Random.NextDouble();
-            return -Math.Log(u) / lambda;
+            return Random(lambda, Accord.Math.Random.Generator.Random);
+        }
+        /// <summary>
+        ///   Generates a random observation from the 
+        ///   Exponential distribution with the given parameters.
+        /// </summary>
+        /// 
+        /// <param name="lambda">The rate parameter lambda.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        /// 
+        /// <returns>A random double value sampled from the specified Exponential distribution.</returns>
+        /// 
+        public static double Random(double lambda, Random source)
+        {
+            return -Math.Log(source.NextDouble()) / lambda;
         }
 
         #endregion

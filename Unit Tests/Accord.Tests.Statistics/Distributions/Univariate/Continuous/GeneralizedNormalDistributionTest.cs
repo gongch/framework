@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,36 +22,18 @@
 
 namespace Accord.Tests.Statistics
 {
-    using Accord.Statistics.Distributions.Univariate;
-    using Accord.Statistics;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using System;
-    using Accord.Statistics.Distributions.Multivariate;
-    using System.Globalization;
     using Accord.Math;
+    using Accord.Statistics.Distributions.Univariate;
+    using NUnit.Framework;
+    using System;
+    using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class GeneralizedNormalDistributionTest
     {
 
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest1()
         {
             var normal = new GeneralizedNormalDistribution(location: 1, scale: 5, shape: 0.42);
@@ -96,9 +78,15 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(430.92857248354375, range2.Max);
             Assert.AreEqual(-428.92857248354403, range3.Min);
             Assert.AreEqual(430.92857248354375, range3.Max);
+
+            Assert.AreEqual(double.NegativeInfinity, normal.Support.Min);
+            Assert.AreEqual(double.PositiveInfinity, normal.Support.Max);
+
+            Assert.AreEqual(normal.InverseDistributionFunction(0), normal.Support.Min);
+            Assert.AreEqual(normal.InverseDistributionFunction(1), normal.Support.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void NormalTest()
         {
             var target = GeneralizedNormalDistribution.Normal(mean: 0.42, stdDev: 4.2);
@@ -107,7 +95,7 @@ namespace Accord.Tests.Statistics
             test(target, normal);
         }
 
-        [TestMethod()]
+        [Test]
         public void NormalTest2()
         {
             var target = GeneralizedNormalDistribution.Normal(mean: 0.0, stdDev: 2 / Constants.Sqrt2);
@@ -129,7 +117,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void SupportTest1()
         {
             var target = new GeneralizedNormalDistribution(0.0, 10, 2);
@@ -140,7 +128,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(double.PositiveInfinity, range.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void LaplaceTest()
         {
             var target = GeneralizedNormalDistribution.Laplace(location: 0.42, scale: 4.2);
@@ -189,7 +177,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest1()
         {
             var target = GeneralizedNormalDistribution.Normal(mean: 0.42, stdDev: 4.2);
@@ -204,7 +192,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest2()
         {
             var target = GeneralizedNormalDistribution.Laplace(location: 0.42, scale: 4.2);

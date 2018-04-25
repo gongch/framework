@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -27,22 +27,38 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
     using Accord.Statistics.Filters;
     using System;
     using System.Globalization;
+    using Accord.Math;
+    using Accord.MachineLearning.DecisionTrees.Learning;
 
     /// <summary>
     ///   Decision rule set.
     /// </summary>
     /// 
-    public class DecisionSet : IEnumerable<DecisionRule>
+    /// <remarks>
+    /// <para>
+    ///   Decision rule sets can be created from <see cref="DecisionTree"/>s using their
+    ///   <see cref="DecisionTree.ToRules()"/> method. An example is shown below.</para>
+    /// </remarks>
+    /// 
+    /// <example>
+    ///   <code source="Unit Tests\Accord.Tests.MachineLearning\DecisionTrees\C45LearningTest.cs" region="doc_iris" />
+    ///   <code source="Unit Tests\Accord.Tests.MachineLearning\DecisionTrees\C45LearningTest.cs" region="doc_missing" />
+    /// </example>
+    /// 
+    /// <seealso cref="DecisionTree"/>
+    /// <seealso cref="C45Learning"/>
+    /// 
+    public class DecisionSet : MulticlassClassifierBase<double[]>, IEnumerable<DecisionRule>
     {
 
         HashSet<DecisionRule> rules;
 
         /// <summary>
-        ///   Gets the number of possible output 
-        ///   classes covered by this decision set.
+        ///   Obsolete. Please use <see cref="ClassifierBase{TInput, TClasses}.NumberOfClasses"/> instead.
         /// </summary>
         /// 
-        public int OutputClasses { get; private set; }
+        [Obsolete("Please use NumberOfClasses instead.")]
+        public int OutputClasses { get { return NumberOfClasses; } }
 
 
         /// <summary>
@@ -88,7 +104,8 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
 
             return new DecisionSet(rules)
             {
-                OutputClasses = tree.OutputClasses
+                NumberOfClasses = tree.NumberOfClasses,
+                NumberOfOutputs = tree.NumberOfOutputs
             };
         }
 
@@ -104,13 +121,8 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
         /// 
         public double? Compute(double[] input)
         {
-            foreach (DecisionRule rule in rules)
-            {
-                if (rule.Match(input))
-                    return rule.Output;
-            }
-
-            return null;
+            double r = Decide(input);
+            return r == -1 ? (double?)null : r;
         }
 
 
@@ -178,7 +190,7 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
         /// 
         public override string ToString()
         {
-            return toString(null, CultureInfo.CurrentUICulture);
+            return toString(null, null, CultureInfo.CurrentUICulture);
         }
 
         /// <summary>
@@ -189,9 +201,9 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
         ///   A <see cref="System.String"/> that represents this instance.
         /// </returns>
         /// 
-        public string ToString(Codification codebook, CultureInfo cultureInfo)
+        public string ToString(Codification<string> codebook, CultureInfo cultureInfo)
         {
-            return toString(codebook, cultureInfo);
+            return toString(codebook, null, cultureInfo);
         }
 
         /// <summary>
@@ -202,12 +214,25 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
         ///   A <see cref="System.String"/> that represents this instance.
         /// </returns>
         /// 
-        public string ToString(Codification codebook)
+        public string ToString(Codification<string> codebook)
         {
             return ToString(codebook, CultureInfo.CurrentUICulture);
         }
 
-        private string toString(Codification codebook, CultureInfo cultureInfo)
+        /// <summary>
+        ///   Returns a <see cref="System.String"/> that represents this instance.
+        /// </summary>
+        /// 
+        /// <returns>
+        ///   A <see cref="System.String"/> that represents this instance.
+        /// </returns>
+        /// 
+        public string ToString(Codification<string> codebook, string outputColumn, CultureInfo cultureInfo)
+        {
+            return toString(codebook, outputColumn, CultureInfo.CurrentUICulture);
+        }
+
+        private string toString(Codification<string> codebook, string outputColumn, CultureInfo cultureInfo)
         {
             var rulesArray = new DecisionRule[this.rules.Count];
 
@@ -218,7 +243,7 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
             if (codebook != null)
             {
                 foreach (DecisionRule rule in rulesArray)
-                    sb.AppendLine(rule.ToString(codebook, cultureInfo));
+                    sb.AppendLine(rule.ToString(codebook, outputColumn, cultureInfo));
             }
             else
             {
@@ -257,5 +282,36 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
             return rules.GetEnumerator();
         }
 
+        /// <summary>
+        /// Computes a class-label decision for a given <paramref name="input" />.
+        /// </summary>
+        /// <param name="input">The input vector that should be classified into
+        /// one of the <see cref="P:Accord.MachineLearning.ITransform.NumberOfOutputs" /> possible classes.</param>
+        /// <returns>A class-label that best described <paramref name="input" /> according
+        /// to this classifier.</returns>
+        public override int Decide(double[] input)
+        {
+            if (input.HasNaN())
+            {
+                int[] outputs = new int[NumberOfClasses];
+                foreach (DecisionRule rule in rules)
+                {
+                    if (rule.Match(input))
+                        outputs[(int)rule.Output] += 1;
+                }
+
+                return outputs.ArgMax();
+            }
+            else
+            {
+                foreach (DecisionRule rule in rules)
+                {
+                    if (rule.Match(input))
+                        return (int)rule.Output;
+                }
+            }
+
+            return -1;
+        }
     }
 }

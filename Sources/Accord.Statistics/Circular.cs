@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 // Copyright © Philipp Berens, 2011
@@ -22,7 +22,7 @@
 //    License along with this library; if not, write to the Free Software
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
-// This file contains implementations based on the orginal code by Philipp
+// This file contains implementations based on the original code by Philipp
 // Berens, shared under a 2-clause BSD license. The original license text 
 // is reproduced below. 
 //
@@ -55,10 +55,9 @@
 namespace Accord.Statistics
 {
     using System;
-    using AForge;
     using Accord.Math;
-    using Accord.Statistics.Distributions.Univariate;
-    using AForge.Math;
+    using Accord.Compat;
+    using System.Numerics;
 
     /// <summary>
     ///   Set of statistics functions operating over a circular space.
@@ -644,12 +643,13 @@ namespace Accord.Statistics
         ///   Whether range values should be wrapped to be contained in the circle. If 
         ///   set to false, range values could be returned outside the [+pi;-pi] range.
         /// </param>
+        /// <param name="type">The quartile definition that should be used. See <see cref="QuantileMethod"/> for datails.</param>
         /// 
         /// <returns>The median of the given samples.</returns>
         /// 
-        public static double Quartiles(double[] samples, double length, out double q1, out double q3, bool wrap = true)
+        public static double Quartiles(double[] samples, double length, out double q1, out double q3, bool wrap = true, QuantileMethod type = QuantileMethod.Default)
         {
-            double q2 = Quartiles(ToRadians(samples, length), out q1, out q3, wrap);
+            double q2 = Quartiles(ToRadians(samples, length), out q1, out q3, wrap, type: type);
             q1 = ToCircular(q1, length, wrap);
             q3 = ToCircular(q3, length, wrap);
             return ToCircular(q2, length);
@@ -670,13 +670,14 @@ namespace Accord.Statistics
         ///   Whether range values should be wrapped to be contained in the circle. If 
         ///   set to false, range values could be returned outside the [+pi;-pi] range.
         /// </param>
+        /// <param name="type">The quartile definition that should be used. See <see cref="QuantileMethod"/> for datails.</param>
         /// 
         /// <returns>The median of the given samples.</returns>
         /// 
-        public static double Quartiles(double[] samples, double length, out double q1, out double q3, double median, bool wrap = true)
+        public static double Quartiles(double[] samples, double length, out double q1, out double q3, double median, bool wrap = true, QuantileMethod type = QuantileMethod.Default)
         {
             double angleMedian = Circular.ToRadians(median, length);
-            double q2 = Quartiles(ToRadians(samples, length), out q1, out q3, angleMedian, wrap);
+            double q2 = Quartiles(ToRadians(samples, length), out q1, out q3, angleMedian, wrap, type: type);
             q1 = ToCircular(q1, length, wrap);
             q3 = ToCircular(q3, length, wrap);
             return ToCircular(q2, length);
@@ -693,12 +694,13 @@ namespace Accord.Statistics
         ///   Whether range values should be wrapped to be contained in the circle. If 
         ///   set to false, range values could be returned outside the [+pi;-pi] range.
         /// </param>
+        /// <param name="type">The quartile definition that should be used. See <see cref="QuantileMethod"/> for datails.</param>
         /// 
         /// <returns>The median of the given angles.</returns>
         /// 
-        public static double Quartiles(double[] angles, out double q1, out double q3, bool wrap = true)
+        public static double Quartiles(double[] angles, out double q1, out double q3, bool wrap = true, QuantileMethod type = QuantileMethod.Default)
         {
-            return Quartiles(angles, out q1, out q3, Median(angles), wrap);
+            return Quartiles(angles, out q1, out q3, Median(angles), wrap, type: type);
         }
 
         /// <summary>
@@ -714,12 +716,13 @@ namespace Accord.Statistics
         ///   Whether range values should be wrapped to be contained in the circle. If 
         ///   set to false, range values could be returned outside the [+pi;-pi] range.
         /// </param>
+        /// <param name="type">The quartile definition that should be used. See <see cref="QuantileMethod"/> for datails.</param>
         /// 
         /// <returns>The median of the given samples.</returns>
         /// 
-        public static double Quartiles(double[] samples, double length, out DoubleRange range, bool wrap = true)
+        public static double Quartiles(double[] samples, double length, out DoubleRange range, bool wrap = true, QuantileMethod type = QuantileMethod.Default)
         {
-            double q2 = Quartiles(ToRadians(samples, length), out range, wrap);
+            double q2 = Quartiles(ToRadians(samples, length), out range, wrap, type: type);
             range.Min = ToCircular(range.Min, length, wrap);
             range.Max = ToCircular(range.Max, length, wrap);
             return ToCircular(q2, length);
@@ -739,13 +742,14 @@ namespace Accord.Statistics
         ///   Whether range values should be wrapped to be contained in the circle. If 
         ///   set to false, range values could be returned outside the [+pi;-pi] range.
         /// </param>
+        /// <param name="type">The quartile definition that should be used. See <see cref="QuantileMethod"/> for datails.</param>
         /// 
         /// <returns>The median of the given samples.</returns>
         /// 
-        public static double Quartiles(double[] samples, double length, out DoubleRange range, double median, bool wrap = true)
+        public static double Quartiles(double[] samples, double length, out DoubleRange range, double median, bool wrap = true, QuantileMethod type = QuantileMethod.Default)
         {
             double angleMedian = Circular.ToRadians(median, length);
-            double q2 = Quartiles(ToRadians(samples, length), out range, angleMedian, wrap);
+            double q2 = Quartiles(ToRadians(samples, length), out range, angleMedian, wrap, type: type);
             range.Min = ToCircular(range.Min, length, wrap);
             range.Max = ToCircular(range.Max, length, wrap);
             return ToCircular(q2, length);
@@ -761,12 +765,13 @@ namespace Accord.Statistics
         ///   Whether range values should be wrapped to be contained in the circle. If 
         ///   set to false, range values could be returned outside the [+pi;-pi] range.
         /// </param>
+        /// <param name="type">The quartile definition that should be used. See <see cref="QuantileMethod"/> for datails.</param>
         /// 
         /// <returns>The median of the given angles.</returns>
         /// 
-        public static double Quartiles(double[] angles, out DoubleRange range, bool wrap = true)
+        public static double Quartiles(double[] angles, out DoubleRange range, bool wrap = true, QuantileMethod type = QuantileMethod.Default)
         {
-            return Quartiles(angles, out range, Median(angles), wrap);
+            return Quartiles(angles, out range, Median(angles), wrap, type: type);
         }
 
         /// <summary>
@@ -780,15 +785,16 @@ namespace Accord.Statistics
         ///   Whether range values should be wrapped to be contained in the circle. If 
         ///   set to false, range values could be returned outside the [+pi;-pi] range.
         /// </param>
+        /// <param name="type">The quartile definition that should be used. See <see cref="QuantileMethod"/> for datails.</param>
         /// 
         /// <returns>The median of the given angles.</returns>
         /// 
-        public static double Quartiles(double[] angles, out DoubleRange range, double median, bool wrap = true)
+        public static double Quartiles(double[] angles, out DoubleRange range, double median, bool wrap = true, QuantileMethod type = QuantileMethod.Default)
         {
             double q1, q3;
-            double q2 = Quartiles(angles, out q1, out q3, median, wrap);
+            double q2 = Quartiles(angles, out q1, out q3, median, wrap, type: type);
 
-            System.Diagnostics.Debug.Assert(q2 == median);
+            Accord.Diagnostics.Debug.Assert(q2 == median);
 
             range = new DoubleRange(q1, q3);
             return median;
@@ -806,10 +812,11 @@ namespace Accord.Statistics
         ///   Whether range values should be wrapped to be contained in the circle. If 
         ///   set to false, range values could be returned outside the [+pi;-pi] range.
         /// </param>
+        /// <param name="type">The quartile definition that should be used. See <see cref="QuantileMethod"/> for datails.</param>
         /// 
         /// <returns>The median of the given angles.</returns>
         /// 
-        public static double Quartiles(double[] angles, out double q1, out double q3, double median, bool wrap = true)
+        public static double Quartiles(double[] angles, out double q1, out double q3, double median, bool wrap = true, QuantileMethod type = QuantileMethod.Default)
         {
             double[] x = new double[angles.Length];
             for (int i = 0; i < angles.Length; i++)
@@ -821,7 +828,7 @@ namespace Accord.Statistics
                 x[i] = (x[i] > +Math.PI) ? (x[i] - (2 * Math.PI)) : (x[i]);
             }
 
-            Tools.Quartiles(x, out q1, out q3, alreadySorted: false);
+            x.Quartiles(out q1, out q3, alreadySorted: false, type: type, inPlace: true);
 
             q1 = q1 + median;
             q3 = q3 + median;

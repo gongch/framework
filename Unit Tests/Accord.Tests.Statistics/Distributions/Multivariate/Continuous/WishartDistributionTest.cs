@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,35 +22,16 @@
 
 namespace Accord.Tests.Statistics
 {
-    using Accord.Statistics.Distributions.Multivariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Accord.Math;
-    using Accord.Statistics.Distributions.Fitting;
-    using Accord.Statistics;
-    using System.Globalization;
+    using Accord.Statistics.Distributions;
+    using Accord.Statistics.Distributions.Multivariate;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class WishartDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest4()
         {
             // Create a Wishart distribution with the parameters:
@@ -60,40 +41,40 @@ namespace Accord.Tests.Statistics
                 degreesOfFreedom: 7,
 
                 // Scale parameter
-                scale: new double[,] 
+                scale: new double[,]
                 {
-                    { 4, 1, 1 },  
+                    { 4, 1, 1 },
                     { 1, 2, 2 },  // (must be symmetric and positive definite)
                     { 1, 2, 6 },
                 }
             );
 
             // Common measures
-            double[] var = wishart.Variance;  // { 224, 56, 504 }
+            double[] var = wishart.Variance;      // { 224, 56, 504 }
             double[,] cov = wishart.Covariance;   // see below
-            double[,] meanm = wishart.MeanMatrix; // see below
-            
+            double[,] meanm = wishart.Mean;       // see below
+
             //         224  63  175             28  7   7 
             //   cov =  63  56  112     mean =   7  14  14
             //         175 112  504              7  14  42
 
             // (the above matrix representations have been transcribed to text using)
-            string scov = cov.ToString(DefaultMatrixFormatProvider.InvariantCulture);
-            string smean = meanm.ToString(DefaultMatrixFormatProvider.InvariantCulture);
+            // string scov = cov.ToString(DefaultMatrixFormatProvider.InvariantCulture);
+            // string smean = meanm.ToString(DefaultMatrixFormatProvider.InvariantCulture);
 
             // For compatibility reasons, .Mean stores a flattened mean matrix
-            double[] mean = wishart.Mean; // { 28, 7, 7, 7, 14, 14, 7, 14, 42 }
+            double[] mean = ((IMultivariateDistribution)wishart).Mean; // { 28, 7, 7, 7, 14, 14, 7, 14, 42 }
 
 
             // Probability density functions
-            double pdf = wishart.ProbabilityDensityFunction(new double[,] 
+            double pdf = wishart.ProbabilityDensityFunction(new double[,]
             {
                 { 8, 3, 1 },
                 { 3, 7, 1 },   //   0.000000011082455043473361
                 { 1, 1, 8 },
             });
 
-            double lpdf = wishart.LogProbabilityDensityFunction(new double[,] 
+            double lpdf = wishart.LogProbabilityDensityFunction(new double[,]
             {
                 { 8, 3, 1 },
                 { 3, 7, 1 },   // -18.317902605850534
@@ -116,5 +97,38 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(-18.317902605850534, lpdf);
         }
 
+
+        [Test]
+        public void GenerateTest4()
+        {
+            // Create a Wishart distribution with the parameters:
+            WishartDistribution wishart = new WishartDistribution(
+
+                // Degrees of freedom
+                degreesOfFreedom: 7,
+
+                // Scale parameter
+                scale: new double[,]
+                {
+                    { 4, 1, 1 },
+                    { 1, 2, 2 },  // (must be symmetric and positive definite)
+                    { 1, 2, 6 },
+                }
+            );
+
+            double[,] one = wishart.Generate();
+            Assert.AreEqual(3, one.Rows());
+            Assert.AreEqual(3, one.Columns());
+            Assert.IsTrue(one.IsPositiveDefinite());
+
+            double[][,] many = wishart.Generate(100);
+            for (int i = 0; i < many.Length; i++)
+            {
+                Assert.AreEqual(3, many[i].Rows());
+                Assert.AreEqual(3, many[i].Columns());
+                Assert.IsTrue(many[i].IsPositiveDefinite());
+            }
+
+        }
     }
 }

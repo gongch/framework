@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,12 +23,13 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Testing;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using AForge;
     using Accord.Statistics.Testing.Power;
+    using Accord.Statistics;
 
-    [TestClass()]
+    [TestFixture]
     public class TwoSampleZTestTest
     {
 
@@ -49,7 +50,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void TwoSampleZTestConstructorTest()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -62,11 +63,11 @@ namespace Accord.Tests.Statistics
 
             TwoSampleZTest actual = new TwoSampleZTest(samples1, samples2);
 
-            double mean1 = Accord.Statistics.Tools.Mean(samples1);
-            double mean2 = Accord.Statistics.Tools.Mean(samples2);
+            double mean1 = Measures.Mean(samples1);
+            double mean2 = Measures.Mean(samples2);
 
-            double var1 = Accord.Statistics.Tools.Variance(samples1);
-            double var2 = Accord.Statistics.Tools.Variance(samples2);
+            double var1 = Measures.Variance(samples1);
+            double var2 = Measures.Variance(samples2);
 
             int n1 = samples1.Length;
             int n2 = samples2.Length;
@@ -84,7 +85,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(actual.Significant);
         }
 
-        [TestMethod()]
+        [Test]
         public void TwoSampleZTestConstructorTest1()
         {
             // Example from http://www.stat.ucla.edu/~cochran/stat10/winter/lectures/lect21.html
@@ -108,7 +109,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(target.Significant);
         }
 
-        [TestMethod()]
+        [Test]
         public void TwoSampleZTestConstructorTest2()
         {
             // Example from http://www.stat.purdue.edu/~tlzhang/stat511/chapter9_1.pdf
@@ -141,7 +142,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(target.Significant);
         }
 
-        [TestMethod()]
+        [Test]
         public void TwoSampleZTestConstructorTest3()
         {
             // Example from Larser & Farber, Elementary Statistics: Picturing the world
@@ -198,7 +199,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void PowerTest1()
         {
             // Example from http://www.statpower.net/Content/310/Print%20Version%20--%20Power%20for%20the%202-Sample%20Z-Statistic.pdf
@@ -226,7 +227,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expectedSamples, actualSamples);
         }
 
-        [TestMethod]
+        [Test]
         public void SampleSizeTest1()
         {
             // Example from http://udel.edu/~mcdonald/statttest.html

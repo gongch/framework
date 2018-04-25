@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 namespace Accord.Statistics.Kernels.Sparse
 {
     using System;
+    using Accord.Compat;
 
     /// <summary>
     ///   Sparse Cauchy Kernel.
@@ -34,6 +35,7 @@ namespace Accord.Statistics.Kernels.Sparse
     /// </remarks>
     /// 
     [Serializable]
+    [Obsolete("Please use the Cauchy kernel with Sparse<double> instead.")]
     public sealed class SparseCauchy : KernelBase, IKernel
     {
         private double sigma;
@@ -73,8 +75,9 @@ namespace Accord.Statistics.Kernels.Sparse
             // Optimization in case x and y are
             // exactly the same object reference.
 
-            if (x == y) 
+            if (x == y)
                 return 1.0;
+#pragma warning disable 0618
 
             double norm = SparseLinear.SquaredEuclidean(x, y);
 

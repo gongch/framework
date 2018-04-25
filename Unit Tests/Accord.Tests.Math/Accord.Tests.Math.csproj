@@ -4,70 +4,47 @@
     <ProjectGuid>{F454DBD6-2AB9-461D-9624-2249B921B6E6}</ProjectGuid>
     <RootNamespace>Accord.Tests.Math</RootNamespace>
     <AssemblyName>Accord.Tests.Math</AssemblyName>
-    <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <FileAlignment>512</FileAlignment>
-    <OldToolsVersion>3.5</OldToolsVersion>
-    <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <UseApplicationTrust>false</UseApplicationTrust>
-    <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>Accord.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+  <Import Project="$(SolutionDir)..\Unit Tests\Accord.Tests.targets" />
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'NET35|AnyCPU' ">
-    <OutputPath>bin\Release\net35</OutputPath>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'net35|AnyCPU' ">
     <DefineConstants>TRACE;NET35</DefineConstants>
-    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'NET40|AnyCPU' ">
-    <OutputPath>bin\Release\net40</OutputPath>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'net40|AnyCPU' ">
     <DefineConstants>TRACE;NET40</DefineConstants>
-    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'NET45|AnyCPU' ">
-    <OutputPath>bin\Release\net45</OutputPath>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'net45|AnyCPU' ">
     <DefineConstants>TRACE;NET45</DefineConstants>
-    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'net46|AnyCPU' ">
+    <DefineConstants>TRACE;NET46</DefineConstants>
+    <CodeAnalysisRuleSet>..\..\Sources\Accord.NET.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'net462|AnyCPU' ">
+    <DefineConstants>TRACE;NET462</DefineConstants>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'mono|AnyCPU' ">
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <DefineConstants>TRACE;MONO</DefineConstants>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AForge">
+    <Reference Include="nunit.framework">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Externals\AForge.NET\AForge.dll</HintPath>
-    </Reference>
-    <Reference Include="AForge.Math">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Externals\AForge.NET\AForge.Math.dll</HintPath>
+      <HintPath>..\..\Externals\NUnit\NUnit.Framework-3.6.1\bin\net-4.5\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
-    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>c:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll</HintPath>
-    </Reference>
+    <Reference Include="System.Numerics" Condition="'$(Configuration)' != 'net35'" />
     <Reference Include="System.XML" />
   </ItemGroup>
   <!--
@@ -82,8 +59,25 @@
   </ItemGroup>
  -->
   <ItemGroup>
+    <Compile Include="Accord.Statistics\MeasuresTest.cs" />
+    <Compile Include="Accord.Statistics\QuantilesTest.cs" />
+    <Compile Include="AForge\Geometry\ClosePointsMergingOptimizerTest.cs" />
+    <Compile Include="AForge\Geometry\FlatAnglesOptimizerTest.cs" />
+    <Compile Include="AForge\Geometry\GeometryToolsTest.cs" />
+    <Compile Include="AForge\Geometry\GrahamConvexHullTest.cs" />
+    <Compile Include="AForge\Geometry\LineSegmentTest.cs" />
+    <Compile Include="AForge\Geometry\LineStraighteningOptimizerTest.cs" />
+    <Compile Include="AForge\Geometry\LineTest.cs" />
+    <Compile Include="AForge\Geometry\ShapeOptimizerTestBase.cs" />
+    <Compile Include="AForge\Geometry\SimpleShapeCheckerTest.cs" />
+    <Compile Include="AForge\Matrix3x3Test.cs" />
+    <Compile Include="AForge\Matrix4x4Test.cs" />
+    <Compile Include="AForge\Metrics\MetricsTest.cs" />
+    <Compile Include="AForge\ToolsTest.cs" />
+    <Compile Include="AForge\Vector3Test.cs" />
     <Compile Include="Collections\RedBlackTreeDictionaryTest.cs" />
     <Compile Include="Collections\RedBlackTreeTest.cs" />
+    <Compile Include="Decompositions\JaggedCholeskyDecompositionTest.cs" />
     <Compile Include="Decompositions\JaggedEigenvalueDecompositionTest.cs" />
     <Compile Include="Decompositions\JaggedQrDecompositionTest.cs" />
     <Compile Include="Functions\OwensTTest.cs" />
@@ -98,21 +92,24 @@
     <Compile Include="CombinatoricsTest.cs" />
     <Compile Include="Decompositions\JaggedSingularValueDecompositionTest.cs" />
     <Compile Include="IO\MatReaderTest.cs" />
+    <Compile Include="Matrix\Matrix.Set.cs" />
+    <Compile Include="Matrix\Matrix.Selection.cs" />
     <Compile Include="Matrix\Matrix.Construction.cs" />
     <Compile Include="Matrix\Matrix.Common.cs" />
+    <Compile Include="Matrix\Matrix.Algebra.cs" />
+    <Compile Include="Matrix\Vector.Interval.cs" />
+    <Compile Include="Matrix\Vector.Range.cs" />
     <Compile Include="Matrix\VectorTest.cs" />
+    <Compile Include="Optimization\Losses\LossesTest.cs" />
+    <Compile Include="Optimization\Losses\ZeroOneLossTest.cs" />
+    <Compile Include="Optimization\Munkres.cs" />
+    <Compile Include="Optimization\MunkresTest.cs" />
     <Compile Include="Optimization\BinarySearchTest.cs" />
     <Compile Include="Optimization\CobylaTest.cs" />
     <Compile Include="Optimization\BoundedBroydenFletcherGoldfarbShannoTest.cs" />
     <Compile Include="Optimization\LinearConstraintTest.cs" />
-    <Compile Include="Optimization\Quadprog\UnsafeGoldfarbIdnani.cs" />
-    <Compile Include="Optimization\Quadprog\QuadprogComparisonTest.cs" />
     <Compile Include="Optimization\SubplexTest.cs" />
     <Compile Include="Optimization\NelderMeadTest.cs" />
-    <Compile Include="Optimization\Lbfgsb3\LbfgsbComparer.cs" />
-    <Compile Include="Optimization\Lbfgsb3\LbfgsbComparisonTest.cs" />
-    <Compile Include="Optimization\LibBFGS\LibBFGSComparisonTest.cs" />
-    <Compile Include="Optimization\LibBFGS\LBFGSComparer.cs" />
     <Compile Include="Optimization\NonlinearConstraintTest.cs" />
     <Compile Include="Environment\REnvironmentTest.cs" />
     <Compile Include="CosineTransformTest.cs" />
@@ -128,7 +125,7 @@
     <Compile Include="Point3Test.cs" />
     <Compile Include="Functions\BetaTest.cs" />
     <Compile Include="Functions\GammaTest.cs" />
-    <Compile Include="Optimization\AugmentedLagrangianSolverTest.cs" />
+    <Compile Include="Optimization\AugmentedLagrangianTest.cs" />
     <Compile Include="Optimization\GoldfarbIdnaniTest.cs" />
     <Compile Include="Matrix\Matrix.Complex.cs" />
     <Compile Include="Matrix\Matrix.Submatrix.cs" />
@@ -143,6 +140,8 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Random\ZigguratNormalGeneratorTest.cs" />
+    <Compile Include="Random\GeneratorTest.cs" />
     <Compile Include="ReducedRowEchelonFormTest.cs" />
     <Compile Include="Wavelets\CDF97Test.cs" />
     <Compile Include="Wavelets\HaarTest.cs" />
@@ -168,16 +167,26 @@
       <Project>{A177A90C-8207-466A-AF70-F2B8452A42AC}</Project>
       <Name>Accord.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\Sources\Accord.IO\Accord.IO.csproj">
+      <Project>{63184ebd-6b28-4066-aaee-5b99431e31f4}</Project>
+      <Name>Accord.IO</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Sources\Accord.Math.Core\Accord.Math.Core.csproj">
+      <Project>{ed3a336f-6da2-4f34-87fe-1ccffa029f8c}</Project>
+      <Name>Accord.Math.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Sources\Accord.Math\Accord.Math.csproj">
       <Project>{F718E9A8-DB62-4785-8C49-4333A60D256A}</Project>
       <Name>Accord.Math</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Accord.Tests.Math.Cpp\Accord.Tests.Math.Cpp.vcxproj">
-      <Project>{161BD953-537D-4325-8A00-22475FC9088E}</Project>
-      <Name>Accord.Tests.Math.Cpp</Name>
+    <ProjectReference Include="..\..\Sources\Accord.Statistics\Accord.Statistics.csproj">
+      <Project>{fd8101dd-c95d-42d6-ad44-ae01c25f2811}</Project>
+      <Name>Accord.Statistics</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
+  </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.0">
       <Visible>False</Visible>
@@ -202,31 +211,96 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Accord.snk" />
-    <None Include="Resources\constraintMatrix11_15_2.csv" />
-    <None Include="Resources\constraintMatrix11_15.csv" />
-    <None Include="Resources\constraintMatrix11_15_3.csv" />
-    <None Include="Resources\constraints11_14_2.csv" />
-    <None Include="Resources\constraints11_14.csv" />
-    <None Include="Resources\constraints11_14_3.csv" />
-    <None Include="Resources\dmatFull.csv" />
-    <None Include="Resources\mat\a64.mat" />
-    <None Include="Resources\mat\bigsparse.mat" />
-    <None Include="Resources\mat\cell.mat" />
-    <None Include="Resources\mat\int32.mat" />
-    <None Include="Resources\mat\int64.mat" />
-    <None Include="Resources\mat\int8.mat" />
-    <None Include="Resources\mat\java.mat" />
-    <None Include="Resources\mat\logical.mat" />
-    <None Include="Resources\mat\matnativedouble.mat" />
-    <None Include="Resources\mat\matnativedouble2.mat" />
-    <None Include="Resources\mat\nan.mat" />
-    <None Include="Resources\mat\object.mat" />
-    <None Include="Resources\mat\simplestruct.mat" />
-    <None Include="Resources\mat\single.mat" />
-    <None Include="Resources\mat\sparse.mat" />
-    <None Include="Resources\mat\uint32.mat" />
-    <None Include="Resources\mat\uint64.mat" />
-    <None Include="Resources\mat\uint8.mat" />
+    <None Include="Resources\constraintMatrix11_15_2.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\constraintMatrix11_15.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\constraintMatrix11_15_3.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\constraints11_14_2.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\constraints11_14.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\constraints11_14_3.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\dmatFull.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\a64.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\bigsparse.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\cell.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\int32.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\int64.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\int8.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\java.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\logical.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\matnativedouble.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\matnativedouble2.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\nan.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\object.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\simplestruct.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\single.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\sparse.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\uint32.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\uint64.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\mat\uint8.mat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\pseudoInverse1.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\unfeasible_qp_1\unf_1_constraintMat.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\unfeasible_qp_1\unf_1_constraintValues.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\unfeasible_qp_1\unf_1_linTerms.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\unfeasible_qp_1\unf_1_quadTerms.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -234,6 +308,17 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\labels16.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\data16.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

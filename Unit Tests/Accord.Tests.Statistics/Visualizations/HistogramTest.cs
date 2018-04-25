@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,9 +23,9 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Visualizations;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class HistogramTest
     {
 
@@ -45,7 +45,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void HistogramConstructorTest()
         {
             Histogram target = new Histogram();
@@ -54,7 +54,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0, target.Bins.Count);
         }
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest1()
         {
             Histogram target = new Histogram();
@@ -75,7 +75,7 @@ namespace Accord.Tests.Statistics
 
         }
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest2()
         {
             Histogram target = new Histogram();
@@ -90,7 +90,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest3()
         {
             Histogram target;
@@ -98,10 +98,8 @@ namespace Accord.Tests.Statistics
 
             double[] values = { 1, 2, 2, 3, 3, 3, 3, 4, 4, 5, 6 };
 
-            target = new Histogram("histogram");
+            target = new Histogram();
             target.Compute(values, 5);
-
-            Assert.AreEqual("histogram", target.Title);
 
             Assert.AreEqual(1, target.Range.Min);
             Assert.AreEqual(6, target.Range.Max);
@@ -161,7 +159,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(values.Length, sum);
         }
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest4()
         {
             Histogram target;
@@ -169,10 +167,8 @@ namespace Accord.Tests.Statistics
 
             double[] values = { 1, 2, 2, 3, 3, 3, 3, 4, 4, 5, 6 };
 
-            target = new Histogram("histogram");
+            target = new Histogram();
             target.Compute(values, 5, true);
-
-            Assert.AreEqual("histogram", target.Title);
 
             Assert.AreEqual(1, target.Range.Min);
             Assert.AreEqual(7, target.Range.Max);
@@ -231,7 +227,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(values.Length, sum);
         }
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest5()
         {
             Histogram target;
@@ -239,7 +235,7 @@ namespace Accord.Tests.Statistics
 
             double[] values = { 1, 2, 2, 3, 3, 3, 3, 4, 4, 5, 6 };
 
-            target = new Histogram("histogram");
+            target = new Histogram();
             target.Compute(values, 6, 1.0);
 
             Assert.AreEqual(1, target.Range.Min);
@@ -307,7 +303,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(values.Length, sum);
         }
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest6()
         {
             Histogram target = new Histogram();

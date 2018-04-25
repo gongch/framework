@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -28,11 +28,27 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
     using System.Text;
     using Accord.Math;
     using Accord.Statistics.Filters;
+    using Accord.Compat;
+    using Accord.MachineLearning.DecisionTrees.Learning;
 
     /// <summary>
     ///   Decision Rule.
     /// </summary>
     /// 
+    /// <example>
+    /// <para>
+    ///   The simplest way to create a set of decision rules is by extracting them from an existing <see cref="DecisionTree"/>.
+    ///   The example below shows how to create a simple decision tree and convert it to a <see cref="DecisionSet">set of rules</see>
+    ///   using its <see cref="DecisionTree.ToRules()"/> method.</para>
+    ///   <code source="Unit Tests\Accord.Tests.MachineLearning\DecisionTrees\C45LearningTest.cs" region="doc_simplest" />
+    /// </example>
+    /// 
+    /// <seealso cref="DecisionSet"/>
+    /// <seealso cref="DecisionTree"/>
+    /// <seealso cref="C45Learning"/>
+    /// <seealso cref="ID3Learning"/>
+    /// 
+    [Serializable]
     public class DecisionRule : ICloneable, IEnumerable<Antecedent>,
         IEquatable<DecisionRule>, IComparable<DecisionRule>
     {
@@ -60,7 +76,7 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
         ///   when all <see cref="Antecedent"/> conditions are met.
         /// </summary>
         /// 
-        public double Output 
+        public double Output
         {
             get { return output; }
             set { output = value; }
@@ -132,7 +148,7 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
         ///   
         public bool Match(double[] input)
         {
-            foreach (var expr in Antecedents)
+            foreach (Antecedent expr in Antecedents)
             {
                 if (!expr.Match(input))
                     return false;
@@ -208,7 +224,7 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
         /// 
         public override string ToString()
         {
-            return toString(null, CultureInfo.CurrentUICulture);
+            return toString(null, null, System.Globalization.CultureInfo.CurrentUICulture);
         }
 
         /// <summary>
@@ -219,9 +235,9 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
         ///   A <see cref="System.String"/> that represents this instance.
         /// </returns>
         /// 
-        public string ToString(Codification codebook)
+        public string ToString(Codification<string> codebook)
         {
-            return toString(codebook, CultureInfo.CurrentUICulture);
+            return toString(codebook, null, System.Globalization.CultureInfo.CurrentUICulture);
         }
 
         /// <summary>
@@ -232,9 +248,9 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
         ///   A <see cref="System.String"/> that represents this instance.
         /// </returns>
         /// 
-        public string ToString(CultureInfo cultureInfo)
+        public string ToString(System.Globalization.CultureInfo cultureInfo)
         {
-            return toString(null, cultureInfo);
+            return toString(null, null, cultureInfo);
         }
 
         /// <summary>
@@ -245,9 +261,22 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
         ///   A <see cref="System.String"/> that represents this instance.
         /// </returns>
         /// 
-        public string ToString(Codification codebook, CultureInfo cultureInfo)
+        public string ToString(Codification<string> codebook, System.Globalization.CultureInfo cultureInfo)
         {
-            return toString(codebook, cultureInfo);
+            return toString(codebook, null, cultureInfo);
+        }
+
+        /// <summary>
+        ///   Returns a <see cref="System.String"/> that represents this instance.
+        /// </summary>
+        /// 
+        /// <returns>
+        ///   A <see cref="System.String"/> that represents this instance.
+        /// </returns>
+        /// 
+        public string ToString(Codification<string> codebook, string outputColumn, System.Globalization.CultureInfo cultureInfo)
+        {
+            return toString(codebook, outputColumn, cultureInfo);
         }
 
 
@@ -345,7 +374,7 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
 
 
 
-        private string toString(Codification codebook, CultureInfo culture)
+        private string toString(Codification<string> codebook, string outputColumn, System.Globalization.CultureInfo culture)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -355,10 +384,14 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
                 sb.AppendFormat("({0}) && ", toString(expr[i], codebook, culture));
             sb.AppendFormat("({0})", toString(expr[expr.Length - 1], codebook, culture));
 
-            return String.Format(culture, "{0} =: {1}", Output, sb);
+            if (String.IsNullOrEmpty(outputColumn))
+                return String.Format(culture, "{0} =: {1}", Output, sb);
+
+            string name = codebook.Revert(outputColumn, (int)Output);
+            return String.Format(culture, "{0} =: {1}", name, sb);
         }
 
-        private string toString(Antecedent antecedent, Codification codebook, CultureInfo culture)
+        private string toString(Antecedent antecedent, Codification<string> codebook, System.Globalization.CultureInfo culture)
         {
             int index = antecedent.Index;
             String name = Variables[index].Name;
@@ -370,9 +403,13 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
 
             String value;
             if (codebook != null && codebook.Columns.Contains(name))
-                value = codebook.Translate(name, (int)antecedent.Value);
-
-            else value = antecedent.Value.ToString(culture);
+            {
+                value = codebook.Revert(name, (int)antecedent.Value);
+            }
+            else
+            {
+                value = antecedent.Value.ToString(culture);
+            }
 
             return String.Format(culture, "{0} {1} {2}", name, op, value);
         }
@@ -444,5 +481,6 @@ namespace Accord.MachineLearning.DecisionTrees.Rules
         {
             return !(a == b);
         }
+
     }
 }

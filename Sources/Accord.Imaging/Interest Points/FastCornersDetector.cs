@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -64,8 +64,10 @@ namespace Accord.Imaging
     using System.Linq;
     using Accord.Math;
     using AForge;
-    using AForge.Imaging;
-    using AForge.Imaging.Filters;
+    using Accord.Imaging;
+    using Accord.Imaging.Filters;
+    using System.CodeDom.Compiler;
+    using Accord.Compat;
 
     /// <summary>
     ///   Features from Accelerated Segment Test (FAST) corners detector.
@@ -104,7 +106,6 @@ namespace Accord.Imaging
     /// 
     /// <example>
     /// <code>
-    /// 
     ///   Bitmap image = ... // Lena's famous picture
     /// 
     ///   // Create a new FAST Corners Detector
@@ -132,29 +133,22 @@ namespace Accord.Imaging
     /// 
     ///   <img src="..\images\fast.png" />
     ///   
+    /// <para>
+    ///   The second example shows how to extract FAST descriptors from a standard test image:</para>
+    ///   <code source="Unit Tests\Accord.Tests.Imaging\FastCornersDetectorTest.cs" region="doc_apply" />
     /// </example>
     /// 
     /// <seealso cref="SpeededUpRobustFeaturesDetector"/>
     /// <seealso cref="FastRetinaKeypointDetector"/>
     /// 
     [Serializable]
-    [SuppressMessage("Microsoft.Maintainability", "CA1505:AvoidUnmaintainableCode")]
-    public class FastCornersDetector : ICornersDetector
+    public class FastCornersDetector : BaseCornersDetector
     {
 
         private int threshold = 20;
         private bool suppress = true;
         private int[] scores;
 
-
-        #region Constructors
-        /// <summary>
-        ///   Initializes a new instance of the <see cref="FastCornersDetector"/> class.
-        /// </summary>
-        /// 
-        public FastCornersDetector()
-        {
-        }
 
         /// <summary>
         ///   Initializes a new instance of the <see cref="FastCornersDetector"/> class.
@@ -163,14 +157,20 @@ namespace Accord.Imaging
         /// <param name="threshold">The suppression threshold. Decreasing this value
         ///   increases the number of points detected by the algorithm. Default is 20.</param>
         /// 
-        public FastCornersDetector(int threshold)
+        public FastCornersDetector(int threshold = 20)
         {
             this.threshold = threshold;
+
+            base.SupportedFormats.UnionWith(new[]
+            {
+                PixelFormat.Format8bppIndexed,
+                PixelFormat.Format24bppRgb,
+                PixelFormat.Format32bppRgb,
+                PixelFormat.Format32bppArgb
+            });
         }
-        #endregion
 
 
-        #region Properties
         /// <summary>
         ///   Gets or sets a value indicating whether non-maximum
         ///   points should be suppressed. Default is true.
@@ -200,7 +200,7 @@ namespace Accord.Imaging
 
         /// <summary>
         ///   Gets the scores of the each corner detected in
-        ///   the previous call to <see cref="ProcessImage(Bitmap)"/>.
+        ///   the previous call to <see cref="BaseFeatureExtractor{TFeature}.Transform(Bitmap)"/>.
         /// </summary>
         /// 
         /// <value>The scores of each last computed corner.</value>
@@ -209,98 +209,14 @@ namespace Accord.Imaging
         {
             get { return scores; }
         }
-        #endregion
-
 
         /// <summary>
-        ///   Process image looking for corners.
+        /// This method should be implemented by inheriting classes to implement the
+        /// actual corners detection, transforming the input image into a list of points.
         /// </summary>
         /// 
-        /// <param name="imageData">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found corners (X-Y coordinates).</returns>
-        /// 
-        /// <exception cref="UnsupportedImageFormatException">
-        ///   The source image has incorrect pixel format.
-        /// </exception>
-        /// 
-        public List<IntPoint> ProcessImage(BitmapData imageData)
+        protected override List<IntPoint> InnerProcess(UnmanagedImage image)
         {
-            return ProcessImage(new UnmanagedImage(imageData));
-        }
-
-        /// <summary>
-        ///   Process image looking for corners.
-        /// </summary>
-        /// 
-        /// <param name="image">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found corners (X-Y coordinates).</returns>
-        /// 
-        /// <exception cref="UnsupportedImageFormatException">
-        ///   The source image has incorrect pixel format.
-        /// </exception>
-        /// 
-        public List<IntPoint> ProcessImage(Bitmap image)
-        {
-            // check image format
-            if (
-                (image.PixelFormat != PixelFormat.Format8bppIndexed) &&
-                (image.PixelFormat != PixelFormat.Format24bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppArgb)
-                )
-            {
-                throw new UnsupportedImageFormatException("Unsupported pixel format of the source");
-            }
-
-            // lock source image
-            BitmapData imageData = image.LockBits(
-                new Rectangle(0, 0, image.Width, image.Height),
-                ImageLockMode.ReadOnly, image.PixelFormat);
-
-            List<IntPoint> corners;
-
-            try
-            {
-                // process the image
-                corners = ProcessImage(new UnmanagedImage(imageData));
-            }
-            finally
-            {
-                // unlock image
-                image.UnlockBits(imageData);
-            }
-
-            return corners;
-        }
-
-        /// <summary>
-        ///   Process image looking for corners.
-        /// </summary>
-        /// 
-        /// <param name="image">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found corners (X-Y coordinates).</returns>
-        /// 
-        /// <exception cref="UnsupportedImageFormatException">
-        ///   The source image has incorrect pixel format.
-        /// </exception>
-        /// 
-        public List<IntPoint> ProcessImage(UnmanagedImage image)
-        {
-
-            // check image format
-            if (
-                (image.PixelFormat != PixelFormat.Format8bppIndexed) &&
-                (image.PixelFormat != PixelFormat.Format24bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppArgb)
-                )
-            {
-                throw new UnsupportedImageFormatException("Unsupported pixel format of the source image.");
-            }
-
             // make sure we have grayscale image
             UnmanagedImage grayImage = null;
 
@@ -333,8 +249,8 @@ namespace Accord.Imaging
             {
                 // 3. Perform Non-Maximum Suppression
                 int[] idx = maximum(corners, scores);
-                corners = corners.Submatrix(idx);
-                scores = scores.Submatrix(idx);
+                corners = corners.Get(idx);
+                scores = scores.Get(idx);
             }
 
             this.scores = scores;
@@ -407,7 +323,8 @@ namespace Accord.Imaging
                         point_above = row_start[pos.Y - 1];
 
                     // Make point_above point to the first of the pixels above the current point, if it exists.*/
-                    for (; corners[point_above].Y < pos.Y && corners[point_above].X < pos.X - 1; point_above++) ;
+                    for (; corners[point_above].Y < pos.Y && corners[point_above].X < pos.X - 1; point_above++)
+                        ;
 
                     for (int j = point_above; corners[j].Y < pos.Y && corners[j].X <= pos.X + 1; j++)
                     {
@@ -426,7 +343,8 @@ namespace Accord.Imaging
                         point_below = row_start[pos.Y + 1];
 
                     // Make point below point to one of the pixels below the current point, if it exists.
-                    for (; point_below < n && corners[point_below].Y == pos.Y + 1 && corners[point_below].X < pos.X - 1; point_below++) ;
+                    for (; point_below < n && corners[point_below].Y == pos.Y + 1 && corners[point_below].X < pos.X - 1; point_below++)
+                        ;
 
                     for (int j = point_below; j < n && corners[j].Y == pos.Y + 1 && corners[j].X <= pos.X + 1; j++)
                     {
@@ -447,6 +365,7 @@ namespace Accord.Imaging
             return maximum.ToArray();
         }
 
+        [GeneratedCode("Accord.NET", "3.7.0")]
         private unsafe IntPoint[] detect(UnmanagedImage image, int[] offsets)
         {
             int width = image.Width;
@@ -464,6 +383,10 @@ namespace Accord.Imaging
             {
                 for (int x = 3; x < width - 3; x++, p++)
                 {
+#if DEBUG
+                    for (int i = 0; i < offsets.Length; i++)
+                        image.CheckBounds(unchecked(p + offsets[i]));
+#endif
 
                     #region Machine Generated Code
                     int cb = *p + b;
@@ -478,17 +401,14 @@ namespace Accord.Imaging
                                                 if (p[offsets[7]] > cb)
                                                     if (p[offsets[8]] > cb)
                                                     { }
-                                                    else
-                                                        if (p[offsets[15]] > cb)
-                                                        { }
-                                                        else
-                                                            continue;
+                                                    else if (p[offsets[15]] > cb)
+                                                    { }
+                                                    else continue;
                                                 else if (p[offsets[7]] < c_b)
                                                     if (p[offsets[14]] > cb)
                                                         if (p[offsets[15]] > cb)
                                                         { }
-                                                        else
-                                                            continue;
+                                                        else continue;
                                                     else if (p[offsets[14]] < c_b)
                                                         if (p[offsets[8]] < c_b)
                                                             if (p[offsets[9]] < c_b)
@@ -498,37 +418,25 @@ namespace Accord.Imaging
                                                                             if (p[offsets[13]] < c_b)
                                                                                 if (p[offsets[15]] < c_b)
                                                                                 { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    if (p[offsets[14]] > cb)
-                                                        if (p[offsets[15]] > cb)
-                                                        { }
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
+                                                                                else continue;
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[14]] > cb)
+                                                    if (p[offsets[15]] > cb)
+                                                    { }
+                                                    else continue;
+                                                else continue;
                                             else if (p[offsets[6]] < c_b)
                                                 if (p[offsets[15]] > cb)
                                                     if (p[offsets[13]] > cb)
                                                         if (p[offsets[14]] > cb)
                                                         { }
-                                                        else
-                                                            continue;
+                                                        else continue;
                                                     else if (p[offsets[13]] < c_b)
                                                         if (p[offsets[7]] < c_b)
                                                             if (p[offsets[8]] < c_b)
@@ -538,113 +446,76 @@ namespace Accord.Imaging
                                                                             if (p[offsets[12]] < c_b)
                                                                                 if (p[offsets[14]] < c_b)
                                                                                 { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    if (p[offsets[7]] < c_b)
-                                                        if (p[offsets[8]] < c_b)
-                                                            if (p[offsets[9]] < c_b)
-                                                                if (p[offsets[10]] < c_b)
-                                                                    if (p[offsets[11]] < c_b)
-                                                                        if (p[offsets[12]] < c_b)
-                                                                            if (p[offsets[13]] < c_b)
-                                                                                if (p[offsets[14]] < c_b)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[13]] > cb)
-                                                    if (p[offsets[14]] > cb)
-                                                        if (p[offsets[15]] > cb)
-                                                        { }
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else if (p[offsets[13]] < c_b)
-                                                    if (p[offsets[7]] < c_b)
-                                                        if (p[offsets[8]] < c_b)
-                                                            if (p[offsets[9]] < c_b)
-                                                                if (p[offsets[10]] < c_b)
-                                                                    if (p[offsets[11]] < c_b)
-                                                                        if (p[offsets[12]] < c_b)
+                                                                                else continue;
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[7]] < c_b)
+                                                    if (p[offsets[8]] < c_b)
+                                                        if (p[offsets[9]] < c_b)
+                                                            if (p[offsets[10]] < c_b)
+                                                                if (p[offsets[11]] < c_b)
+                                                                    if (p[offsets[12]] < c_b)
+                                                                        if (p[offsets[13]] < c_b)
                                                                             if (p[offsets[14]] < c_b)
-                                                                                if (p[offsets[15]] < c_b)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
+                                                                            { }
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[13]] > cb)
+                                                if (p[offsets[14]] > cb)
+                                                    if (p[offsets[15]] > cb)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[13]] < c_b)
+                                                if (p[offsets[7]] < c_b)
+                                                    if (p[offsets[8]] < c_b)
+                                                        if (p[offsets[9]] < c_b)
+                                                            if (p[offsets[10]] < c_b)
+                                                                if (p[offsets[11]] < c_b)
+                                                                    if (p[offsets[12]] < c_b)
+                                                                        if (p[offsets[14]] < c_b)
+                                                                            if (p[offsets[15]] < c_b)
+                                                                            { }
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
                                         else if (p[offsets[5]] < c_b)
                                             if (p[offsets[14]] > cb)
                                                 if (p[offsets[12]] > cb)
                                                     if (p[offsets[13]] > cb)
                                                         if (p[offsets[15]] > cb)
                                                         { }
-                                                        else
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                            if (p[offsets[10]] > cb)
-                                                                                if (p[offsets[11]] > cb)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        continue;
+                                                        else if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                                if (p[offsets[8]] > cb)
+                                                                    if (p[offsets[9]] > cb)
+                                                                        if (p[offsets[10]] > cb)
+                                                                            if (p[offsets[11]] > cb)
+                                                                            { }
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
                                                 else if (p[offsets[12]] < c_b)
                                                     if (p[offsets[6]] < c_b)
                                                         if (p[offsets[7]] < c_b)
@@ -654,22 +525,14 @@ namespace Accord.Imaging
                                                                         if (p[offsets[11]] < c_b)
                                                                             if (p[offsets[13]] < c_b)
                                                                             { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
                                             else if (p[offsets[14]] < c_b)
                                                 if (p[offsets[7]] < c_b)
                                                     if (p[offsets[8]] < c_b)
@@ -680,112 +543,74 @@ namespace Accord.Imaging
                                                                         if (p[offsets[13]] < c_b)
                                                                             if (p[offsets[6]] < c_b)
                                                                             { }
-                                                                            else
-                                                                                if (p[offsets[15]] < c_b)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                if (p[offsets[6]] < c_b)
-                                                    if (p[offsets[7]] < c_b)
-                                                        if (p[offsets[8]] < c_b)
-                                                            if (p[offsets[9]] < c_b)
-                                                                if (p[offsets[10]] < c_b)
-                                                                    if (p[offsets[11]] < c_b)
-                                                                        if (p[offsets[12]] < c_b)
-                                                                            if (p[offsets[13]] < c_b)
+                                                                            else if (p[offsets[15]] < c_b)
                                                                             { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            if (p[offsets[12]] > cb)
-                                                if (p[offsets[13]] > cb)
-                                                    if (p[offsets[14]] > cb)
-                                                        if (p[offsets[15]] > cb)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                            if (p[offsets[10]] > cb)
-                                                                                if (p[offsets[11]] > cb)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else if (p[offsets[12]] < c_b)
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[6]] < c_b)
                                                 if (p[offsets[7]] < c_b)
                                                     if (p[offsets[8]] < c_b)
                                                         if (p[offsets[9]] < c_b)
                                                             if (p[offsets[10]] < c_b)
                                                                 if (p[offsets[11]] < c_b)
-                                                                    if (p[offsets[13]] < c_b)
-                                                                        if (p[offsets[14]] < c_b)
-                                                                            if (p[offsets[6]] < c_b)
-                                                                            { }
-                                                                            else
-                                                                                if (p[offsets[15]] < c_b)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
+                                                                    if (p[offsets[12]] < c_b)
+                                                                        if (p[offsets[13]] < c_b)
+                                                                        { }
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[12]] > cb)
+                                            if (p[offsets[13]] > cb)
+                                                if (p[offsets[14]] > cb)
+                                                    if (p[offsets[15]] > cb)
+                                                    { }
+                                                    else if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                    if (p[offsets[10]] > cb)
+                                                                        if (p[offsets[11]] > cb)
+                                                                        { }
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[12]] < c_b)
+                                            if (p[offsets[7]] < c_b)
+                                                if (p[offsets[8]] < c_b)
+                                                    if (p[offsets[9]] < c_b)
+                                                        if (p[offsets[10]] < c_b)
+                                                            if (p[offsets[11]] < c_b)
+                                                                if (p[offsets[13]] < c_b)
+                                                                    if (p[offsets[14]] < c_b)
+                                                                        if (p[offsets[6]] < c_b)
+                                                                        { }
+                                                                        else if (p[offsets[15]] < c_b)
+                                                                        { }
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
                                     else if (p[offsets[4]] < c_b)
                                         if (p[offsets[13]] > cb)
                                             if (p[offsets[11]] > cb)
@@ -793,45 +618,31 @@ namespace Accord.Imaging
                                                     if (p[offsets[14]] > cb)
                                                         if (p[offsets[15]] > cb)
                                                         { }
-                                                        else
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                            if (p[offsets[10]] > cb)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                            if (p[offsets[10]] > cb)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    continue;
+                                                        else if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                                if (p[offsets[8]] > cb)
+                                                                    if (p[offsets[9]] > cb)
+                                                                        if (p[offsets[10]] > cb)
+                                                                        { }
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[5]] > cb)
+                                                        if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                                if (p[offsets[8]] > cb)
+                                                                    if (p[offsets[9]] > cb)
+                                                                        if (p[offsets[10]] > cb)
+                                                                        { }
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
                                             else if (p[offsets[11]] < c_b)
                                                 if (p[offsets[5]] < c_b)
                                                     if (p[offsets[6]] < c_b)
@@ -841,22 +652,14 @@ namespace Accord.Imaging
                                                                     if (p[offsets[10]] < c_b)
                                                                         if (p[offsets[12]] < c_b)
                                                                         { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
                                         else if (p[offsets[13]] < c_b)
                                             if (p[offsets[7]] < c_b)
                                                 if (p[offsets[8]] < c_b)
@@ -867,142 +670,94 @@ namespace Accord.Imaging
                                                                     if (p[offsets[6]] < c_b)
                                                                         if (p[offsets[5]] < c_b)
                                                                         { }
-                                                                        else
-                                                                            if (p[offsets[14]] < c_b)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                    else
-                                                                        if (p[offsets[14]] < c_b)
-                                                                            if (p[offsets[15]] < c_b)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            if (p[offsets[5]] < c_b)
-                                                if (p[offsets[6]] < c_b)
-                                                    if (p[offsets[7]] < c_b)
-                                                        if (p[offsets[8]] < c_b)
-                                                            if (p[offsets[9]] < c_b)
-                                                                if (p[offsets[10]] < c_b)
-                                                                    if (p[offsets[11]] < c_b)
-                                                                        if (p[offsets[12]] < c_b)
+                                                                        else if (p[offsets[14]] < c_b)
                                                                         { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                    else
-                                        if (p[offsets[11]] > cb)
-                                            if (p[offsets[12]] > cb)
-                                                if (p[offsets[13]] > cb)
-                                                    if (p[offsets[14]] > cb)
-                                                        if (p[offsets[15]] > cb)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                            if (p[offsets[10]] > cb)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                            if (p[offsets[10]] > cb)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else if (p[offsets[11]] < c_b)
-                                            if (p[offsets[7]] < c_b)
-                                                if (p[offsets[8]] < c_b)
-                                                    if (p[offsets[9]] < c_b)
-                                                        if (p[offsets[10]] < c_b)
-                                                            if (p[offsets[12]] < c_b)
-                                                                if (p[offsets[13]] < c_b)
-                                                                    if (p[offsets[6]] < c_b)
-                                                                        if (p[offsets[5]] < c_b)
+                                                                        else continue;
+                                                                    else if (p[offsets[14]] < c_b)
+                                                                        if (p[offsets[15]] < c_b)
                                                                         { }
-                                                                        else
-                                                                            if (p[offsets[14]] < c_b)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                    else
-                                                                        if (p[offsets[14]] < c_b)
-                                                                            if (p[offsets[15]] < c_b)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[5]] < c_b)
+                                            if (p[offsets[6]] < c_b)
+                                                if (p[offsets[7]] < c_b)
+                                                    if (p[offsets[8]] < c_b)
+                                                        if (p[offsets[9]] < c_b)
+                                                            if (p[offsets[10]] < c_b)
+                                                                if (p[offsets[11]] < c_b)
+                                                                    if (p[offsets[12]] < c_b)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else if (p[offsets[11]] > cb)
+                                        if (p[offsets[12]] > cb)
+                                            if (p[offsets[13]] > cb)
+                                                if (p[offsets[14]] > cb)
+                                                    if (p[offsets[15]] > cb)
+                                                    { }
+                                                    else if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                    if (p[offsets[10]] > cb)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                    if (p[offsets[10]] > cb)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else if (p[offsets[11]] < c_b)
+                                        if (p[offsets[7]] < c_b)
+                                            if (p[offsets[8]] < c_b)
+                                                if (p[offsets[9]] < c_b)
+                                                    if (p[offsets[10]] < c_b)
+                                                        if (p[offsets[12]] < c_b)
+                                                            if (p[offsets[13]] < c_b)
+                                                                if (p[offsets[6]] < c_b)
+                                                                    if (p[offsets[5]] < c_b)
+                                                                    { }
+                                                                    else if (p[offsets[14]] < c_b)
+                                                                    { }
+                                                                    else continue;
+                                                                else if (p[offsets[14]] < c_b)
+                                                                    if (p[offsets[15]] < c_b)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
                                 else if (p[offsets[3]] < c_b)
                                     if (p[offsets[10]] > cb)
                                         if (p[offsets[11]] > cb)
@@ -1011,61 +766,41 @@ namespace Accord.Imaging
                                                     if (p[offsets[14]] > cb)
                                                         if (p[offsets[15]] > cb)
                                                         { }
-                                                        else
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
+                                                        else if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                                if (p[offsets[8]] > cb)
+                                                                    if (p[offsets[9]] > cb)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[5]] > cb)
+                                                        if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                                if (p[offsets[8]] > cb)
+                                                                    if (p[offsets[9]] > cb)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[4]] > cb)
+                                                    if (p[offsets[5]] > cb)
+                                                        if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                                if (p[offsets[8]] > cb)
+                                                                    if (p[offsets[9]] > cb)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
                                     else if (p[offsets[10]] < c_b)
                                         if (p[offsets[7]] < c_b)
                                             if (p[offsets[8]] < c_b)
@@ -1075,158 +810,105 @@ namespace Accord.Imaging
                                                             if (p[offsets[5]] < c_b)
                                                                 if (p[offsets[4]] < c_b)
                                                                 { }
-                                                                else
-                                                                    if (p[offsets[12]] < c_b)
-                                                                        if (p[offsets[13]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                            else
-                                                                if (p[offsets[12]] < c_b)
+                                                                else if (p[offsets[12]] < c_b)
                                                                     if (p[offsets[13]] < c_b)
-                                                                        if (p[offsets[14]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                        else
-                                                            if (p[offsets[12]] < c_b)
-                                                                if (p[offsets[13]] < c_b)
-                                                                    if (p[offsets[14]] < c_b)
-                                                                        if (p[offsets[15]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
-                                else
-                                    if (p[offsets[10]] > cb)
-                                        if (p[offsets[11]] > cb)
-                                            if (p[offsets[12]] > cb)
-                                                if (p[offsets[13]] > cb)
-                                                    if (p[offsets[14]] > cb)
-                                                        if (p[offsets[15]] > cb)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                        if (p[offsets[9]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                    else if (p[offsets[10]] < c_b)
-                                        if (p[offsets[7]] < c_b)
-                                            if (p[offsets[8]] < c_b)
-                                                if (p[offsets[9]] < c_b)
-                                                    if (p[offsets[11]] < c_b)
-                                                        if (p[offsets[12]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[5]] < c_b)
-                                                                    if (p[offsets[4]] < c_b)
                                                                     { }
-                                                                    else
-                                                                        if (p[offsets[13]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                else
-                                                                    if (p[offsets[13]] < c_b)
-                                                                        if (p[offsets[14]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                            else
+                                                                    else continue;
+                                                                else continue;
+                                                            else if (p[offsets[12]] < c_b)
                                                                 if (p[offsets[13]] < c_b)
                                                                     if (p[offsets[14]] < c_b)
-                                                                        if (p[offsets[15]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else if (p[offsets[12]] < c_b)
+                                                            if (p[offsets[13]] < c_b)
+                                                                if (p[offsets[14]] < c_b)
+                                                                    if (p[offsets[15]] < c_b)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else if (p[offsets[10]] > cb)
+                                    if (p[offsets[11]] > cb)
+                                        if (p[offsets[12]] > cb)
+                                            if (p[offsets[13]] > cb)
+                                                if (p[offsets[14]] > cb)
+                                                    if (p[offsets[15]] > cb)
+                                                    { }
+                                                    else if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else if (p[offsets[10]] < c_b)
+                                    if (p[offsets[7]] < c_b)
+                                        if (p[offsets[8]] < c_b)
+                                            if (p[offsets[9]] < c_b)
+                                                if (p[offsets[11]] < c_b)
+                                                    if (p[offsets[12]] < c_b)
+                                                        if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[5]] < c_b)
+                                                                if (p[offsets[4]] < c_b)
+                                                                { }
+                                                                else if (p[offsets[13]] < c_b)
+                                                                { }
+                                                                else continue;
+                                                            else if (p[offsets[13]] < c_b)
+                                                                if (p[offsets[14]] < c_b)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else if (p[offsets[13]] < c_b)
+                                                            if (p[offsets[14]] < c_b)
+                                                                if (p[offsets[15]] < c_b)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
                             else if (p[offsets[2]] < c_b)
                                 if (p[offsets[9]] > cb)
                                     if (p[offsets[10]] > cb)
@@ -1236,72 +918,48 @@ namespace Accord.Imaging
                                                     if (p[offsets[14]] > cb)
                                                         if (p[offsets[15]] > cb)
                                                         { }
-                                                        else
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[3]] > cb)
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
+                                                        else if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                                if (p[offsets[8]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[5]] > cb)
+                                                        if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                                if (p[offsets[8]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[4]] > cb)
+                                                    if (p[offsets[5]] > cb)
+                                                        if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                                if (p[offsets[8]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[3]] > cb)
+                                                if (p[offsets[4]] > cb)
+                                                    if (p[offsets[5]] > cb)
+                                                        if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                                if (p[offsets[8]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
                                 else if (p[offsets[9]] < c_b)
                                     if (p[offsets[7]] < c_b)
                                         if (p[offsets[8]] < c_b)
@@ -1311,197 +969,131 @@ namespace Accord.Imaging
                                                         if (p[offsets[4]] < c_b)
                                                             if (p[offsets[3]] < c_b)
                                                             { }
-                                                            else
-                                                                if (p[offsets[11]] < c_b)
-                                                                    if (p[offsets[12]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                        else
-                                                            if (p[offsets[11]] < c_b)
+                                                            else if (p[offsets[11]] < c_b)
                                                                 if (p[offsets[12]] < c_b)
-                                                                    if (p[offsets[13]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[11]] < c_b)
-                                                            if (p[offsets[12]] < c_b)
-                                                                if (p[offsets[13]] < c_b)
-                                                                    if (p[offsets[14]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[11]] < c_b)
-                                                        if (p[offsets[12]] < c_b)
-                                                            if (p[offsets[13]] < c_b)
-                                                                if (p[offsets[14]] < c_b)
-                                                                    if (p[offsets[15]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
-                            else
-                                if (p[offsets[9]] > cb)
-                                    if (p[offsets[10]] > cb)
-                                        if (p[offsets[11]] > cb)
-                                            if (p[offsets[12]] > cb)
-                                                if (p[offsets[13]] > cb)
-                                                    if (p[offsets[14]] > cb)
-                                                        if (p[offsets[15]] > cb)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[3]] > cb)
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                    if (p[offsets[8]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
-                                else if (p[offsets[9]] < c_b)
-                                    if (p[offsets[7]] < c_b)
-                                        if (p[offsets[8]] < c_b)
-                                            if (p[offsets[10]] < c_b)
-                                                if (p[offsets[11]] < c_b)
-                                                    if (p[offsets[6]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[4]] < c_b)
-                                                                if (p[offsets[3]] < c_b)
                                                                 { }
-                                                                else
-                                                                    if (p[offsets[12]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                            else
-                                                                if (p[offsets[12]] < c_b)
-                                                                    if (p[offsets[13]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                        else
+                                                                else continue;
+                                                            else continue;
+                                                        else if (p[offsets[11]] < c_b)
                                                             if (p[offsets[12]] < c_b)
                                                                 if (p[offsets[13]] < c_b)
-                                                                    if (p[offsets[14]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[11]] < c_b)
                                                         if (p[offsets[12]] < c_b)
                                                             if (p[offsets[13]] < c_b)
                                                                 if (p[offsets[14]] < c_b)
-                                                                    if (p[offsets[15]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[11]] < c_b)
+                                                    if (p[offsets[12]] < c_b)
+                                                        if (p[offsets[13]] < c_b)
+                                                            if (p[offsets[14]] < c_b)
+                                                                if (p[offsets[15]] < c_b)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else if (p[offsets[9]] > cb)
+                                if (p[offsets[10]] > cb)
+                                    if (p[offsets[11]] > cb)
+                                        if (p[offsets[12]] > cb)
+                                            if (p[offsets[13]] > cb)
+                                                if (p[offsets[14]] > cb)
+                                                    if (p[offsets[15]] > cb)
+                                                    { }
+                                                    else if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[3]] > cb)
+                                            if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else if (p[offsets[9]] < c_b)
+                                if (p[offsets[7]] < c_b)
+                                    if (p[offsets[8]] < c_b)
+                                        if (p[offsets[10]] < c_b)
+                                            if (p[offsets[11]] < c_b)
+                                                if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[5]] < c_b)
+                                                        if (p[offsets[4]] < c_b)
+                                                            if (p[offsets[3]] < c_b)
+                                                            { }
+                                                            else if (p[offsets[12]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else if (p[offsets[12]] < c_b)
+                                                            if (p[offsets[13]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[12]] < c_b)
+                                                        if (p[offsets[13]] < c_b)
+                                                            if (p[offsets[14]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[12]] < c_b)
+                                                    if (p[offsets[13]] < c_b)
+                                                        if (p[offsets[14]] < c_b)
+                                                            if (p[offsets[15]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else continue;
                         else if (p[offsets[1]] < c_b)
                             if (p[offsets[8]] > cb)
                                 if (p[offsets[9]] > cb)
@@ -1512,80 +1104,53 @@ namespace Accord.Imaging
                                                     if (p[offsets[14]] > cb)
                                                         if (p[offsets[15]] > cb)
                                                         { }
-                                                        else
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[3]] > cb)
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            if (p[offsets[2]] > cb)
-                                                if (p[offsets[3]] > cb)
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
+                                                        else if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[5]] > cb)
+                                                        if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[4]] > cb)
+                                                    if (p[offsets[5]] > cb)
+                                                        if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[3]] > cb)
+                                                if (p[offsets[4]] > cb)
+                                                    if (p[offsets[5]] > cb)
+                                                        if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[2]] > cb)
+                                            if (p[offsets[3]] > cb)
+                                                if (p[offsets[4]] > cb)
+                                                    if (p[offsets[5]] > cb)
+                                                        if (p[offsets[6]] > cb)
+                                                            if (p[offsets[7]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
                             else if (p[offsets[8]] < c_b)
                                 if (p[offsets[7]] < c_b)
                                     if (p[offsets[9]] < c_b)
@@ -1595,239 +1160,159 @@ namespace Accord.Imaging
                                                     if (p[offsets[3]] < c_b)
                                                         if (p[offsets[2]] < c_b)
                                                         { }
-                                                        else
-                                                            if (p[offsets[10]] < c_b)
-                                                                if (p[offsets[11]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[10]] < c_b)
+                                                        else if (p[offsets[10]] < c_b)
                                                             if (p[offsets[11]] < c_b)
-                                                                if (p[offsets[12]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[10]] < c_b)
-                                                        if (p[offsets[11]] < c_b)
-                                                            if (p[offsets[12]] < c_b)
-                                                                if (p[offsets[13]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[10]] < c_b)
-                                                    if (p[offsets[11]] < c_b)
-                                                        if (p[offsets[12]] < c_b)
-                                                            if (p[offsets[13]] < c_b)
-                                                                if (p[offsets[14]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            if (p[offsets[10]] < c_b)
-                                                if (p[offsets[11]] < c_b)
-                                                    if (p[offsets[12]] < c_b)
-                                                        if (p[offsets[13]] < c_b)
-                                                            if (p[offsets[14]] < c_b)
-                                                                if (p[offsets[15]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
-                            else
-                                continue;
-                        else
-                            if (p[offsets[8]] > cb)
-                                if (p[offsets[9]] > cb)
-                                    if (p[offsets[10]] > cb)
-                                        if (p[offsets[11]] > cb)
-                                            if (p[offsets[12]] > cb)
-                                                if (p[offsets[13]] > cb)
-                                                    if (p[offsets[14]] > cb)
-                                                        if (p[offsets[15]] > cb)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[3]] > cb)
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            if (p[offsets[2]] > cb)
-                                                if (p[offsets[3]] > cb)
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[7]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
-                            else if (p[offsets[8]] < c_b)
-                                if (p[offsets[7]] < c_b)
-                                    if (p[offsets[9]] < c_b)
-                                        if (p[offsets[10]] < c_b)
-                                            if (p[offsets[6]] < c_b)
-                                                if (p[offsets[5]] < c_b)
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[3]] < c_b)
-                                                            if (p[offsets[2]] < c_b)
                                                             { }
-                                                            else
-                                                                if (p[offsets[11]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                        else
-                                                            if (p[offsets[11]] < c_b)
-                                                                if (p[offsets[12]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[10]] < c_b)
                                                         if (p[offsets[11]] < c_b)
                                                             if (p[offsets[12]] < c_b)
-                                                                if (p[offsets[13]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[10]] < c_b)
                                                     if (p[offsets[11]] < c_b)
                                                         if (p[offsets[12]] < c_b)
                                                             if (p[offsets[13]] < c_b)
-                                                                if (p[offsets[14]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[10]] < c_b)
                                                 if (p[offsets[11]] < c_b)
                                                     if (p[offsets[12]] < c_b)
                                                         if (p[offsets[13]] < c_b)
                                                             if (p[offsets[14]] < c_b)
-                                                                if (p[offsets[15]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
-                            else
-                                continue;
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[10]] < c_b)
+                                            if (p[offsets[11]] < c_b)
+                                                if (p[offsets[12]] < c_b)
+                                                    if (p[offsets[13]] < c_b)
+                                                        if (p[offsets[14]] < c_b)
+                                                            if (p[offsets[15]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else continue;
+                        else if (p[offsets[8]] > cb)
+                            if (p[offsets[9]] > cb)
+                                if (p[offsets[10]] > cb)
+                                    if (p[offsets[11]] > cb)
+                                        if (p[offsets[12]] > cb)
+                                            if (p[offsets[13]] > cb)
+                                                if (p[offsets[14]] > cb)
+                                                    if (p[offsets[15]] > cb)
+                                                    { }
+                                                    else if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[3]] > cb)
+                                            if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else if (p[offsets[2]] > cb)
+                                        if (p[offsets[3]] > cb)
+                                            if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else continue;
+                        else if (p[offsets[8]] < c_b)
+                            if (p[offsets[7]] < c_b)
+                                if (p[offsets[9]] < c_b)
+                                    if (p[offsets[10]] < c_b)
+                                        if (p[offsets[6]] < c_b)
+                                            if (p[offsets[5]] < c_b)
+                                                if (p[offsets[4]] < c_b)
+                                                    if (p[offsets[3]] < c_b)
+                                                        if (p[offsets[2]] < c_b)
+                                                        { }
+                                                        else if (p[offsets[11]] < c_b)
+                                                        { }
+                                                        else continue;
+                                                    else if (p[offsets[11]] < c_b)
+                                                        if (p[offsets[12]] < c_b)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[11]] < c_b)
+                                                    if (p[offsets[12]] < c_b)
+                                                        if (p[offsets[13]] < c_b)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[11]] < c_b)
+                                                if (p[offsets[12]] < c_b)
+                                                    if (p[offsets[13]] < c_b)
+                                                        if (p[offsets[14]] < c_b)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[11]] < c_b)
+                                            if (p[offsets[12]] < c_b)
+                                                if (p[offsets[13]] < c_b)
+                                                    if (p[offsets[14]] < c_b)
+                                                        if (p[offsets[15]] < c_b)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else continue;
+                        else continue;
                     else if (p[offsets[0]] < c_b)
                         if (p[offsets[1]] > cb)
                             if (p[offsets[8]] > cb)
@@ -1839,80 +1324,53 @@ namespace Accord.Imaging
                                                     if (p[offsets[3]] > cb)
                                                         if (p[offsets[2]] > cb)
                                                         { }
-                                                        else
-                                                            if (p[offsets[10]] > cb)
-                                                                if (p[offsets[11]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[10]] > cb)
+                                                        else if (p[offsets[10]] > cb)
                                                             if (p[offsets[11]] > cb)
-                                                                if (p[offsets[12]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[10]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[10]] > cb)
                                                         if (p[offsets[11]] > cb)
                                                             if (p[offsets[12]] > cb)
-                                                                if (p[offsets[13]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[10]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[10]] > cb)
                                                     if (p[offsets[11]] > cb)
                                                         if (p[offsets[12]] > cb)
                                                             if (p[offsets[13]] > cb)
-                                                                if (p[offsets[14]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            if (p[offsets[10]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[10]] > cb)
                                                 if (p[offsets[11]] > cb)
                                                     if (p[offsets[12]] > cb)
                                                         if (p[offsets[13]] > cb)
                                                             if (p[offsets[14]] > cb)
-                                                                if (p[offsets[15]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[10]] > cb)
+                                            if (p[offsets[11]] > cb)
+                                                if (p[offsets[12]] > cb)
+                                                    if (p[offsets[13]] > cb)
+                                                        if (p[offsets[14]] > cb)
+                                                            if (p[offsets[15]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
                             else if (p[offsets[8]] < c_b)
                                 if (p[offsets[9]] < c_b)
                                     if (p[offsets[10]] < c_b)
@@ -1922,82 +1380,54 @@ namespace Accord.Imaging
                                                     if (p[offsets[14]] < c_b)
                                                         if (p[offsets[15]] < c_b)
                                                         { }
-                                                        else
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[3]] < c_b)
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            if (p[offsets[2]] < c_b)
-                                                if (p[offsets[3]] < c_b)
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
-                            else
-                                continue;
+                                                        else if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[5]] < c_b)
+                                                        if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[4]] < c_b)
+                                                    if (p[offsets[5]] < c_b)
+                                                        if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[3]] < c_b)
+                                                if (p[offsets[4]] < c_b)
+                                                    if (p[offsets[5]] < c_b)
+                                                        if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[2]] < c_b)
+                                            if (p[offsets[3]] < c_b)
+                                                if (p[offsets[4]] < c_b)
+                                                    if (p[offsets[5]] < c_b)
+                                                        if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else continue;
                         else if (p[offsets[1]] < c_b)
                             if (p[offsets[2]] > cb)
                                 if (p[offsets[9]] > cb)
@@ -2009,62 +1439,41 @@ namespace Accord.Imaging
                                                         if (p[offsets[4]] > cb)
                                                             if (p[offsets[3]] > cb)
                                                             { }
-                                                            else
-                                                                if (p[offsets[11]] > cb)
-                                                                    if (p[offsets[12]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                        else
-                                                            if (p[offsets[11]] > cb)
+                                                            else if (p[offsets[11]] > cb)
                                                                 if (p[offsets[12]] > cb)
-                                                                    if (p[offsets[13]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[11]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else if (p[offsets[11]] > cb)
                                                             if (p[offsets[12]] > cb)
                                                                 if (p[offsets[13]] > cb)
-                                                                    if (p[offsets[14]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[11]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[11]] > cb)
                                                         if (p[offsets[12]] > cb)
                                                             if (p[offsets[13]] > cb)
                                                                 if (p[offsets[14]] > cb)
-                                                                    if (p[offsets[15]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[11]] > cb)
+                                                    if (p[offsets[12]] > cb)
+                                                        if (p[offsets[13]] > cb)
+                                                            if (p[offsets[14]] > cb)
+                                                                if (p[offsets[15]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
                                 else if (p[offsets[9]] < c_b)
                                     if (p[offsets[10]] < c_b)
                                         if (p[offsets[11]] < c_b)
@@ -2073,74 +1482,49 @@ namespace Accord.Imaging
                                                     if (p[offsets[14]] < c_b)
                                                         if (p[offsets[15]] < c_b)
                                                         { }
-                                                        else
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[3]] < c_b)
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
+                                                        else if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                                if (p[offsets[8]] < c_b)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[5]] < c_b)
+                                                        if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                                if (p[offsets[8]] < c_b)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[4]] < c_b)
+                                                    if (p[offsets[5]] < c_b)
+                                                        if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                                if (p[offsets[8]] < c_b)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[3]] < c_b)
+                                                if (p[offsets[4]] < c_b)
+                                                    if (p[offsets[5]] < c_b)
+                                                        if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                                if (p[offsets[8]] < c_b)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
                             else if (p[offsets[2]] < c_b)
                                 if (p[offsets[3]] > cb)
                                     if (p[offsets[10]] > cb)
@@ -2152,47 +1536,31 @@ namespace Accord.Imaging
                                                             if (p[offsets[5]] > cb)
                                                                 if (p[offsets[4]] > cb)
                                                                 { }
-                                                                else
-                                                                    if (p[offsets[12]] > cb)
-                                                                        if (p[offsets[13]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                            else
-                                                                if (p[offsets[12]] > cb)
+                                                                else if (p[offsets[12]] > cb)
                                                                     if (p[offsets[13]] > cb)
-                                                                        if (p[offsets[14]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                        else
-                                                            if (p[offsets[12]] > cb)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else if (p[offsets[12]] > cb)
                                                                 if (p[offsets[13]] > cb)
                                                                     if (p[offsets[14]] > cb)
-                                                                        if (p[offsets[15]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else if (p[offsets[12]] > cb)
+                                                            if (p[offsets[13]] > cb)
+                                                                if (p[offsets[14]] > cb)
+                                                                    if (p[offsets[15]] > cb)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
                                     else if (p[offsets[10]] < c_b)
                                         if (p[offsets[11]] < c_b)
                                             if (p[offsets[12]] < c_b)
@@ -2200,63 +1568,42 @@ namespace Accord.Imaging
                                                     if (p[offsets[14]] < c_b)
                                                         if (p[offsets[15]] < c_b)
                                                         { }
-                                                        else
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
+                                                        else if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                                if (p[offsets[8]] < c_b)
+                                                                    if (p[offsets[9]] < c_b)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[5]] < c_b)
+                                                        if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                                if (p[offsets[8]] < c_b)
+                                                                    if (p[offsets[9]] < c_b)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[4]] < c_b)
+                                                    if (p[offsets[5]] < c_b)
+                                                        if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                                if (p[offsets[8]] < c_b)
+                                                                    if (p[offsets[9]] < c_b)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
                                 else if (p[offsets[3]] < c_b)
                                     if (p[offsets[4]] > cb)
                                         if (p[offsets[13]] > cb)
@@ -2269,31 +1616,20 @@ namespace Accord.Imaging
                                                                     if (p[offsets[6]] > cb)
                                                                         if (p[offsets[5]] > cb)
                                                                         { }
-                                                                        else
-                                                                            if (p[offsets[14]] > cb)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                    else
-                                                                        if (p[offsets[14]] > cb)
-                                                                            if (p[offsets[15]] > cb)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
+                                                                        else if (p[offsets[14]] > cb)
+                                                                        { }
+                                                                        else continue;
+                                                                    else if (p[offsets[14]] > cb)
+                                                                        if (p[offsets[15]] > cb)
+                                                                        { }
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
                                         else if (p[offsets[13]] < c_b)
                                             if (p[offsets[11]] > cb)
                                                 if (p[offsets[5]] > cb)
@@ -2304,92 +1640,61 @@ namespace Accord.Imaging
                                                                     if (p[offsets[10]] > cb)
                                                                         if (p[offsets[12]] > cb)
                                                                         { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
                                             else if (p[offsets[11]] < c_b)
                                                 if (p[offsets[12]] < c_b)
                                                     if (p[offsets[14]] < c_b)
                                                         if (p[offsets[15]] < c_b)
                                                         { }
-                                                        else
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                            if (p[offsets[10]] < c_b)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                            if (p[offsets[10]] < c_b)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            if (p[offsets[5]] > cb)
-                                                if (p[offsets[6]] > cb)
-                                                    if (p[offsets[7]] > cb)
-                                                        if (p[offsets[8]] > cb)
-                                                            if (p[offsets[9]] > cb)
-                                                                if (p[offsets[10]] > cb)
-                                                                    if (p[offsets[11]] > cb)
-                                                                        if (p[offsets[12]] > cb)
+                                                        else if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                                if (p[offsets[8]] < c_b)
+                                                                    if (p[offsets[9]] < c_b)
+                                                                        if (p[offsets[10]] < c_b)
                                                                         { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[5]] < c_b)
+                                                        if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                                if (p[offsets[8]] < c_b)
+                                                                    if (p[offsets[9]] < c_b)
+                                                                        if (p[offsets[10]] < c_b)
+                                                                        { }
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[5]] > cb)
+                                            if (p[offsets[6]] > cb)
+                                                if (p[offsets[7]] > cb)
+                                                    if (p[offsets[8]] > cb)
+                                                        if (p[offsets[9]] > cb)
+                                                            if (p[offsets[10]] > cb)
+                                                                if (p[offsets[11]] > cb)
+                                                                    if (p[offsets[12]] > cb)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
                                     else if (p[offsets[4]] < c_b)
                                         if (p[offsets[5]] > cb)
                                             if (p[offsets[14]] > cb)
@@ -2402,25 +1707,16 @@ namespace Accord.Imaging
                                                                         if (p[offsets[13]] > cb)
                                                                             if (p[offsets[6]] > cb)
                                                                             { }
-                                                                            else
-                                                                                if (p[offsets[15]] > cb)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
+                                                                            else if (p[offsets[15]] > cb)
+                                                                            { }
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
                                             else if (p[offsets[14]] < c_b)
                                                 if (p[offsets[12]] > cb)
                                                     if (p[offsets[6]] > cb)
@@ -2431,74 +1727,49 @@ namespace Accord.Imaging
                                                                         if (p[offsets[11]] > cb)
                                                                             if (p[offsets[13]] > cb)
                                                                             { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
                                                 else if (p[offsets[12]] < c_b)
                                                     if (p[offsets[13]] < c_b)
                                                         if (p[offsets[15]] < c_b)
                                                         { }
-                                                        else
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                            if (p[offsets[10]] < c_b)
-                                                                                if (p[offsets[11]] < c_b)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                if (p[offsets[6]] > cb)
-                                                    if (p[offsets[7]] > cb)
-                                                        if (p[offsets[8]] > cb)
-                                                            if (p[offsets[9]] > cb)
-                                                                if (p[offsets[10]] > cb)
-                                                                    if (p[offsets[11]] > cb)
-                                                                        if (p[offsets[12]] > cb)
-                                                                            if (p[offsets[13]] > cb)
+                                                        else if (p[offsets[6]] < c_b)
+                                                            if (p[offsets[7]] < c_b)
+                                                                if (p[offsets[8]] < c_b)
+                                                                    if (p[offsets[9]] < c_b)
+                                                                        if (p[offsets[10]] < c_b)
+                                                                            if (p[offsets[11]] < c_b)
                                                                             { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[6]] > cb)
+                                                if (p[offsets[7]] > cb)
+                                                    if (p[offsets[8]] > cb)
+                                                        if (p[offsets[9]] > cb)
+                                                            if (p[offsets[10]] > cb)
+                                                                if (p[offsets[11]] > cb)
+                                                                    if (p[offsets[12]] > cb)
+                                                                        if (p[offsets[13]] > cb)
+                                                                        { }
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
                                         else if (p[offsets[5]] < c_b)
                                             if (p[offsets[6]] > cb)
                                                 if (p[offsets[15]] < c_b)
@@ -2511,53 +1782,35 @@ namespace Accord.Imaging
                                                                             if (p[offsets[12]] > cb)
                                                                                 if (p[offsets[14]] > cb)
                                                                                 { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
+                                                                                else continue;
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
                                                     else if (p[offsets[13]] < c_b)
                                                         if (p[offsets[14]] < c_b)
                                                         { }
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    if (p[offsets[7]] > cb)
-                                                        if (p[offsets[8]] > cb)
-                                                            if (p[offsets[9]] > cb)
-                                                                if (p[offsets[10]] > cb)
-                                                                    if (p[offsets[11]] > cb)
-                                                                        if (p[offsets[12]] > cb)
-                                                                            if (p[offsets[13]] > cb)
-                                                                                if (p[offsets[14]] > cb)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[7]] > cb)
+                                                    if (p[offsets[8]] > cb)
+                                                        if (p[offsets[9]] > cb)
+                                                            if (p[offsets[10]] > cb)
+                                                                if (p[offsets[11]] > cb)
+                                                                    if (p[offsets[12]] > cb)
+                                                                        if (p[offsets[13]] > cb)
+                                                                            if (p[offsets[14]] > cb)
+                                                                            { }
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
                                             else if (p[offsets[6]] < c_b)
                                                 if (p[offsets[7]] > cb)
                                                     if (p[offsets[14]] > cb)
@@ -2569,807 +1822,540 @@ namespace Accord.Imaging
                                                                             if (p[offsets[13]] > cb)
                                                                                 if (p[offsets[15]] > cb)
                                                                                 { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
+                                                                                else continue;
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
                                                     else if (p[offsets[14]] < c_b)
                                                         if (p[offsets[15]] < c_b)
                                                         { }
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
+                                                        else continue;
+                                                    else continue;
                                                 else if (p[offsets[7]] < c_b)
                                                     if (p[offsets[8]] < c_b)
                                                     { }
-                                                    else
-                                                        if (p[offsets[15]] < c_b)
-                                                        { }
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[14]] < c_b)
-                                                        if (p[offsets[15]] < c_b)
-                                                        { }
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[13]] > cb)
-                                                    if (p[offsets[7]] > cb)
-                                                        if (p[offsets[8]] > cb)
-                                                            if (p[offsets[9]] > cb)
-                                                                if (p[offsets[10]] > cb)
-                                                                    if (p[offsets[11]] > cb)
-                                                                        if (p[offsets[12]] > cb)
-                                                                            if (p[offsets[14]] > cb)
-                                                                                if (p[offsets[15]] > cb)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else if (p[offsets[13]] < c_b)
-                                                    if (p[offsets[14]] < c_b)
-                                                        if (p[offsets[15]] < c_b)
-                                                        { }
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            if (p[offsets[12]] > cb)
+                                                    else if (p[offsets[15]] < c_b)
+                                                    { }
+                                                    else continue;
+                                                else if (p[offsets[14]] < c_b)
+                                                    if (p[offsets[15]] < c_b)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[13]] > cb)
                                                 if (p[offsets[7]] > cb)
                                                     if (p[offsets[8]] > cb)
                                                         if (p[offsets[9]] > cb)
                                                             if (p[offsets[10]] > cb)
                                                                 if (p[offsets[11]] > cb)
-                                                                    if (p[offsets[13]] > cb)
+                                                                    if (p[offsets[12]] > cb)
                                                                         if (p[offsets[14]] > cb)
-                                                                            if (p[offsets[6]] > cb)
+                                                                            if (p[offsets[15]] > cb)
                                                                             { }
-                                                                            else
-                                                                                if (p[offsets[15]] > cb)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else if (p[offsets[12]] < c_b)
-                                                if (p[offsets[13]] < c_b)
-                                                    if (p[offsets[14]] < c_b)
-                                                        if (p[offsets[15]] < c_b)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                            if (p[offsets[10]] < c_b)
-                                                                                if (p[offsets[11]] < c_b)
-                                                                                { }
-                                                                                else
-                                                                                    continue;
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                    else
-                                        if (p[offsets[11]] > cb)
+                                                                            else continue;
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[13]] < c_b)
+                                                if (p[offsets[14]] < c_b)
+                                                    if (p[offsets[15]] < c_b)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[12]] > cb)
                                             if (p[offsets[7]] > cb)
                                                 if (p[offsets[8]] > cb)
                                                     if (p[offsets[9]] > cb)
                                                         if (p[offsets[10]] > cb)
-                                                            if (p[offsets[12]] > cb)
+                                                            if (p[offsets[11]] > cb)
                                                                 if (p[offsets[13]] > cb)
-                                                                    if (p[offsets[6]] > cb)
-                                                                        if (p[offsets[5]] > cb)
+                                                                    if (p[offsets[14]] > cb)
+                                                                        if (p[offsets[6]] > cb)
                                                                         { }
-                                                                        else
-                                                                            if (p[offsets[14]] > cb)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                    else
-                                                                        if (p[offsets[14]] > cb)
-                                                                            if (p[offsets[15]] > cb)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else if (p[offsets[11]] < c_b)
-                                            if (p[offsets[12]] < c_b)
-                                                if (p[offsets[13]] < c_b)
-                                                    if (p[offsets[14]] < c_b)
-                                                        if (p[offsets[15]] < c_b)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                            if (p[offsets[10]] < c_b)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                            if (p[offsets[10]] < c_b)
-                                                                            { }
-                                                                            else
-                                                                                continue;
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                else
-                                    if (p[offsets[10]] > cb)
+                                                                        else if (p[offsets[15]] > cb)
+                                                                        { }
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[12]] < c_b)
+                                            if (p[offsets[13]] < c_b)
+                                                if (p[offsets[14]] < c_b)
+                                                    if (p[offsets[15]] < c_b)
+                                                    { }
+                                                    else if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                    if (p[offsets[10]] < c_b)
+                                                                        if (p[offsets[11]] < c_b)
+                                                                        { }
+                                                                        else continue;
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else if (p[offsets[11]] > cb)
                                         if (p[offsets[7]] > cb)
                                             if (p[offsets[8]] > cb)
                                                 if (p[offsets[9]] > cb)
-                                                    if (p[offsets[11]] > cb)
+                                                    if (p[offsets[10]] > cb)
                                                         if (p[offsets[12]] > cb)
-                                                            if (p[offsets[6]] > cb)
-                                                                if (p[offsets[5]] > cb)
-                                                                    if (p[offsets[4]] > cb)
+                                                            if (p[offsets[13]] > cb)
+                                                                if (p[offsets[6]] > cb)
+                                                                    if (p[offsets[5]] > cb)
                                                                     { }
-                                                                    else
-                                                                        if (p[offsets[13]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                else
-                                                                    if (p[offsets[13]] > cb)
-                                                                        if (p[offsets[14]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                            else
-                                                                if (p[offsets[13]] > cb)
-                                                                    if (p[offsets[14]] > cb)
-                                                                        if (p[offsets[15]] > cb)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
+                                                                    else if (p[offsets[14]] > cb)
+                                                                    { }
+                                                                    else continue;
+                                                                else if (p[offsets[14]] > cb)
+                                                                    if (p[offsets[15]] > cb)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else if (p[offsets[11]] < c_b)
+                                        if (p[offsets[12]] < c_b)
+                                            if (p[offsets[13]] < c_b)
+                                                if (p[offsets[14]] < c_b)
+                                                    if (p[offsets[15]] < c_b)
+                                                    { }
+                                                    else if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                    if (p[offsets[10]] < c_b)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                    if (p[offsets[10]] < c_b)
+                                                                    { }
+                                                                    else continue;
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else if (p[offsets[10]] > cb)
+                                    if (p[offsets[7]] > cb)
+                                        if (p[offsets[8]] > cb)
+                                            if (p[offsets[9]] > cb)
+                                                if (p[offsets[11]] > cb)
+                                                    if (p[offsets[12]] > cb)
+                                                        if (p[offsets[6]] > cb)
+                                                            if (p[offsets[5]] > cb)
+                                                                if (p[offsets[4]] > cb)
+                                                                { }
+                                                                else if (p[offsets[13]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else if (p[offsets[13]] > cb)
+                                                                if (p[offsets[14]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else if (p[offsets[13]] > cb)
+                                                            if (p[offsets[14]] > cb)
+                                                                if (p[offsets[15]] > cb)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else if (p[offsets[10]] < c_b)
+                                    if (p[offsets[11]] < c_b)
+                                        if (p[offsets[12]] < c_b)
+                                            if (p[offsets[13]] < c_b)
+                                                if (p[offsets[14]] < c_b)
+                                                    if (p[offsets[15]] < c_b)
+                                                    { }
+                                                    else if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                { }
+                                                                else continue;
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else if (p[offsets[9]] > cb)
+                                if (p[offsets[7]] > cb)
+                                    if (p[offsets[8]] > cb)
+                                        if (p[offsets[10]] > cb)
+                                            if (p[offsets[11]] > cb)
+                                                if (p[offsets[6]] > cb)
+                                                    if (p[offsets[5]] > cb)
+                                                        if (p[offsets[4]] > cb)
+                                                            if (p[offsets[3]] > cb)
+                                                            { }
+                                                            else if (p[offsets[12]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else if (p[offsets[12]] > cb)
+                                                            if (p[offsets[13]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else if (p[offsets[12]] > cb)
+                                                        if (p[offsets[13]] > cb)
+                                                            if (p[offsets[14]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[12]] > cb)
+                                                    if (p[offsets[13]] > cb)
+                                                        if (p[offsets[14]] > cb)
+                                                            if (p[offsets[15]] > cb)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else if (p[offsets[9]] < c_b)
+                                if (p[offsets[10]] < c_b)
+                                    if (p[offsets[11]] < c_b)
+                                        if (p[offsets[12]] < c_b)
+                                            if (p[offsets[13]] < c_b)
+                                                if (p[offsets[14]] < c_b)
+                                                    if (p[offsets[15]] < c_b)
+                                                    { }
+                                                    else if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[3]] < c_b)
+                                            if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                            { }
+                                                            else continue;
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else continue;
+                        else if (p[offsets[8]] > cb)
+                            if (p[offsets[7]] > cb)
+                                if (p[offsets[9]] > cb)
+                                    if (p[offsets[10]] > cb)
+                                        if (p[offsets[6]] > cb)
+                                            if (p[offsets[5]] > cb)
+                                                if (p[offsets[4]] > cb)
+                                                    if (p[offsets[3]] > cb)
+                                                        if (p[offsets[2]] > cb)
+                                                        { }
+                                                        else if (p[offsets[11]] > cb)
+                                                        { }
+                                                        else continue;
+                                                    else if (p[offsets[11]] > cb)
+                                                        if (p[offsets[12]] > cb)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[11]] > cb)
+                                                    if (p[offsets[12]] > cb)
+                                                        if (p[offsets[13]] > cb)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[11]] > cb)
+                                                if (p[offsets[12]] > cb)
+                                                    if (p[offsets[13]] > cb)
+                                                        if (p[offsets[14]] > cb)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[11]] > cb)
+                                            if (p[offsets[12]] > cb)
+                                                if (p[offsets[13]] > cb)
+                                                    if (p[offsets[14]] > cb)
+                                                        if (p[offsets[15]] > cb)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else continue;
+                        else if (p[offsets[8]] < c_b)
+                            if (p[offsets[9]] < c_b)
+                                if (p[offsets[10]] < c_b)
+                                    if (p[offsets[11]] < c_b)
+                                        if (p[offsets[12]] < c_b)
+                                            if (p[offsets[13]] < c_b)
+                                                if (p[offsets[14]] < c_b)
+                                                    if (p[offsets[15]] < c_b)
+                                                    { }
+                                                    else if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[3]] < c_b)
+                                            if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else if (p[offsets[2]] < c_b)
+                                        if (p[offsets[3]] < c_b)
+                                            if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                        { }
+                                                        else continue;
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else continue;
+                        else continue;
+                    else if (p[offsets[7]] > cb)
+                        if (p[offsets[8]] > cb)
+                            if (p[offsets[9]] > cb)
+                                if (p[offsets[6]] > cb)
+                                    if (p[offsets[5]] > cb)
+                                        if (p[offsets[4]] > cb)
+                                            if (p[offsets[3]] > cb)
+                                                if (p[offsets[2]] > cb)
+                                                    if (p[offsets[1]] > cb)
+                                                    { }
+                                                    else if (p[offsets[10]] > cb)
+                                                    { }
+                                                    else continue;
+                                                else if (p[offsets[10]] > cb)
+                                                    if (p[offsets[11]] > cb)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[10]] > cb)
+                                                if (p[offsets[11]] > cb)
+                                                    if (p[offsets[12]] > cb)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[10]] > cb)
+                                            if (p[offsets[11]] > cb)
+                                                if (p[offsets[12]] > cb)
+                                                    if (p[offsets[13]] > cb)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else if (p[offsets[10]] > cb)
+                                        if (p[offsets[11]] > cb)
+                                            if (p[offsets[12]] > cb)
+                                                if (p[offsets[13]] > cb)
+                                                    if (p[offsets[14]] > cb)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else if (p[offsets[10]] > cb)
+                                    if (p[offsets[11]] > cb)
+                                        if (p[offsets[12]] > cb)
+                                            if (p[offsets[13]] > cb)
+                                                if (p[offsets[14]] > cb)
+                                                    if (p[offsets[15]] > cb)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else continue;
+                        else continue;
+                    else if (p[offsets[7]] < c_b)
+                        if (p[offsets[8]] < c_b)
+                            if (p[offsets[9]] < c_b)
+                                if (p[offsets[6]] < c_b)
+                                    if (p[offsets[5]] < c_b)
+                                        if (p[offsets[4]] < c_b)
+                                            if (p[offsets[3]] < c_b)
+                                                if (p[offsets[2]] < c_b)
+                                                    if (p[offsets[1]] < c_b)
+                                                    { }
+                                                    else if (p[offsets[10]] < c_b)
+                                                    { }
+                                                    else continue;
+                                                else if (p[offsets[10]] < c_b)
+                                                    if (p[offsets[11]] < c_b)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else if (p[offsets[10]] < c_b)
+                                                if (p[offsets[11]] < c_b)
+                                                    if (p[offsets[12]] < c_b)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else if (p[offsets[10]] < c_b)
+                                            if (p[offsets[11]] < c_b)
+                                                if (p[offsets[12]] < c_b)
+                                                    if (p[offsets[13]] < c_b)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
                                     else if (p[offsets[10]] < c_b)
                                         if (p[offsets[11]] < c_b)
                                             if (p[offsets[12]] < c_b)
                                                 if (p[offsets[13]] < c_b)
                                                     if (p[offsets[14]] < c_b)
-                                                        if (p[offsets[15]] < c_b)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                        if (p[offsets[9]] < c_b)
-                                                                        { }
-                                                                        else
-                                                                            continue;
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
-                            else
-                                if (p[offsets[9]] > cb)
-                                    if (p[offsets[7]] > cb)
-                                        if (p[offsets[8]] > cb)
-                                            if (p[offsets[10]] > cb)
-                                                if (p[offsets[11]] > cb)
-                                                    if (p[offsets[6]] > cb)
-                                                        if (p[offsets[5]] > cb)
-                                                            if (p[offsets[4]] > cb)
-                                                                if (p[offsets[3]] > cb)
-                                                                { }
-                                                                else
-                                                                    if (p[offsets[12]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                            else
-                                                                if (p[offsets[12]] > cb)
-                                                                    if (p[offsets[13]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                        else
-                                                            if (p[offsets[12]] > cb)
-                                                                if (p[offsets[13]] > cb)
-                                                                    if (p[offsets[14]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[12]] > cb)
-                                                            if (p[offsets[13]] > cb)
-                                                                if (p[offsets[14]] > cb)
-                                                                    if (p[offsets[15]] > cb)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
-                                else if (p[offsets[9]] < c_b)
-                                    if (p[offsets[10]] < c_b)
-                                        if (p[offsets[11]] < c_b)
-                                            if (p[offsets[12]] < c_b)
-                                                if (p[offsets[13]] < c_b)
-                                                    if (p[offsets[14]] < c_b)
-                                                        if (p[offsets[15]] < c_b)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[3]] < c_b)
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                    if (p[offsets[8]] < c_b)
-                                                                    { }
-                                                                    else
-                                                                        continue;
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
-                        else
-                            if (p[offsets[8]] > cb)
-                                if (p[offsets[7]] > cb)
-                                    if (p[offsets[9]] > cb)
-                                        if (p[offsets[10]] > cb)
-                                            if (p[offsets[6]] > cb)
-                                                if (p[offsets[5]] > cb)
-                                                    if (p[offsets[4]] > cb)
-                                                        if (p[offsets[3]] > cb)
-                                                            if (p[offsets[2]] > cb)
-                                                            { }
-                                                            else
-                                                                if (p[offsets[11]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                        else
-                                                            if (p[offsets[11]] > cb)
-                                                                if (p[offsets[12]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[11]] > cb)
-                                                            if (p[offsets[12]] > cb)
-                                                                if (p[offsets[13]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[11]] > cb)
-                                                        if (p[offsets[12]] > cb)
-                                                            if (p[offsets[13]] > cb)
-                                                                if (p[offsets[14]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[11]] > cb)
-                                                    if (p[offsets[12]] > cb)
-                                                        if (p[offsets[13]] > cb)
-                                                            if (p[offsets[14]] > cb)
-                                                                if (p[offsets[15]] > cb)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
-                            else if (p[offsets[8]] < c_b)
-                                if (p[offsets[9]] < c_b)
-                                    if (p[offsets[10]] < c_b)
-                                        if (p[offsets[11]] < c_b)
-                                            if (p[offsets[12]] < c_b)
-                                                if (p[offsets[13]] < c_b)
-                                                    if (p[offsets[14]] < c_b)
-                                                        if (p[offsets[15]] < c_b)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[3]] < c_b)
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            if (p[offsets[2]] < c_b)
-                                                if (p[offsets[3]] < c_b)
-                                                    if (p[offsets[4]] < c_b)
-                                                        if (p[offsets[5]] < c_b)
-                                                            if (p[offsets[6]] < c_b)
-                                                                if (p[offsets[7]] < c_b)
-                                                                { }
-                                                                else
-                                                                    continue;
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                    else
-                                        continue;
-                                else
-                                    continue;
-                            else
-                                continue;
-                    else
-                        if (p[offsets[7]] > cb)
-                            if (p[offsets[8]] > cb)
-                                if (p[offsets[9]] > cb)
-                                    if (p[offsets[6]] > cb)
-                                        if (p[offsets[5]] > cb)
-                                            if (p[offsets[4]] > cb)
-                                                if (p[offsets[3]] > cb)
-                                                    if (p[offsets[2]] > cb)
-                                                        if (p[offsets[1]] > cb)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[10]] > cb)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[10]] > cb)
-                                                            if (p[offsets[11]] > cb)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[10]] > cb)
-                                                        if (p[offsets[11]] > cb)
-                                                            if (p[offsets[12]] > cb)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[10]] > cb)
-                                                    if (p[offsets[11]] > cb)
-                                                        if (p[offsets[12]] > cb)
-                                                            if (p[offsets[13]] > cb)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            if (p[offsets[10]] > cb)
-                                                if (p[offsets[11]] > cb)
-                                                    if (p[offsets[12]] > cb)
-                                                        if (p[offsets[13]] > cb)
-                                                            if (p[offsets[14]] > cb)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                    else
-                                        if (p[offsets[10]] > cb)
-                                            if (p[offsets[11]] > cb)
-                                                if (p[offsets[12]] > cb)
-                                                    if (p[offsets[13]] > cb)
-                                                        if (p[offsets[14]] > cb)
-                                                            if (p[offsets[15]] > cb)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                else
-                                    continue;
-                            else
-                                continue;
-                        else if (p[offsets[7]] < c_b)
-                            if (p[offsets[8]] < c_b)
-                                if (p[offsets[9]] < c_b)
-                                    if (p[offsets[6]] < c_b)
-                                        if (p[offsets[5]] < c_b)
-                                            if (p[offsets[4]] < c_b)
-                                                if (p[offsets[3]] < c_b)
-                                                    if (p[offsets[2]] < c_b)
-                                                        if (p[offsets[1]] < c_b)
-                                                        { }
-                                                        else
-                                                            if (p[offsets[10]] < c_b)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                    else
-                                                        if (p[offsets[10]] < c_b)
-                                                            if (p[offsets[11]] < c_b)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                else
-                                                    if (p[offsets[10]] < c_b)
-                                                        if (p[offsets[11]] < c_b)
-                                                            if (p[offsets[12]] < c_b)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                            else
-                                                if (p[offsets[10]] < c_b)
-                                                    if (p[offsets[11]] < c_b)
-                                                        if (p[offsets[12]] < c_b)
-                                                            if (p[offsets[13]] < c_b)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                        else
-                                            if (p[offsets[10]] < c_b)
-                                                if (p[offsets[11]] < c_b)
-                                                    if (p[offsets[12]] < c_b)
-                                                        if (p[offsets[13]] < c_b)
-                                                            if (p[offsets[14]] < c_b)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                    else
-                                        if (p[offsets[10]] < c_b)
-                                            if (p[offsets[11]] < c_b)
-                                                if (p[offsets[12]] < c_b)
-                                                    if (p[offsets[13]] < c_b)
-                                                        if (p[offsets[14]] < c_b)
-                                                            if (p[offsets[15]] < c_b)
-                                                            { }
-                                                            else
-                                                                continue;
-                                                        else
-                                                            continue;
-                                                    else
-                                                        continue;
-                                                else
-                                                    continue;
-                                            else
-                                                continue;
-                                        else
-                                            continue;
-                                else
-                                    continue;
-                            else
-                                continue;
-                        else
-                            continue;
-
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else if (p[offsets[10]] < c_b)
+                                    if (p[offsets[11]] < c_b)
+                                        if (p[offsets[12]] < c_b)
+                                            if (p[offsets[13]] < c_b)
+                                                if (p[offsets[14]] < c_b)
+                                                    if (p[offsets[15]] < c_b)
+                                                    { }
+                                                    else continue;
+                                                else continue;
+                                            else continue;
+                                        else continue;
+                                    else continue;
+                                else continue;
+                            else continue;
+                        else continue;
+                    else continue;
                     #endregion
 
                     points.Add(new IntPoint(x, y));
@@ -3385,11 +2371,16 @@ namespace Accord.Imaging
             byte* src = (byte*)image.ImageData.ToPointer();
             byte* p = src + corner.Y * image.Stride + corner.X;
 
+#if DEBUG
+            for (int i = 0; i < offsets.Length; i++)
+                image.CheckBounds(unchecked(p + offsets[i]));
+#endif
+
             // Compute the score using binary search
             int bmin = this.threshold, bmax = 255;
             int b = (bmax + bmin) / 2;
 
-            for (; ; )
+            for (;;)
             {
                 int cb = *p + b;
                 int c_b = *p - b;
@@ -3405,17 +2396,14 @@ namespace Accord.Imaging
                                             if (p[offsets[7]] > cb)
                                                 if (p[offsets[8]] > cb)
                                                     goto is_a_corner;
-                                                else
-                                                    if (p[offsets[15]] > cb)
-                                                        goto is_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
+                                                else if (p[offsets[15]] > cb)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
                                             else if (p[offsets[7]] < c_b)
                                                 if (p[offsets[14]] > cb)
                                                     if (p[offsets[15]] > cb)
                                                         goto is_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
                                                 else if (p[offsets[14]] < c_b)
                                                     if (p[offsets[8]] < c_b)
                                                         if (p[offsets[9]] < c_b)
@@ -3425,37 +2413,25 @@ namespace Accord.Imaging
                                                                         if (p[offsets[13]] < c_b)
                                                                             if (p[offsets[15]] < c_b)
                                                                                 goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[14]] > cb)
-                                                    if (p[offsets[15]] > cb)
-                                                        goto is_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
+                                                                            else goto is_not_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[14]] > cb)
+                                                if (p[offsets[15]] > cb)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
                                         else if (p[offsets[6]] < c_b)
                                             if (p[offsets[15]] > cb)
                                                 if (p[offsets[13]] > cb)
                                                     if (p[offsets[14]] > cb)
                                                         goto is_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
                                                 else if (p[offsets[13]] < c_b)
                                                     if (p[offsets[7]] < c_b)
                                                         if (p[offsets[8]] < c_b)
@@ -3465,113 +2441,76 @@ namespace Accord.Imaging
                                                                         if (p[offsets[12]] < c_b)
                                                                             if (p[offsets[14]] < c_b)
                                                                                 goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[7]] < c_b)
-                                                    if (p[offsets[8]] < c_b)
-                                                        if (p[offsets[9]] < c_b)
-                                                            if (p[offsets[10]] < c_b)
-                                                                if (p[offsets[11]] < c_b)
-                                                                    if (p[offsets[12]] < c_b)
-                                                                        if (p[offsets[13]] < c_b)
-                                                                            if (p[offsets[14]] < c_b)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[13]] > cb)
-                                                if (p[offsets[14]] > cb)
-                                                    if (p[offsets[15]] > cb)
-                                                        goto is_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else if (p[offsets[13]] < c_b)
-                                                if (p[offsets[7]] < c_b)
-                                                    if (p[offsets[8]] < c_b)
-                                                        if (p[offsets[9]] < c_b)
-                                                            if (p[offsets[10]] < c_b)
-                                                                if (p[offsets[11]] < c_b)
-                                                                    if (p[offsets[12]] < c_b)
+                                                                            else goto is_not_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[7]] < c_b)
+                                                if (p[offsets[8]] < c_b)
+                                                    if (p[offsets[9]] < c_b)
+                                                        if (p[offsets[10]] < c_b)
+                                                            if (p[offsets[11]] < c_b)
+                                                                if (p[offsets[12]] < c_b)
+                                                                    if (p[offsets[13]] < c_b)
                                                                         if (p[offsets[14]] < c_b)
-                                                                            if (p[offsets[15]] < c_b)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
+                                                                            goto is_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[13]] > cb)
+                                            if (p[offsets[14]] > cb)
+                                                if (p[offsets[15]] > cb)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[13]] < c_b)
+                                            if (p[offsets[7]] < c_b)
+                                                if (p[offsets[8]] < c_b)
+                                                    if (p[offsets[9]] < c_b)
+                                                        if (p[offsets[10]] < c_b)
+                                                            if (p[offsets[11]] < c_b)
+                                                                if (p[offsets[12]] < c_b)
+                                                                    if (p[offsets[14]] < c_b)
+                                                                        if (p[offsets[15]] < c_b)
+                                                                            goto is_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
                                     else if (p[offsets[5]] < c_b)
                                         if (p[offsets[14]] > cb)
                                             if (p[offsets[12]] > cb)
                                                 if (p[offsets[13]] > cb)
                                                     if (p[offsets[15]] > cb)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        if (p[offsets[10]] > cb)
-                                                                            if (p[offsets[11]] > cb)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
+                                                    else if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                    if (p[offsets[10]] > cb)
+                                                                        if (p[offsets[11]] > cb)
+                                                                            goto is_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
                                             else if (p[offsets[12]] < c_b)
                                                 if (p[offsets[6]] < c_b)
                                                     if (p[offsets[7]] < c_b)
@@ -3581,22 +2520,14 @@ namespace Accord.Imaging
                                                                     if (p[offsets[11]] < c_b)
                                                                         if (p[offsets[13]] < c_b)
                                                                             goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
                                         else if (p[offsets[14]] < c_b)
                                             if (p[offsets[7]] < c_b)
                                                 if (p[offsets[8]] < c_b)
@@ -3607,112 +2538,74 @@ namespace Accord.Imaging
                                                                     if (p[offsets[13]] < c_b)
                                                                         if (p[offsets[6]] < c_b)
                                                                             goto is_a_corner;
-                                                                        else
-                                                                            if (p[offsets[15]] < c_b)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[6]] < c_b)
-                                                if (p[offsets[7]] < c_b)
-                                                    if (p[offsets[8]] < c_b)
-                                                        if (p[offsets[9]] < c_b)
-                                                            if (p[offsets[10]] < c_b)
-                                                                if (p[offsets[11]] < c_b)
-                                                                    if (p[offsets[12]] < c_b)
-                                                                        if (p[offsets[13]] < c_b)
+                                                                        else if (p[offsets[15]] < c_b)
                                                                             goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[12]] > cb)
-                                            if (p[offsets[13]] > cb)
-                                                if (p[offsets[14]] > cb)
-                                                    if (p[offsets[15]] > cb)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        if (p[offsets[10]] > cb)
-                                                                            if (p[offsets[11]] > cb)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else if (p[offsets[12]] < c_b)
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[6]] < c_b)
                                             if (p[offsets[7]] < c_b)
                                                 if (p[offsets[8]] < c_b)
                                                     if (p[offsets[9]] < c_b)
                                                         if (p[offsets[10]] < c_b)
                                                             if (p[offsets[11]] < c_b)
-                                                                if (p[offsets[13]] < c_b)
-                                                                    if (p[offsets[14]] < c_b)
-                                                                        if (p[offsets[6]] < c_b)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            if (p[offsets[15]] < c_b)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
+                                                                if (p[offsets[12]] < c_b)
+                                                                    if (p[offsets[13]] < c_b)
+                                                                        goto is_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[12]] > cb)
+                                        if (p[offsets[13]] > cb)
+                                            if (p[offsets[14]] > cb)
+                                                if (p[offsets[15]] > cb)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        if (p[offsets[8]] > cb)
+                                                            if (p[offsets[9]] > cb)
+                                                                if (p[offsets[10]] > cb)
+                                                                    if (p[offsets[11]] > cb)
+                                                                        goto is_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[12]] < c_b)
+                                        if (p[offsets[7]] < c_b)
+                                            if (p[offsets[8]] < c_b)
+                                                if (p[offsets[9]] < c_b)
+                                                    if (p[offsets[10]] < c_b)
+                                                        if (p[offsets[11]] < c_b)
+                                                            if (p[offsets[13]] < c_b)
+                                                                if (p[offsets[14]] < c_b)
+                                                                    if (p[offsets[6]] < c_b)
+                                                                        goto is_a_corner;
+                                                                    else if (p[offsets[15]] < c_b)
+                                                                        goto is_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
                                 else if (p[offsets[4]] < c_b)
                                     if (p[offsets[13]] > cb)
                                         if (p[offsets[11]] > cb)
@@ -3720,45 +2613,31 @@ namespace Accord.Imaging
                                                 if (p[offsets[14]] > cb)
                                                     if (p[offsets[15]] > cb)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        if (p[offsets[10]] > cb)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        if (p[offsets[10]] > cb)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
+                                                    else if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                    if (p[offsets[10]] > cb)
+                                                                        goto is_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                    if (p[offsets[10]] > cb)
+                                                                        goto is_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
                                         else if (p[offsets[11]] < c_b)
                                             if (p[offsets[5]] < c_b)
                                                 if (p[offsets[6]] < c_b)
@@ -3768,22 +2647,14 @@ namespace Accord.Imaging
                                                                 if (p[offsets[10]] < c_b)
                                                                     if (p[offsets[12]] < c_b)
                                                                         goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
                                     else if (p[offsets[13]] < c_b)
                                         if (p[offsets[7]] < c_b)
                                             if (p[offsets[8]] < c_b)
@@ -3794,142 +2665,94 @@ namespace Accord.Imaging
                                                                 if (p[offsets[6]] < c_b)
                                                                     if (p[offsets[5]] < c_b)
                                                                         goto is_a_corner;
-                                                                    else
-                                                                        if (p[offsets[14]] < c_b)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                else
-                                                                    if (p[offsets[14]] < c_b)
-                                                                        if (p[offsets[15]] < c_b)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[5]] < c_b)
-                                            if (p[offsets[6]] < c_b)
-                                                if (p[offsets[7]] < c_b)
-                                                    if (p[offsets[8]] < c_b)
-                                                        if (p[offsets[9]] < c_b)
-                                                            if (p[offsets[10]] < c_b)
-                                                                if (p[offsets[11]] < c_b)
-                                                                    if (p[offsets[12]] < c_b)
+                                                                    else if (p[offsets[14]] < c_b)
                                                                         goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                else
-                                    if (p[offsets[11]] > cb)
-                                        if (p[offsets[12]] > cb)
-                                            if (p[offsets[13]] > cb)
-                                                if (p[offsets[14]] > cb)
-                                                    if (p[offsets[15]] > cb)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        if (p[offsets[10]] > cb)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        if (p[offsets[10]] > cb)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else if (p[offsets[11]] < c_b)
-                                        if (p[offsets[7]] < c_b)
-                                            if (p[offsets[8]] < c_b)
-                                                if (p[offsets[9]] < c_b)
-                                                    if (p[offsets[10]] < c_b)
-                                                        if (p[offsets[12]] < c_b)
-                                                            if (p[offsets[13]] < c_b)
-                                                                if (p[offsets[6]] < c_b)
-                                                                    if (p[offsets[5]] < c_b)
+                                                                    else goto is_not_a_corner;
+                                                                else if (p[offsets[14]] < c_b)
+                                                                    if (p[offsets[15]] < c_b)
                                                                         goto is_a_corner;
-                                                                    else
-                                                                        if (p[offsets[14]] < c_b)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                else
-                                                                    if (p[offsets[14]] < c_b)
-                                                                        if (p[offsets[15]] < c_b)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[5]] < c_b)
+                                        if (p[offsets[6]] < c_b)
+                                            if (p[offsets[7]] < c_b)
+                                                if (p[offsets[8]] < c_b)
+                                                    if (p[offsets[9]] < c_b)
+                                                        if (p[offsets[10]] < c_b)
+                                                            if (p[offsets[11]] < c_b)
+                                                                if (p[offsets[12]] < c_b)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else if (p[offsets[11]] > cb)
+                                    if (p[offsets[12]] > cb)
+                                        if (p[offsets[13]] > cb)
+                                            if (p[offsets[14]] > cb)
+                                                if (p[offsets[15]] > cb)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        if (p[offsets[8]] > cb)
+                                                            if (p[offsets[9]] > cb)
+                                                                if (p[offsets[10]] > cb)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[5]] > cb)
+                                                if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        if (p[offsets[8]] > cb)
+                                                            if (p[offsets[9]] > cb)
+                                                                if (p[offsets[10]] > cb)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else if (p[offsets[11]] < c_b)
+                                    if (p[offsets[7]] < c_b)
+                                        if (p[offsets[8]] < c_b)
+                                            if (p[offsets[9]] < c_b)
+                                                if (p[offsets[10]] < c_b)
+                                                    if (p[offsets[12]] < c_b)
+                                                        if (p[offsets[13]] < c_b)
+                                                            if (p[offsets[6]] < c_b)
+                                                                if (p[offsets[5]] < c_b)
+                                                                    goto is_a_corner;
+                                                                else if (p[offsets[14]] < c_b)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else if (p[offsets[14]] < c_b)
+                                                                if (p[offsets[15]] < c_b)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
                             else if (p[offsets[3]] < c_b)
                                 if (p[offsets[10]] > cb)
                                     if (p[offsets[11]] > cb)
@@ -3938,61 +2761,41 @@ namespace Accord.Imaging
                                                 if (p[offsets[14]] > cb)
                                                     if (p[offsets[15]] > cb)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
+                                                    else if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                if (p[offsets[9]] > cb)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
                                 else if (p[offsets[10]] < c_b)
                                     if (p[offsets[7]] < c_b)
                                         if (p[offsets[8]] < c_b)
@@ -4002,158 +2805,105 @@ namespace Accord.Imaging
                                                         if (p[offsets[5]] < c_b)
                                                             if (p[offsets[4]] < c_b)
                                                                 goto is_a_corner;
-                                                            else
-                                                                if (p[offsets[12]] < c_b)
-                                                                    if (p[offsets[13]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                        else
-                                                            if (p[offsets[12]] < c_b)
+                                                            else if (p[offsets[12]] < c_b)
                                                                 if (p[offsets[13]] < c_b)
-                                                                    if (p[offsets[14]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                    else
-                                                        if (p[offsets[12]] < c_b)
-                                                            if (p[offsets[13]] < c_b)
-                                                                if (p[offsets[14]] < c_b)
-                                                                    if (p[offsets[15]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                if (p[offsets[10]] > cb)
-                                    if (p[offsets[11]] > cb)
-                                        if (p[offsets[12]] > cb)
-                                            if (p[offsets[13]] > cb)
-                                                if (p[offsets[14]] > cb)
-                                                    if (p[offsets[15]] > cb)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    if (p[offsets[9]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else if (p[offsets[10]] < c_b)
-                                    if (p[offsets[7]] < c_b)
-                                        if (p[offsets[8]] < c_b)
-                                            if (p[offsets[9]] < c_b)
-                                                if (p[offsets[11]] < c_b)
-                                                    if (p[offsets[12]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[5]] < c_b)
-                                                                if (p[offsets[4]] < c_b)
                                                                     goto is_a_corner;
-                                                                else
-                                                                    if (p[offsets[13]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                            else
-                                                                if (p[offsets[13]] < c_b)
-                                                                    if (p[offsets[14]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                        else
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else if (p[offsets[12]] < c_b)
                                                             if (p[offsets[13]] < c_b)
                                                                 if (p[offsets[14]] < c_b)
-                                                                    if (p[offsets[15]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else if (p[offsets[12]] < c_b)
+                                                        if (p[offsets[13]] < c_b)
+                                                            if (p[offsets[14]] < c_b)
+                                                                if (p[offsets[15]] < c_b)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else if (p[offsets[10]] > cb)
+                                if (p[offsets[11]] > cb)
+                                    if (p[offsets[12]] > cb)
+                                        if (p[offsets[13]] > cb)
+                                            if (p[offsets[14]] > cb)
+                                                if (p[offsets[15]] > cb)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        if (p[offsets[8]] > cb)
+                                                            if (p[offsets[9]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[5]] > cb)
+                                                if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        if (p[offsets[8]] > cb)
+                                                            if (p[offsets[9]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[4]] > cb)
+                                            if (p[offsets[5]] > cb)
+                                                if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        if (p[offsets[8]] > cb)
+                                                            if (p[offsets[9]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else if (p[offsets[10]] < c_b)
+                                if (p[offsets[7]] < c_b)
+                                    if (p[offsets[8]] < c_b)
+                                        if (p[offsets[9]] < c_b)
+                                            if (p[offsets[11]] < c_b)
+                                                if (p[offsets[12]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[5]] < c_b)
+                                                            if (p[offsets[4]] < c_b)
+                                                                goto is_a_corner;
+                                                            else if (p[offsets[13]] < c_b)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else if (p[offsets[13]] < c_b)
+                                                            if (p[offsets[14]] < c_b)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else if (p[offsets[13]] < c_b)
+                                                        if (p[offsets[14]] < c_b)
+                                                            if (p[offsets[15]] < c_b)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
                         else if (p[offsets[2]] < c_b)
                             if (p[offsets[9]] > cb)
                                 if (p[offsets[10]] > cb)
@@ -4163,72 +2913,48 @@ namespace Accord.Imaging
                                                 if (p[offsets[14]] > cb)
                                                     if (p[offsets[15]] > cb)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[3]] > cb)
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
+                                                    else if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[3]] > cb)
+                                            if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            if (p[offsets[8]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
                             else if (p[offsets[9]] < c_b)
                                 if (p[offsets[7]] < c_b)
                                     if (p[offsets[8]] < c_b)
@@ -4238,197 +2964,131 @@ namespace Accord.Imaging
                                                     if (p[offsets[4]] < c_b)
                                                         if (p[offsets[3]] < c_b)
                                                             goto is_a_corner;
-                                                        else
-                                                            if (p[offsets[11]] < c_b)
-                                                                if (p[offsets[12]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                    else
-                                                        if (p[offsets[11]] < c_b)
+                                                        else if (p[offsets[11]] < c_b)
                                                             if (p[offsets[12]] < c_b)
-                                                                if (p[offsets[13]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[11]] < c_b)
-                                                        if (p[offsets[12]] < c_b)
-                                                            if (p[offsets[13]] < c_b)
-                                                                if (p[offsets[14]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[11]] < c_b)
-                                                    if (p[offsets[12]] < c_b)
-                                                        if (p[offsets[13]] < c_b)
-                                                            if (p[offsets[14]] < c_b)
-                                                                if (p[offsets[15]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
-                        else
-                            if (p[offsets[9]] > cb)
-                                if (p[offsets[10]] > cb)
-                                    if (p[offsets[11]] > cb)
-                                        if (p[offsets[12]] > cb)
-                                            if (p[offsets[13]] > cb)
-                                                if (p[offsets[14]] > cb)
-                                                    if (p[offsets[15]] > cb)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[3]] > cb)
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                if (p[offsets[8]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else if (p[offsets[9]] < c_b)
-                                if (p[offsets[7]] < c_b)
-                                    if (p[offsets[8]] < c_b)
-                                        if (p[offsets[10]] < c_b)
-                                            if (p[offsets[11]] < c_b)
-                                                if (p[offsets[6]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[4]] < c_b)
-                                                            if (p[offsets[3]] < c_b)
                                                                 goto is_a_corner;
-                                                            else
-                                                                if (p[offsets[12]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                        else
-                                                            if (p[offsets[12]] < c_b)
-                                                                if (p[offsets[13]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                    else
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else if (p[offsets[11]] < c_b)
                                                         if (p[offsets[12]] < c_b)
                                                             if (p[offsets[13]] < c_b)
-                                                                if (p[offsets[14]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[11]] < c_b)
                                                     if (p[offsets[12]] < c_b)
                                                         if (p[offsets[13]] < c_b)
                                                             if (p[offsets[14]] < c_b)
-                                                                if (p[offsets[15]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[11]] < c_b)
+                                                if (p[offsets[12]] < c_b)
+                                                    if (p[offsets[13]] < c_b)
+                                                        if (p[offsets[14]] < c_b)
+                                                            if (p[offsets[15]] < c_b)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else if (p[offsets[9]] > cb)
+                            if (p[offsets[10]] > cb)
+                                if (p[offsets[11]] > cb)
+                                    if (p[offsets[12]] > cb)
+                                        if (p[offsets[13]] > cb)
+                                            if (p[offsets[14]] > cb)
+                                                if (p[offsets[15]] > cb)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        if (p[offsets[8]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[5]] > cb)
+                                                if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        if (p[offsets[8]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[4]] > cb)
+                                            if (p[offsets[5]] > cb)
+                                                if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        if (p[offsets[8]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[3]] > cb)
+                                        if (p[offsets[4]] > cb)
+                                            if (p[offsets[5]] > cb)
+                                                if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        if (p[offsets[8]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else if (p[offsets[9]] < c_b)
+                            if (p[offsets[7]] < c_b)
+                                if (p[offsets[8]] < c_b)
+                                    if (p[offsets[10]] < c_b)
+                                        if (p[offsets[11]] < c_b)
+                                            if (p[offsets[6]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[4]] < c_b)
+                                                        if (p[offsets[3]] < c_b)
+                                                            goto is_a_corner;
+                                                        else if (p[offsets[12]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else if (p[offsets[12]] < c_b)
+                                                        if (p[offsets[13]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[12]] < c_b)
+                                                    if (p[offsets[13]] < c_b)
+                                                        if (p[offsets[14]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[12]] < c_b)
+                                                if (p[offsets[13]] < c_b)
+                                                    if (p[offsets[14]] < c_b)
+                                                        if (p[offsets[15]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else goto is_not_a_corner;
                     else if (p[offsets[1]] < c_b)
                         if (p[offsets[8]] > cb)
                             if (p[offsets[9]] > cb)
@@ -4439,80 +3099,53 @@ namespace Accord.Imaging
                                                 if (p[offsets[14]] > cb)
                                                     if (p[offsets[15]] > cb)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[3]] > cb)
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[2]] > cb)
-                                            if (p[offsets[3]] > cb)
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
+                                                    else if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[3]] > cb)
+                                            if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[2]] > cb)
+                                        if (p[offsets[3]] > cb)
+                                            if (p[offsets[4]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[7]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
                         else if (p[offsets[8]] < c_b)
                             if (p[offsets[7]] < c_b)
                                 if (p[offsets[9]] < c_b)
@@ -4522,239 +3155,159 @@ namespace Accord.Imaging
                                                 if (p[offsets[3]] < c_b)
                                                     if (p[offsets[2]] < c_b)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[10]] < c_b)
-                                                            if (p[offsets[11]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[10]] < c_b)
+                                                    else if (p[offsets[10]] < c_b)
                                                         if (p[offsets[11]] < c_b)
-                                                            if (p[offsets[12]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[10]] < c_b)
-                                                    if (p[offsets[11]] < c_b)
-                                                        if (p[offsets[12]] < c_b)
-                                                            if (p[offsets[13]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[10]] < c_b)
-                                                if (p[offsets[11]] < c_b)
-                                                    if (p[offsets[12]] < c_b)
-                                                        if (p[offsets[13]] < c_b)
-                                                            if (p[offsets[14]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[10]] < c_b)
-                                            if (p[offsets[11]] < c_b)
-                                                if (p[offsets[12]] < c_b)
-                                                    if (p[offsets[13]] < c_b)
-                                                        if (p[offsets[14]] < c_b)
-                                                            if (p[offsets[15]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
-                        else
-                            goto is_not_a_corner;
-                    else
-                        if (p[offsets[8]] > cb)
-                            if (p[offsets[9]] > cb)
-                                if (p[offsets[10]] > cb)
-                                    if (p[offsets[11]] > cb)
-                                        if (p[offsets[12]] > cb)
-                                            if (p[offsets[13]] > cb)
-                                                if (p[offsets[14]] > cb)
-                                                    if (p[offsets[15]] > cb)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[3]] > cb)
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[2]] > cb)
-                                            if (p[offsets[3]] > cb)
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[7]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
-                        else if (p[offsets[8]] < c_b)
-                            if (p[offsets[7]] < c_b)
-                                if (p[offsets[9]] < c_b)
-                                    if (p[offsets[10]] < c_b)
-                                        if (p[offsets[6]] < c_b)
-                                            if (p[offsets[5]] < c_b)
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[3]] < c_b)
-                                                        if (p[offsets[2]] < c_b)
                                                             goto is_a_corner;
-                                                        else
-                                                            if (p[offsets[11]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                    else
-                                                        if (p[offsets[11]] < c_b)
-                                                            if (p[offsets[12]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[10]] < c_b)
                                                     if (p[offsets[11]] < c_b)
                                                         if (p[offsets[12]] < c_b)
-                                                            if (p[offsets[13]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[10]] < c_b)
                                                 if (p[offsets[11]] < c_b)
                                                     if (p[offsets[12]] < c_b)
                                                         if (p[offsets[13]] < c_b)
-                                                            if (p[offsets[14]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[10]] < c_b)
                                             if (p[offsets[11]] < c_b)
                                                 if (p[offsets[12]] < c_b)
                                                     if (p[offsets[13]] < c_b)
                                                         if (p[offsets[14]] < c_b)
-                                                            if (p[offsets[15]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
-                        else
-                            goto is_not_a_corner;
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[10]] < c_b)
+                                        if (p[offsets[11]] < c_b)
+                                            if (p[offsets[12]] < c_b)
+                                                if (p[offsets[13]] < c_b)
+                                                    if (p[offsets[14]] < c_b)
+                                                        if (p[offsets[15]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else goto is_not_a_corner;
+                    else if (p[offsets[8]] > cb)
+                        if (p[offsets[9]] > cb)
+                            if (p[offsets[10]] > cb)
+                                if (p[offsets[11]] > cb)
+                                    if (p[offsets[12]] > cb)
+                                        if (p[offsets[13]] > cb)
+                                            if (p[offsets[14]] > cb)
+                                                if (p[offsets[15]] > cb)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[5]] > cb)
+                                                if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[4]] > cb)
+                                            if (p[offsets[5]] > cb)
+                                                if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[3]] > cb)
+                                        if (p[offsets[4]] > cb)
+                                            if (p[offsets[5]] > cb)
+                                                if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else if (p[offsets[2]] > cb)
+                                    if (p[offsets[3]] > cb)
+                                        if (p[offsets[4]] > cb)
+                                            if (p[offsets[5]] > cb)
+                                                if (p[offsets[6]] > cb)
+                                                    if (p[offsets[7]] > cb)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else goto is_not_a_corner;
+                    else if (p[offsets[8]] < c_b)
+                        if (p[offsets[7]] < c_b)
+                            if (p[offsets[9]] < c_b)
+                                if (p[offsets[10]] < c_b)
+                                    if (p[offsets[6]] < c_b)
+                                        if (p[offsets[5]] < c_b)
+                                            if (p[offsets[4]] < c_b)
+                                                if (p[offsets[3]] < c_b)
+                                                    if (p[offsets[2]] < c_b)
+                                                        goto is_a_corner;
+                                                    else if (p[offsets[11]] < c_b)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[11]] < c_b)
+                                                    if (p[offsets[12]] < c_b)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[11]] < c_b)
+                                                if (p[offsets[12]] < c_b)
+                                                    if (p[offsets[13]] < c_b)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[11]] < c_b)
+                                            if (p[offsets[12]] < c_b)
+                                                if (p[offsets[13]] < c_b)
+                                                    if (p[offsets[14]] < c_b)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[11]] < c_b)
+                                        if (p[offsets[12]] < c_b)
+                                            if (p[offsets[13]] < c_b)
+                                                if (p[offsets[14]] < c_b)
+                                                    if (p[offsets[15]] < c_b)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else goto is_not_a_corner;
+                    else goto is_not_a_corner;
                 else if (p[offsets[0]] < c_b)
                     if (p[offsets[1]] > cb)
                         if (p[offsets[8]] > cb)
@@ -4766,80 +3319,53 @@ namespace Accord.Imaging
                                                 if (p[offsets[3]] > cb)
                                                     if (p[offsets[2]] > cb)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[10]] > cb)
-                                                            if (p[offsets[11]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[10]] > cb)
+                                                    else if (p[offsets[10]] > cb)
                                                         if (p[offsets[11]] > cb)
-                                                            if (p[offsets[12]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[10]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[10]] > cb)
                                                     if (p[offsets[11]] > cb)
                                                         if (p[offsets[12]] > cb)
-                                                            if (p[offsets[13]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[10]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[10]] > cb)
                                                 if (p[offsets[11]] > cb)
                                                     if (p[offsets[12]] > cb)
                                                         if (p[offsets[13]] > cb)
-                                                            if (p[offsets[14]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[10]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[10]] > cb)
                                             if (p[offsets[11]] > cb)
                                                 if (p[offsets[12]] > cb)
                                                     if (p[offsets[13]] > cb)
                                                         if (p[offsets[14]] > cb)
-                                                            if (p[offsets[15]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[10]] > cb)
+                                        if (p[offsets[11]] > cb)
+                                            if (p[offsets[12]] > cb)
+                                                if (p[offsets[13]] > cb)
+                                                    if (p[offsets[14]] > cb)
+                                                        if (p[offsets[15]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
                         else if (p[offsets[8]] < c_b)
                             if (p[offsets[9]] < c_b)
                                 if (p[offsets[10]] < c_b)
@@ -4849,82 +3375,54 @@ namespace Accord.Imaging
                                                 if (p[offsets[14]] < c_b)
                                                     if (p[offsets[15]] < c_b)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[3]] < c_b)
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[2]] < c_b)
-                                            if (p[offsets[3]] < c_b)
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
-                        else
-                            goto is_not_a_corner;
+                                                    else if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[3]] < c_b)
+                                            if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[2]] < c_b)
+                                        if (p[offsets[3]] < c_b)
+                                            if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else goto is_not_a_corner;
                     else if (p[offsets[1]] < c_b)
                         if (p[offsets[2]] > cb)
                             if (p[offsets[9]] > cb)
@@ -4936,62 +3434,41 @@ namespace Accord.Imaging
                                                     if (p[offsets[4]] > cb)
                                                         if (p[offsets[3]] > cb)
                                                             goto is_a_corner;
-                                                        else
-                                                            if (p[offsets[11]] > cb)
-                                                                if (p[offsets[12]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                    else
-                                                        if (p[offsets[11]] > cb)
+                                                        else if (p[offsets[11]] > cb)
                                                             if (p[offsets[12]] > cb)
-                                                                if (p[offsets[13]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[11]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else if (p[offsets[11]] > cb)
                                                         if (p[offsets[12]] > cb)
                                                             if (p[offsets[13]] > cb)
-                                                                if (p[offsets[14]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[11]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[11]] > cb)
                                                     if (p[offsets[12]] > cb)
                                                         if (p[offsets[13]] > cb)
                                                             if (p[offsets[14]] > cb)
-                                                                if (p[offsets[15]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[11]] > cb)
+                                                if (p[offsets[12]] > cb)
+                                                    if (p[offsets[13]] > cb)
+                                                        if (p[offsets[14]] > cb)
+                                                            if (p[offsets[15]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
                             else if (p[offsets[9]] < c_b)
                                 if (p[offsets[10]] < c_b)
                                     if (p[offsets[11]] < c_b)
@@ -5000,74 +3477,49 @@ namespace Accord.Imaging
                                                 if (p[offsets[14]] < c_b)
                                                     if (p[offsets[15]] < c_b)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[3]] < c_b)
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
+                                                    else if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[3]] < c_b)
+                                            if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
                         else if (p[offsets[2]] < c_b)
                             if (p[offsets[3]] > cb)
                                 if (p[offsets[10]] > cb)
@@ -5079,47 +3531,31 @@ namespace Accord.Imaging
                                                         if (p[offsets[5]] > cb)
                                                             if (p[offsets[4]] > cb)
                                                                 goto is_a_corner;
-                                                            else
-                                                                if (p[offsets[12]] > cb)
-                                                                    if (p[offsets[13]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                        else
-                                                            if (p[offsets[12]] > cb)
+                                                            else if (p[offsets[12]] > cb)
                                                                 if (p[offsets[13]] > cb)
-                                                                    if (p[offsets[14]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                    else
-                                                        if (p[offsets[12]] > cb)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else if (p[offsets[12]] > cb)
                                                             if (p[offsets[13]] > cb)
                                                                 if (p[offsets[14]] > cb)
-                                                                    if (p[offsets[15]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else if (p[offsets[12]] > cb)
+                                                        if (p[offsets[13]] > cb)
+                                                            if (p[offsets[14]] > cb)
+                                                                if (p[offsets[15]] > cb)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
                                 else if (p[offsets[10]] < c_b)
                                     if (p[offsets[11]] < c_b)
                                         if (p[offsets[12]] < c_b)
@@ -5127,63 +3563,42 @@ namespace Accord.Imaging
                                                 if (p[offsets[14]] < c_b)
                                                     if (p[offsets[15]] < c_b)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
+                                                    else if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[4]] < c_b)
+                                                if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
                             else if (p[offsets[3]] < c_b)
                                 if (p[offsets[4]] > cb)
                                     if (p[offsets[13]] > cb)
@@ -5196,31 +3611,20 @@ namespace Accord.Imaging
                                                                 if (p[offsets[6]] > cb)
                                                                     if (p[offsets[5]] > cb)
                                                                         goto is_a_corner;
-                                                                    else
-                                                                        if (p[offsets[14]] > cb)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                else
-                                                                    if (p[offsets[14]] > cb)
-                                                                        if (p[offsets[15]] > cb)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
+                                                                    else if (p[offsets[14]] > cb)
+                                                                        goto is_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else if (p[offsets[14]] > cb)
+                                                                    if (p[offsets[15]] > cb)
+                                                                        goto is_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
                                     else if (p[offsets[13]] < c_b)
                                         if (p[offsets[11]] > cb)
                                             if (p[offsets[5]] > cb)
@@ -5231,92 +3635,61 @@ namespace Accord.Imaging
                                                                 if (p[offsets[10]] > cb)
                                                                     if (p[offsets[12]] > cb)
                                                                         goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
                                         else if (p[offsets[11]] < c_b)
                                             if (p[offsets[12]] < c_b)
                                                 if (p[offsets[14]] < c_b)
                                                     if (p[offsets[15]] < c_b)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        if (p[offsets[10]] < c_b)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        if (p[offsets[10]] < c_b)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[5]] > cb)
-                                            if (p[offsets[6]] > cb)
-                                                if (p[offsets[7]] > cb)
-                                                    if (p[offsets[8]] > cb)
-                                                        if (p[offsets[9]] > cb)
-                                                            if (p[offsets[10]] > cb)
-                                                                if (p[offsets[11]] > cb)
-                                                                    if (p[offsets[12]] > cb)
+                                                    else if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                    if (p[offsets[10]] < c_b)
                                                                         goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[5]] < c_b)
+                                                    if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                    if (p[offsets[10]] < c_b)
+                                                                        goto is_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[5]] > cb)
+                                        if (p[offsets[6]] > cb)
+                                            if (p[offsets[7]] > cb)
+                                                if (p[offsets[8]] > cb)
+                                                    if (p[offsets[9]] > cb)
+                                                        if (p[offsets[10]] > cb)
+                                                            if (p[offsets[11]] > cb)
+                                                                if (p[offsets[12]] > cb)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
                                 else if (p[offsets[4]] < c_b)
                                     if (p[offsets[5]] > cb)
                                         if (p[offsets[14]] > cb)
@@ -5329,25 +3702,16 @@ namespace Accord.Imaging
                                                                     if (p[offsets[13]] > cb)
                                                                         if (p[offsets[6]] > cb)
                                                                             goto is_a_corner;
-                                                                        else
-                                                                            if (p[offsets[15]] > cb)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
+                                                                        else if (p[offsets[15]] > cb)
+                                                                            goto is_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
                                         else if (p[offsets[14]] < c_b)
                                             if (p[offsets[12]] > cb)
                                                 if (p[offsets[6]] > cb)
@@ -5358,74 +3722,49 @@ namespace Accord.Imaging
                                                                     if (p[offsets[11]] > cb)
                                                                         if (p[offsets[13]] > cb)
                                                                             goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
                                             else if (p[offsets[12]] < c_b)
                                                 if (p[offsets[13]] < c_b)
                                                     if (p[offsets[15]] < c_b)
                                                         goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        if (p[offsets[10]] < c_b)
-                                                                            if (p[offsets[11]] < c_b)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[6]] > cb)
-                                                if (p[offsets[7]] > cb)
-                                                    if (p[offsets[8]] > cb)
-                                                        if (p[offsets[9]] > cb)
-                                                            if (p[offsets[10]] > cb)
-                                                                if (p[offsets[11]] > cb)
-                                                                    if (p[offsets[12]] > cb)
-                                                                        if (p[offsets[13]] > cb)
+                                                    else if (p[offsets[6]] < c_b)
+                                                        if (p[offsets[7]] < c_b)
+                                                            if (p[offsets[8]] < c_b)
+                                                                if (p[offsets[9]] < c_b)
+                                                                    if (p[offsets[10]] < c_b)
+                                                                        if (p[offsets[11]] < c_b)
                                                                             goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[6]] > cb)
+                                            if (p[offsets[7]] > cb)
+                                                if (p[offsets[8]] > cb)
+                                                    if (p[offsets[9]] > cb)
+                                                        if (p[offsets[10]] > cb)
+                                                            if (p[offsets[11]] > cb)
+                                                                if (p[offsets[12]] > cb)
+                                                                    if (p[offsets[13]] > cb)
+                                                                        goto is_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
                                     else if (p[offsets[5]] < c_b)
                                         if (p[offsets[6]] > cb)
                                             if (p[offsets[15]] < c_b)
@@ -5438,53 +3777,35 @@ namespace Accord.Imaging
                                                                         if (p[offsets[12]] > cb)
                                                                             if (p[offsets[14]] > cb)
                                                                                 goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
+                                                                            else goto is_not_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
                                                 else if (p[offsets[13]] < c_b)
                                                     if (p[offsets[14]] < c_b)
                                                         goto is_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[7]] > cb)
-                                                    if (p[offsets[8]] > cb)
-                                                        if (p[offsets[9]] > cb)
-                                                            if (p[offsets[10]] > cb)
-                                                                if (p[offsets[11]] > cb)
-                                                                    if (p[offsets[12]] > cb)
-                                                                        if (p[offsets[13]] > cb)
-                                                                            if (p[offsets[14]] > cb)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[7]] > cb)
+                                                if (p[offsets[8]] > cb)
+                                                    if (p[offsets[9]] > cb)
+                                                        if (p[offsets[10]] > cb)
+                                                            if (p[offsets[11]] > cb)
+                                                                if (p[offsets[12]] > cb)
+                                                                    if (p[offsets[13]] > cb)
+                                                                        if (p[offsets[14]] > cb)
+                                                                            goto is_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
                                         else if (p[offsets[6]] < c_b)
                                             if (p[offsets[7]] > cb)
                                                 if (p[offsets[14]] > cb)
@@ -5496,810 +3817,544 @@ namespace Accord.Imaging
                                                                         if (p[offsets[13]] > cb)
                                                                             if (p[offsets[15]] > cb)
                                                                                 goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
+                                                                            else goto is_not_a_corner;
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
                                                 else if (p[offsets[14]] < c_b)
                                                     if (p[offsets[15]] < c_b)
                                                         goto is_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
                                             else if (p[offsets[7]] < c_b)
                                                 if (p[offsets[8]] < c_b)
                                                     goto is_a_corner;
-                                                else
-                                                    if (p[offsets[15]] < c_b)
-                                                        goto is_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[14]] < c_b)
-                                                    if (p[offsets[15]] < c_b)
-                                                        goto is_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[13]] > cb)
-                                                if (p[offsets[7]] > cb)
-                                                    if (p[offsets[8]] > cb)
-                                                        if (p[offsets[9]] > cb)
-                                                            if (p[offsets[10]] > cb)
-                                                                if (p[offsets[11]] > cb)
-                                                                    if (p[offsets[12]] > cb)
-                                                                        if (p[offsets[14]] > cb)
-                                                                            if (p[offsets[15]] > cb)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else if (p[offsets[13]] < c_b)
-                                                if (p[offsets[14]] < c_b)
-                                                    if (p[offsets[15]] < c_b)
-                                                        goto is_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[12]] > cb)
+                                                else if (p[offsets[15]] < c_b)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[14]] < c_b)
+                                                if (p[offsets[15]] < c_b)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[13]] > cb)
                                             if (p[offsets[7]] > cb)
                                                 if (p[offsets[8]] > cb)
                                                     if (p[offsets[9]] > cb)
                                                         if (p[offsets[10]] > cb)
                                                             if (p[offsets[11]] > cb)
-                                                                if (p[offsets[13]] > cb)
+                                                                if (p[offsets[12]] > cb)
                                                                     if (p[offsets[14]] > cb)
-                                                                        if (p[offsets[6]] > cb)
+                                                                        if (p[offsets[15]] > cb)
                                                                             goto is_a_corner;
-                                                                        else
-                                                                            if (p[offsets[15]] > cb)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else if (p[offsets[12]] < c_b)
-                                            if (p[offsets[13]] < c_b)
-                                                if (p[offsets[14]] < c_b)
-                                                    if (p[offsets[15]] < c_b)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        if (p[offsets[10]] < c_b)
-                                                                            if (p[offsets[11]] < c_b)
-                                                                                goto is_a_corner;
-                                                                            else
-                                                                                goto is_not_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                else
-                                    if (p[offsets[11]] > cb)
+                                                                        else goto is_not_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[13]] < c_b)
+                                            if (p[offsets[14]] < c_b)
+                                                if (p[offsets[15]] < c_b)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[12]] > cb)
                                         if (p[offsets[7]] > cb)
                                             if (p[offsets[8]] > cb)
                                                 if (p[offsets[9]] > cb)
                                                     if (p[offsets[10]] > cb)
-                                                        if (p[offsets[12]] > cb)
+                                                        if (p[offsets[11]] > cb)
                                                             if (p[offsets[13]] > cb)
-                                                                if (p[offsets[6]] > cb)
-                                                                    if (p[offsets[5]] > cb)
+                                                                if (p[offsets[14]] > cb)
+                                                                    if (p[offsets[6]] > cb)
                                                                         goto is_a_corner;
-                                                                    else
-                                                                        if (p[offsets[14]] > cb)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                else
-                                                                    if (p[offsets[14]] > cb)
-                                                                        if (p[offsets[15]] > cb)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else if (p[offsets[11]] < c_b)
-                                        if (p[offsets[12]] < c_b)
-                                            if (p[offsets[13]] < c_b)
-                                                if (p[offsets[14]] < c_b)
-                                                    if (p[offsets[15]] < c_b)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        if (p[offsets[10]] < c_b)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        if (p[offsets[10]] < c_b)
-                                                                            goto is_a_corner;
-                                                                        else
-                                                                            goto is_not_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                            else
-                                if (p[offsets[10]] > cb)
+                                                                    else if (p[offsets[15]] > cb)
+                                                                        goto is_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[12]] < c_b)
+                                        if (p[offsets[13]] < c_b)
+                                            if (p[offsets[14]] < c_b)
+                                                if (p[offsets[15]] < c_b)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        if (p[offsets[8]] < c_b)
+                                                            if (p[offsets[9]] < c_b)
+                                                                if (p[offsets[10]] < c_b)
+                                                                    if (p[offsets[11]] < c_b)
+                                                                        goto is_a_corner;
+                                                                    else goto is_not_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else if (p[offsets[11]] > cb)
                                     if (p[offsets[7]] > cb)
                                         if (p[offsets[8]] > cb)
                                             if (p[offsets[9]] > cb)
-                                                if (p[offsets[11]] > cb)
+                                                if (p[offsets[10]] > cb)
                                                     if (p[offsets[12]] > cb)
-                                                        if (p[offsets[6]] > cb)
-                                                            if (p[offsets[5]] > cb)
-                                                                if (p[offsets[4]] > cb)
+                                                        if (p[offsets[13]] > cb)
+                                                            if (p[offsets[6]] > cb)
+                                                                if (p[offsets[5]] > cb)
                                                                     goto is_a_corner;
-                                                                else
-                                                                    if (p[offsets[13]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                            else
-                                                                if (p[offsets[13]] > cb)
-                                                                    if (p[offsets[14]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                        else
-                                                            if (p[offsets[13]] > cb)
-                                                                if (p[offsets[14]] > cb)
-                                                                    if (p[offsets[15]] > cb)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
+                                                                else if (p[offsets[14]] > cb)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else if (p[offsets[14]] > cb)
+                                                                if (p[offsets[15]] > cb)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else if (p[offsets[11]] < c_b)
+                                    if (p[offsets[12]] < c_b)
+                                        if (p[offsets[13]] < c_b)
+                                            if (p[offsets[14]] < c_b)
+                                                if (p[offsets[15]] < c_b)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        if (p[offsets[8]] < c_b)
+                                                            if (p[offsets[9]] < c_b)
+                                                                if (p[offsets[10]] < c_b)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[5]] < c_b)
+                                                if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        if (p[offsets[8]] < c_b)
+                                                            if (p[offsets[9]] < c_b)
+                                                                if (p[offsets[10]] < c_b)
+                                                                    goto is_a_corner;
+                                                                else goto is_not_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else if (p[offsets[10]] > cb)
+                                if (p[offsets[7]] > cb)
+                                    if (p[offsets[8]] > cb)
+                                        if (p[offsets[9]] > cb)
+                                            if (p[offsets[11]] > cb)
+                                                if (p[offsets[12]] > cb)
+                                                    if (p[offsets[6]] > cb)
+                                                        if (p[offsets[5]] > cb)
+                                                            if (p[offsets[4]] > cb)
+                                                                goto is_a_corner;
+                                                            else if (p[offsets[13]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else if (p[offsets[13]] > cb)
+                                                            if (p[offsets[14]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else if (p[offsets[13]] > cb)
+                                                        if (p[offsets[14]] > cb)
+                                                            if (p[offsets[15]] > cb)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else if (p[offsets[10]] < c_b)
+                                if (p[offsets[11]] < c_b)
+                                    if (p[offsets[12]] < c_b)
+                                        if (p[offsets[13]] < c_b)
+                                            if (p[offsets[14]] < c_b)
+                                                if (p[offsets[15]] < c_b)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        if (p[offsets[8]] < c_b)
+                                                            if (p[offsets[9]] < c_b)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[5]] < c_b)
+                                                if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        if (p[offsets[8]] < c_b)
+                                                            if (p[offsets[9]] < c_b)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[4]] < c_b)
+                                            if (p[offsets[5]] < c_b)
+                                                if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        if (p[offsets[8]] < c_b)
+                                                            if (p[offsets[9]] < c_b)
+                                                                goto is_a_corner;
+                                                            else goto is_not_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else if (p[offsets[9]] > cb)
+                            if (p[offsets[7]] > cb)
+                                if (p[offsets[8]] > cb)
+                                    if (p[offsets[10]] > cb)
+                                        if (p[offsets[11]] > cb)
+                                            if (p[offsets[6]] > cb)
+                                                if (p[offsets[5]] > cb)
+                                                    if (p[offsets[4]] > cb)
+                                                        if (p[offsets[3]] > cb)
+                                                            goto is_a_corner;
+                                                        else if (p[offsets[12]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else if (p[offsets[12]] > cb)
+                                                        if (p[offsets[13]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[12]] > cb)
+                                                    if (p[offsets[13]] > cb)
+                                                        if (p[offsets[14]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[12]] > cb)
+                                                if (p[offsets[13]] > cb)
+                                                    if (p[offsets[14]] > cb)
+                                                        if (p[offsets[15]] > cb)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else if (p[offsets[9]] < c_b)
+                            if (p[offsets[10]] < c_b)
+                                if (p[offsets[11]] < c_b)
+                                    if (p[offsets[12]] < c_b)
+                                        if (p[offsets[13]] < c_b)
+                                            if (p[offsets[14]] < c_b)
+                                                if (p[offsets[15]] < c_b)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        if (p[offsets[8]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[5]] < c_b)
+                                                if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        if (p[offsets[8]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[4]] < c_b)
+                                            if (p[offsets[5]] < c_b)
+                                                if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        if (p[offsets[8]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[3]] < c_b)
+                                        if (p[offsets[4]] < c_b)
+                                            if (p[offsets[5]] < c_b)
+                                                if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        if (p[offsets[8]] < c_b)
+                                                            goto is_a_corner;
+                                                        else goto is_not_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else goto is_not_a_corner;
+                    else if (p[offsets[8]] > cb)
+                        if (p[offsets[7]] > cb)
+                            if (p[offsets[9]] > cb)
+                                if (p[offsets[10]] > cb)
+                                    if (p[offsets[6]] > cb)
+                                        if (p[offsets[5]] > cb)
+                                            if (p[offsets[4]] > cb)
+                                                if (p[offsets[3]] > cb)
+                                                    if (p[offsets[2]] > cb)
+                                                        goto is_a_corner;
+                                                    else if (p[offsets[11]] > cb)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else if (p[offsets[11]] > cb)
+                                                    if (p[offsets[12]] > cb)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[11]] > cb)
+                                                if (p[offsets[12]] > cb)
+                                                    if (p[offsets[13]] > cb)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[11]] > cb)
+                                            if (p[offsets[12]] > cb)
+                                                if (p[offsets[13]] > cb)
+                                                    if (p[offsets[14]] > cb)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[11]] > cb)
+                                        if (p[offsets[12]] > cb)
+                                            if (p[offsets[13]] > cb)
+                                                if (p[offsets[14]] > cb)
+                                                    if (p[offsets[15]] > cb)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else goto is_not_a_corner;
+                    else if (p[offsets[8]] < c_b)
+                        if (p[offsets[9]] < c_b)
+                            if (p[offsets[10]] < c_b)
+                                if (p[offsets[11]] < c_b)
+                                    if (p[offsets[12]] < c_b)
+                                        if (p[offsets[13]] < c_b)
+                                            if (p[offsets[14]] < c_b)
+                                                if (p[offsets[15]] < c_b)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[5]] < c_b)
+                                                if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[4]] < c_b)
+                                            if (p[offsets[5]] < c_b)
+                                                if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[3]] < c_b)
+                                        if (p[offsets[4]] < c_b)
+                                            if (p[offsets[5]] < c_b)
+                                                if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else if (p[offsets[2]] < c_b)
+                                    if (p[offsets[3]] < c_b)
+                                        if (p[offsets[4]] < c_b)
+                                            if (p[offsets[5]] < c_b)
+                                                if (p[offsets[6]] < c_b)
+                                                    if (p[offsets[7]] < c_b)
+                                                        goto is_a_corner;
+                                                    else goto is_not_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else goto is_not_a_corner;
+                    else goto is_not_a_corner;
+                else if (p[offsets[7]] > cb)
+                    if (p[offsets[8]] > cb)
+                        if (p[offsets[9]] > cb)
+                            if (p[offsets[6]] > cb)
+                                if (p[offsets[5]] > cb)
+                                    if (p[offsets[4]] > cb)
+                                        if (p[offsets[3]] > cb)
+                                            if (p[offsets[2]] > cb)
+                                                if (p[offsets[1]] > cb)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[10]] > cb)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[10]] > cb)
+                                                if (p[offsets[11]] > cb)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[10]] > cb)
+                                            if (p[offsets[11]] > cb)
+                                                if (p[offsets[12]] > cb)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[10]] > cb)
+                                        if (p[offsets[11]] > cb)
+                                            if (p[offsets[12]] > cb)
+                                                if (p[offsets[13]] > cb)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else if (p[offsets[10]] > cb)
+                                    if (p[offsets[11]] > cb)
+                                        if (p[offsets[12]] > cb)
+                                            if (p[offsets[13]] > cb)
+                                                if (p[offsets[14]] > cb)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else if (p[offsets[10]] > cb)
+                                if (p[offsets[11]] > cb)
+                                    if (p[offsets[12]] > cb)
+                                        if (p[offsets[13]] > cb)
+                                            if (p[offsets[14]] > cb)
+                                                if (p[offsets[15]] > cb)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else goto is_not_a_corner;
+                    else goto is_not_a_corner;
+                else if (p[offsets[7]] < c_b)
+                    if (p[offsets[8]] < c_b)
+                        if (p[offsets[9]] < c_b)
+                            if (p[offsets[6]] < c_b)
+                                if (p[offsets[5]] < c_b)
+                                    if (p[offsets[4]] < c_b)
+                                        if (p[offsets[3]] < c_b)
+                                            if (p[offsets[2]] < c_b)
+                                                if (p[offsets[1]] < c_b)
+                                                    goto is_a_corner;
+                                                else if (p[offsets[10]] < c_b)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else if (p[offsets[10]] < c_b)
+                                                if (p[offsets[11]] < c_b)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else if (p[offsets[10]] < c_b)
+                                            if (p[offsets[11]] < c_b)
+                                                if (p[offsets[12]] < c_b)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else if (p[offsets[10]] < c_b)
+                                        if (p[offsets[11]] < c_b)
+                                            if (p[offsets[12]] < c_b)
+                                                if (p[offsets[13]] < c_b)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
                                 else if (p[offsets[10]] < c_b)
                                     if (p[offsets[11]] < c_b)
                                         if (p[offsets[12]] < c_b)
                                             if (p[offsets[13]] < c_b)
                                                 if (p[offsets[14]] < c_b)
-                                                    if (p[offsets[15]] < c_b)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    if (p[offsets[9]] < c_b)
-                                                                        goto is_a_corner;
-                                                                    else
-                                                                        goto is_not_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                        else
-                            if (p[offsets[9]] > cb)
-                                if (p[offsets[7]] > cb)
-                                    if (p[offsets[8]] > cb)
-                                        if (p[offsets[10]] > cb)
-                                            if (p[offsets[11]] > cb)
-                                                if (p[offsets[6]] > cb)
-                                                    if (p[offsets[5]] > cb)
-                                                        if (p[offsets[4]] > cb)
-                                                            if (p[offsets[3]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                if (p[offsets[12]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                        else
-                                                            if (p[offsets[12]] > cb)
-                                                                if (p[offsets[13]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                    else
-                                                        if (p[offsets[12]] > cb)
-                                                            if (p[offsets[13]] > cb)
-                                                                if (p[offsets[14]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[12]] > cb)
-                                                        if (p[offsets[13]] > cb)
-                                                            if (p[offsets[14]] > cb)
-                                                                if (p[offsets[15]] > cb)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else if (p[offsets[9]] < c_b)
-                                if (p[offsets[10]] < c_b)
-                                    if (p[offsets[11]] < c_b)
-                                        if (p[offsets[12]] < c_b)
-                                            if (p[offsets[13]] < c_b)
-                                                if (p[offsets[14]] < c_b)
-                                                    if (p[offsets[15]] < c_b)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[3]] < c_b)
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                if (p[offsets[8]] < c_b)
-                                                                    goto is_a_corner;
-                                                                else
-                                                                    goto is_not_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
-                    else
-                        if (p[offsets[8]] > cb)
-                            if (p[offsets[7]] > cb)
-                                if (p[offsets[9]] > cb)
-                                    if (p[offsets[10]] > cb)
-                                        if (p[offsets[6]] > cb)
-                                            if (p[offsets[5]] > cb)
-                                                if (p[offsets[4]] > cb)
-                                                    if (p[offsets[3]] > cb)
-                                                        if (p[offsets[2]] > cb)
-                                                            goto is_a_corner;
-                                                        else
-                                                            if (p[offsets[11]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                    else
-                                                        if (p[offsets[11]] > cb)
-                                                            if (p[offsets[12]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[11]] > cb)
-                                                        if (p[offsets[12]] > cb)
-                                                            if (p[offsets[13]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[11]] > cb)
-                                                    if (p[offsets[12]] > cb)
-                                                        if (p[offsets[13]] > cb)
-                                                            if (p[offsets[14]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[11]] > cb)
-                                                if (p[offsets[12]] > cb)
-                                                    if (p[offsets[13]] > cb)
-                                                        if (p[offsets[14]] > cb)
-                                                            if (p[offsets[15]] > cb)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
-                        else if (p[offsets[8]] < c_b)
-                            if (p[offsets[9]] < c_b)
-                                if (p[offsets[10]] < c_b)
-                                    if (p[offsets[11]] < c_b)
-                                        if (p[offsets[12]] < c_b)
-                                            if (p[offsets[13]] < c_b)
-                                                if (p[offsets[14]] < c_b)
-                                                    if (p[offsets[15]] < c_b)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[3]] < c_b)
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[2]] < c_b)
-                                            if (p[offsets[3]] < c_b)
-                                                if (p[offsets[4]] < c_b)
-                                                    if (p[offsets[5]] < c_b)
-                                                        if (p[offsets[6]] < c_b)
-                                                            if (p[offsets[7]] < c_b)
-                                                                goto is_a_corner;
-                                                            else
-                                                                goto is_not_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                else
-                                    goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
-                        else
-                            goto is_not_a_corner;
-                else
-                    if (p[offsets[7]] > cb)
-                        if (p[offsets[8]] > cb)
-                            if (p[offsets[9]] > cb)
-                                if (p[offsets[6]] > cb)
-                                    if (p[offsets[5]] > cb)
-                                        if (p[offsets[4]] > cb)
-                                            if (p[offsets[3]] > cb)
-                                                if (p[offsets[2]] > cb)
-                                                    if (p[offsets[1]] > cb)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[10]] > cb)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[10]] > cb)
-                                                        if (p[offsets[11]] > cb)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[10]] > cb)
-                                                    if (p[offsets[11]] > cb)
-                                                        if (p[offsets[12]] > cb)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[10]] > cb)
-                                                if (p[offsets[11]] > cb)
-                                                    if (p[offsets[12]] > cb)
-                                                        if (p[offsets[13]] > cb)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[10]] > cb)
-                                            if (p[offsets[11]] > cb)
-                                                if (p[offsets[12]] > cb)
-                                                    if (p[offsets[13]] > cb)
-                                                        if (p[offsets[14]] > cb)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                else
-                                    if (p[offsets[10]] > cb)
-                                        if (p[offsets[11]] > cb)
-                                            if (p[offsets[12]] > cb)
-                                                if (p[offsets[13]] > cb)
-                                                    if (p[offsets[14]] > cb)
-                                                        if (p[offsets[15]] > cb)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
-                        else
-                            goto is_not_a_corner;
-                    else if (p[offsets[7]] < c_b)
-                        if (p[offsets[8]] < c_b)
-                            if (p[offsets[9]] < c_b)
-                                if (p[offsets[6]] < c_b)
-                                    if (p[offsets[5]] < c_b)
-                                        if (p[offsets[4]] < c_b)
-                                            if (p[offsets[3]] < c_b)
-                                                if (p[offsets[2]] < c_b)
-                                                    if (p[offsets[1]] < c_b)
-                                                        goto is_a_corner;
-                                                    else
-                                                        if (p[offsets[10]] < c_b)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                else
-                                                    if (p[offsets[10]] < c_b)
-                                                        if (p[offsets[11]] < c_b)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                            else
-                                                if (p[offsets[10]] < c_b)
-                                                    if (p[offsets[11]] < c_b)
-                                                        if (p[offsets[12]] < c_b)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                        else
-                                            if (p[offsets[10]] < c_b)
-                                                if (p[offsets[11]] < c_b)
-                                                    if (p[offsets[12]] < c_b)
-                                                        if (p[offsets[13]] < c_b)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                    else
-                                        if (p[offsets[10]] < c_b)
-                                            if (p[offsets[11]] < c_b)
-                                                if (p[offsets[12]] < c_b)
-                                                    if (p[offsets[13]] < c_b)
-                                                        if (p[offsets[14]] < c_b)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                else
-                                    if (p[offsets[10]] < c_b)
-                                        if (p[offsets[11]] < c_b)
-                                            if (p[offsets[12]] < c_b)
-                                                if (p[offsets[13]] < c_b)
-                                                    if (p[offsets[14]] < c_b)
-                                                        if (p[offsets[15]] < c_b)
-                                                            goto is_a_corner;
-                                                        else
-                                                            goto is_not_a_corner;
-                                                    else
-                                                        goto is_not_a_corner;
-                                                else
-                                                    goto is_not_a_corner;
-                                            else
-                                                goto is_not_a_corner;
-                                        else
-                                            goto is_not_a_corner;
-                                    else
-                                        goto is_not_a_corner;
-                            else
-                                goto is_not_a_corner;
-                        else
-                            goto is_not_a_corner;
-                    else
-                        goto is_not_a_corner;
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else if (p[offsets[10]] < c_b)
+                                if (p[offsets[11]] < c_b)
+                                    if (p[offsets[12]] < c_b)
+                                        if (p[offsets[13]] < c_b)
+                                            if (p[offsets[14]] < c_b)
+                                                if (p[offsets[15]] < c_b)
+                                                    goto is_a_corner;
+                                                else goto is_not_a_corner;
+                                            else goto is_not_a_corner;
+                                        else goto is_not_a_corner;
+                                    else goto is_not_a_corner;
+                                else goto is_not_a_corner;
+                            else goto is_not_a_corner;
+                        else goto is_not_a_corner;
+                    else goto is_not_a_corner;
+                else goto is_not_a_corner;
 
                 #endregion
 
-            is_a_corner:
+                is_a_corner:
                 bmin = b;
                 goto end_if;
 
@@ -6339,5 +4394,16 @@ namespace Accord.Imaging
         }
         #endregion
 
+        /// <summary>
+        /// Creates a new object that is a copy of the current instance.
+        /// </summary>
+        /// 
+        protected override object Clone(ISet<PixelFormat> supportedFormats)
+        {
+            return new FastCornersDetector(threshold)
+            {
+                SupportedFormats = supportedFormats
+            };
+        }
     }
 }

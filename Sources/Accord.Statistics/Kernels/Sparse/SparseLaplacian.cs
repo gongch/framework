@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,13 +23,15 @@
 namespace Accord.Statistics.Kernels.Sparse
 {
     using System;
-    using AForge;
+    using Accord.Math.Distances;
+    using Accord.Compat;
 
     /// <summary>
     ///   Sparse Laplacian Kernel.
     /// </summary>
     /// 
     [Serializable]
+    [Obsolete("Please use the Laplacian kernel with Sparse<double> instead.")]
     public sealed class SparseLaplacian : KernelBase, IKernel, IDistance
     {
         private double sigma;
@@ -97,41 +99,14 @@ namespace Accord.Statistics.Kernels.Sparse
             // Optimization in case x and y are
             // exactly the same object reference.
 
-            if (x == y) 
+            if (x == y)
                 return 1.0;
 
-            double norm = 0.0;
+#pragma warning disable 0618
 
-            int i = 0, j = 0;
+            double norm = SparseLinear.SquaredEuclidean(x, y);
 
-            while (i < x.Length || j < y.Length)
-            {
-                double posx = x[i];
-                double posy = y[j];
-
-                if (posx == posy)
-                {
-                    double d = x[i + 1] - y[j + 1];
-                    norm += d * d;
-                    i += 2; j += 2;
-                }
-                else if (posx < posy)
-                {
-                    double d = x[j + 1];
-                    norm += d * d;
-                    i += 2;
-                }
-                else if (posx > posy)
-                {
-                    double d = y[i + 1];
-                    norm += d * d;
-                    j += 2;
-                }
-            }
-
-            norm = Math.Sqrt(norm);
-
-            return Math.Exp(-gamma * norm);
+            return Math.Exp(-gamma * Math.Sqrt(norm));
         }
 
         /// <summary>
@@ -146,41 +121,12 @@ namespace Accord.Statistics.Kernels.Sparse
         /// 
         public override double Distance(double[] x, double[] y)
         {
-            if (x == y) 
+            if (x == y)
                 return 0.0;
 
-            double norm = 0.0;
+            double norm = SparseLinear.SquaredEuclidean(x, y);
 
-            int i = 0, j = 0;
-
-            while (i < x.Length || j < y.Length)
-            {
-                double posx = x[i];
-                double posy = y[j];
-
-                if (posx == posy)
-                {
-                    double d = x[i + 1] - y[j + 1];
-                    norm += d * d;
-                    i += 2; j += 2;
-                }
-                else if (posx < posy)
-                {
-                    double d = x[j + 1];
-                    norm += d * d;
-                    i += 2;
-                }
-                else if (posx > posy)
-                {
-                    double d = y[i + 1];
-                    norm += d * d;
-                    j += 2;
-                }
-            }
-
-            norm = Math.Sqrt(norm);
-
-            return 2 - 2 * Math.Exp(-gamma * norm);
+            return 2 - 2 * Math.Exp(-gamma * Math.Sqrt(norm));
         }
 
 
@@ -210,7 +156,7 @@ namespace Accord.Statistics.Kernels.Sparse
 
             double q1 = distances[(int)Math.Ceiling(0.15 * distances.Length)];
             double q9 = distances[(int)Math.Ceiling(0.85 * distances.Length)];
-            double qm = Accord.Statistics.Tools.Median(distances, alreadySorted: true);
+            double qm = distances.Median(alreadySorted: true);
 
             range = new DoubleRange(q1, q9);
 

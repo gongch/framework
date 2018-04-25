@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,30 +24,21 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Kernels.Sparse;
     using Accord.Statistics.Kernels;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class SparseLaplacianTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
+        [Test]
+        public void FunctionTest2()
         {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
+            SparseLinearTest.SparseTest(new Laplacian(), new SparseLaplacian());
+            SparseLinearTest.SparseTest(new Laplacian(0), new SparseLaplacian(0));
+            SparseLinearTest.SparseTest(new Laplacian(3.6), new SparseLaplacian(3.6));
         }
 
-
-
-        [TestMethod()]
+        [Test]
         public void FunctionTest()
         {
             Laplacian dense = new Laplacian(3.6);
@@ -82,7 +73,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(double.IsNaN(actual));
         }
 
-        [TestMethod()]
+        [Test]
         public void DistanceTest()
         {
             Laplacian dense = new Laplacian(3.6);

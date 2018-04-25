@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@ namespace Accord.Tests.Statistics
 {
     using System;
     using Accord.Statistics.Links;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class LogitLinkFunctionTest
     {
 
@@ -46,7 +46,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void LogitLinkFunctionConstructorTest()
         {
             LogitLinkFunction target = new LogitLinkFunction();
@@ -63,7 +63,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void LogitLinkFunctionConstructorTest1()
         {
             double beta = 3.14;
@@ -83,7 +83,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void DerivativeTest()
         {
             double[] expected =
@@ -110,7 +110,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void DerivativeTest2()
         {
             double beta = 4.2;

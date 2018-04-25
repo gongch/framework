@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -20,34 +20,17 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-namespace Accord.Tests.Wavelets
+namespace Accord.Tests.Math
 {
     using Accord.Math.Wavelets;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Math;
 
-    [TestClass()]
+    [TestFixture]
     public class HaarTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void FWT2DTest()
         {
             double[,] original =
@@ -79,7 +62,7 @@ namespace Accord.Tests.Wavelets
             Assert.IsTrue(Matrix.IsEqual(data, original, 0.0001));
         }
 
-        [TestMethod()]
+        [Test]
         public void FWT2DTest2()
         {
             int levels = 2;
@@ -113,7 +96,7 @@ namespace Accord.Tests.Wavelets
             Assert.IsTrue(Matrix.IsEqual(data, original, 0.0001));
         }
 
-        [TestMethod()]
+        [Test]
         public void IWTTest()
         {
             double[] original = { 1, 2, 3, 4 };

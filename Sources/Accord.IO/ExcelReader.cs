@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,12 +22,15 @@
 
 namespace Accord.IO
 {
+#if !NETSTANDARD
     using System;
+    using System.Collections.Generic;
     using System.Data;
     using System.Data.Common;
     using System.Data.OleDb;
     using System.Globalization;
     using System.IO;
+    using Accord.Compat;
 
     /// <summary>
     ///   Excel file reader using Microsoft Jet Database Engine.
@@ -253,22 +256,31 @@ namespace Accord.IO
         /// 
         public string[] GetWorksheetList()
         {
-            OleDbConnection connection = new OleDbConnection(strConnection);
-            connection.Open();
-            DataTable tableWorksheets = connection.GetSchema("Tables");
-            connection.Close();
+            var set = new HashSet<string>();
 
-            worksheets = new string[tableWorksheets.Rows.Count];
-
-            for (int i = 0; i < worksheets.Length; i++)
+            using (var connection = new OleDbConnection(strConnection))
             {
-                worksheets[i] = (string)tableWorksheets.Rows[i]["TABLE_NAME"];
-                worksheets[i] = worksheets[i].Remove(worksheets[i].Length - 1).Trim('"', '\'');
+                connection.Open();
 
-                // removes the trailing $ and other characters appended in the table name
-                while (worksheets[i].EndsWith("$", StringComparison.Ordinal))
-                    worksheets[i] = worksheets[i].Remove(worksheets[i].Length - 1).Trim('"', '\'');
+                var table = connection.GetSchema("Tables");
+
+                for (int i = 0; i < table.Rows.Count; i++)
+                {
+                    string name = (string)table.Rows[i]["TABLE_NAME"];
+
+                    // removes the trailing $ and other characters appended in the table name
+                    while (name.EndsWith("$", StringComparison.Ordinal)
+                        || name.EndsWith("$\"", StringComparison.Ordinal)
+                        || name.EndsWith("$\'", StringComparison.Ordinal)
+                        || name.EndsWith("$\"\'", StringComparison.Ordinal)
+                        || name.EndsWith("$\'\"", StringComparison.Ordinal))
+                        name = name.Remove(name.Length - 1).Trim('"', '\'');
+
+                    set.Add(name);
+                }
             }
+
+            this.worksheets = new List<string>(set).ToArray();
 
             return worksheets;
         }
@@ -345,25 +357,6 @@ namespace Accord.IO
             }
 
             return dataset;
-        }
-
-    }
-
-
-
-#if NET35
-    internal static class Extensions
-    {
-
-        internal static void CopyTo(this Stream input, Stream output)
-        {
-            byte[] buffer = new byte[16 * 1024]; 
-
-            int bytesRead;
-            while ((bytesRead = input.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                output.Write(buffer, 0, bytesRead);
-            }
         }
     }
 #endif

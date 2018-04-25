@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,16 +22,25 @@
 
 namespace Accord.MachineLearning
 {
+    using Accord.Statistics;
     using System;
+    using Accord.MachineLearning.Performance;
+    using System.Collections.Generic;
+    using Accord.Compat;
 
     /// <summary>
     ///   Summary statistics for a cross-validation trial.
     /// </summary>
     /// 
+    /// <example>
+    ///   <code source="Unit Tests\Accord.Tests.MachineLearning\CrossValidationTest.cs" region="doc_learn" />
+    ///   <code source="Unit Tests\Accord.Tests.MachineLearning\CrossValidationTest.cs" region="doc_learn_hmm" />
+    ///   <code source="Unit Tests\Accord.Tests.MachineLearning\DecisionTrees\DecisionTreeTest.cs" region="doc_cross_validation" />
+    /// </example>
+    /// 
     [Serializable]
     public class CrossValidationStatistics
     {
-
         /// <summary>
         ///   Gets the values acquired during the cross-validation.
         ///   Most often those will be the errors for each folding.
@@ -115,14 +124,14 @@ namespace Accord.MachineLearning
             this.Values = statistics;
             this.Variances = variances;
 
-            this.Mean = Statistics.Tools.Mean(statistics);
-            this.Variance = Statistics.Tools.Variance(statistics, Mean);
+            this.Mean = Measures.Mean(statistics);
+            this.Variance = Measures.Variance(statistics, Mean);
 
             // Compute the pooled variance if the individual variances
             //  for each cross-validation run are available
 
             if (variances != null)
-                this.PooledVariance = Statistics.Tools.PooledVariance(sizes, variances);
+                this.PooledVariance = Measures.PooledVariance(sizes, variances);
         }
 
     }

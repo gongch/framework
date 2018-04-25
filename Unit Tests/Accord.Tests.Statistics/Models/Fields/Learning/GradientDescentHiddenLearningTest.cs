@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -27,29 +27,13 @@ namespace Accord.Tests.Statistics.Models.Fields
     using Accord.Statistics.Models.Fields.Functions;
     using Accord.Statistics.Models.Fields.Learning;
     using Accord.Statistics.Models.Markov;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class GradientDescentHiddenLearningTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void RunTest()
         {
             var inputs = QuasiNewtonHiddenLearningTest.inputs;
@@ -60,6 +44,11 @@ namespace Accord.Tests.Statistics.Models.Fields
 
             var model = new HiddenConditionalRandomField<int>(function);
             var target = new HiddenGradientDescentLearning<int>(model);
+
+#if DEBUG
+            target.ParallelOptions.MaxDegreeOfParallelism = 1;
+#endif
+
             target.LearningRate = 1000;
 
             double[] actual = new double[inputs.Length];
@@ -88,10 +77,8 @@ namespace Accord.Tests.Statistics.Models.Fields
                 expected[i] = outputs[i];
             }
 
-            Assert.AreEqual(-0.0019419916698781847, ll0, 1e-10);
-            Assert.AreEqual(0.00053970993162644199, error, 1e-10);
-            Assert.IsFalse(Double.IsNaN(ll0));
-            Assert.IsFalse(Double.IsNaN(error));
+            Assert.AreEqual(-0.00046872579975998363, ll0, 1e-10);
+            Assert.AreEqual(0.00027018722449545507, error, 1e-10);
 
             for (int i = 0; i < inputs.Length; i++)
                 Assert.AreEqual(expected[i], actual[i]);
@@ -99,7 +86,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             Assert.IsTrue(ll1 > ll0);
         }
 
-        [TestMethod()]
+        [Test]
         public void RunTest2()
         {
             var inputs = QuasiNewtonHiddenLearningTest.inputs;

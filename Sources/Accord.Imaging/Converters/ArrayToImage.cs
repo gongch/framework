@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,10 +22,10 @@
 
 namespace Accord.Imaging.Converters
 {
+    using Accord.Math;
     using System;
     using System.Drawing;
     using System.Drawing.Imaging;
-    using AForge.Imaging;
 
     /// <summary>
     ///   Jagged array to Bitmap converter.
@@ -173,10 +173,9 @@ namespace Accord.Imaging.Converters
         /// 
         public void Convert(double[] input, out Bitmap output)
         {
-            output = AForge.Imaging.Image.CreateGrayscaleImage(Width, Height);
+            output = Accord.Imaging.Image.CreateGrayscaleImage(Width, Height);
 
-            BitmapData data = output.LockBits(new Rectangle(0, 0, Width, Height),
-                ImageLockMode.WriteOnly, output.PixelFormat);
+            BitmapData data = output.LockBits(ImageLockMode.WriteOnly);
 
             int offset = data.Stride - Width;
             int src = 0;
@@ -189,7 +188,7 @@ namespace Accord.Imaging.Converters
                 {
                     for (int x = 0; x < Width; x++, src++, dst++)
                     {
-                        *dst = (byte)Accord.Math.Tools.Scale(Min, Max, 0, 255, input[src]);
+                        *dst = (byte)Vector.Scale(input[src], Min, Max, 0, 255);
                     }
                     dst += offset;
                 }
@@ -207,10 +206,9 @@ namespace Accord.Imaging.Converters
         /// 
         public void Convert(float[] input, out Bitmap output)
         {
-            output = AForge.Imaging.Image.CreateGrayscaleImage(Width, Height);
+            output = Accord.Imaging.Image.CreateGrayscaleImage(Width, Height);
 
-            BitmapData data = output.LockBits(new Rectangle(0, 0, Width, Height),
-                ImageLockMode.WriteOnly, output.PixelFormat);
+            BitmapData data = output.LockBits(ImageLockMode.WriteOnly);
 
             int offset = data.Stride - Width;
             int src = 0;
@@ -226,7 +224,7 @@ namespace Accord.Imaging.Converters
                 {
                     for (int x = 0; x < Width; x++, src++, dst++)
                     {
-                        *dst = (byte)Accord.Math.Tools.Scale(min, max, 0, 255, input[src]);
+                        *dst = (byte)Vector.Scale(input[src], min, max, 0, 255);
                     }
                     dst += offset;
                 }
@@ -246,10 +244,9 @@ namespace Accord.Imaging.Converters
         /// 
         public void Convert(byte[] input, out Bitmap output)
         {
-            output = AForge.Imaging.Image.CreateGrayscaleImage(Width, Height);
+            output = Accord.Imaging.Image.CreateGrayscaleImage(Width, Height);
 
-            BitmapData data = output.LockBits(new Rectangle(0, 0, Width, Height),
-                ImageLockMode.WriteOnly, output.PixelFormat);
+            BitmapData data = output.LockBits(ImageLockMode.WriteOnly);
 
             int offset = data.Stride - Width;
             int src = 0;
@@ -348,8 +345,7 @@ namespace Accord.Imaging.Converters
 
             output = new Bitmap(Width, Height, format);
 
-            BitmapData data = output.LockBits(new Rectangle(0, 0, Width, Height),
-                ImageLockMode.WriteOnly, format);
+            BitmapData data = output.LockBits(ImageLockMode.WriteOnly);
 
             int pixelSize = System.Drawing.Image.GetPixelFormatSize(format) / 8;
             int offset = data.Stride - Width * pixelSize;
@@ -365,7 +361,7 @@ namespace Accord.Imaging.Converters
                     {
                         for (int c = channels - 1; c >= 0; c--, dst++)
                         {
-                            *dst = (byte)Accord.Math.Tools.Scale(Min, Max, 0, 255, input[src][c]);
+                            *dst = (byte)Vector.Scale(input[src][c], Min, Max, (byte)0, (byte)255);
                         }
                     }
                     dst += offset;
@@ -408,8 +404,7 @@ namespace Accord.Imaging.Converters
 
             output = new Bitmap(Width, Height, format);
 
-            BitmapData data = output.LockBits(new Rectangle(0, 0, Width, Height),
-                ImageLockMode.WriteOnly, format);
+            BitmapData data = output.LockBits(ImageLockMode.WriteOnly);
 
             int pixelSize = System.Drawing.Image.GetPixelFormatSize(format) / 8;
             int offset = data.Stride - Width * pixelSize;
@@ -428,7 +423,7 @@ namespace Accord.Imaging.Converters
                     {
                         for (int c = channels - 1; c >= 0; c--, dst++)
                         {
-                            *dst = (byte)Accord.Math.Tools.Scale(min, max, 0, 255, input[src][c]);
+                            *dst = (byte)Vector.Scale(input[src][c], min, max, (byte)0, (byte)255);
                         }
                     }
                     dst += offset;
@@ -473,8 +468,7 @@ namespace Accord.Imaging.Converters
 
             output = new Bitmap(Width, Height, format);
 
-            BitmapData data = output.LockBits(new Rectangle(0, 0, Width, Height),
-                ImageLockMode.WriteOnly, format);
+            BitmapData data = output.LockBits(ImageLockMode.WriteOnly);
 
             int pixelSize = System.Drawing.Image.GetPixelFormatSize(format) / 8;
             int offset = data.Stride - Width * pixelSize;
@@ -515,8 +509,7 @@ namespace Accord.Imaging.Converters
             PixelFormat format = PixelFormat.Format32bppArgb;
             output = new Bitmap(Width, Height, format);
 
-            BitmapData data = output.LockBits(new Rectangle(0, 0, Width, Height),
-                ImageLockMode.WriteOnly, format);
+            BitmapData data = output.LockBits(ImageLockMode.WriteOnly);
 
             int pixelSize = System.Drawing.Image.GetPixelFormatSize(format) / 8;
             int offset = data.Stride - Width * pixelSize;

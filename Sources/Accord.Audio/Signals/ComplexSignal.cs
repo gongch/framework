@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@ namespace Accord.Audio
     using System;
     using System.Runtime.InteropServices;
     using Accord.Math;
-    using AForge.Math;
+    using Accord.Compat;
+    using System.Numerics;
 
     /// <summary>
     ///   Complex signal status.
@@ -177,13 +178,24 @@ namespace Accord.Audio
         public Complex[,] ToArray()
         {
             Complex[,] array = new Complex[Length, Channels];
-            
+
             GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
             IntPtr pointer = handle.AddrOfPinnedObject();
+#pragma warning disable CS0618 // Type or member is obsolete
             Marshal.Copy(RawData, 0, pointer, array.Length * Marshal.SizeOf(typeof(Complex)));
+#pragma warning restore CS0618 // Type or member is obsolete
             handle.Free();
 
             return array;
+        }
+
+        /// <summary>
+        ///   Converts the complex signal to a complex array.
+        /// </summary>
+        /// 
+        public Complex[] ToArray(int channel)
+        {
+            return GetChannel(channel);
         }
 
         /// <summary>
@@ -356,7 +368,7 @@ namespace Accord.Audio
             int channels = array.GetLength(1);
 
             // check signal size
-            if (!AForge.Math.Tools.IsPowerOf2(samples))
+            if (!Accord.Math.Tools.IsPowerOf2(samples))
             {
                 throw new InvalidSignalPropertiesException("Signals length should be a power of 2.");
             }
@@ -366,7 +378,9 @@ namespace Accord.Audio
                 for (int j = 0; j < channels; j++)
                     data[i, j] = new Complex(array[i, j], 0);
 
+#pragma warning disable CS0618 // Type or member is obsolete
             byte[] buffer = new byte[data.Length * Marshal.SizeOf(typeof(Complex))];
+#pragma warning restore CS0618 // Type or member is obsolete
 
             GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
             Marshal.Copy(handle.AddrOfPinnedObject(), buffer, 0, buffer.Length);
@@ -406,13 +420,15 @@ namespace Accord.Audio
             int channels = array.GetLength(1);
 
             // check signal size
-            if (!AForge.Math.Tools.IsPowerOf2(samples))
+            if (!Accord.Math.Tools.IsPowerOf2(samples))
             {
                 throw new InvalidSignalPropertiesException("Signals length should be a power of 2.");
             }
 
 
+#pragma warning disable CS0618 // Type or member is obsolete
             byte[] buffer = new byte[array.Length * Marshal.SizeOf(typeof(Complex))];
+#pragma warning restore CS0618 // Type or member is obsolete
 
             GCHandle handle = GCHandle.Alloc(array, GCHandleType.Pinned);
             Marshal.Copy(handle.AddrOfPinnedObject(), buffer, 0, buffer.Length);

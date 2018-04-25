@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@ namespace Accord.MachineLearning
 {
     using System;
     using System.Collections.Generic;
+    using Accord.Compat;
 
     /// <summary>
     ///   Modes for storing models.
@@ -161,7 +162,7 @@ namespace Accord.MachineLearning
                     History[i] = clone;
 
                     // Check if we should store the value as current maximum or minimum
-                    if (MinValidationValue.Value == null || MinValidationValue.Value == null)
+                    if (MinValidationValue.Value == null || MaxValidationValue.Value == null)
                     {
                         // If this is the first iteration, store the first model as max/min
                         MinValidationValue = new KeyValuePair<int, CrossValidationValues<TModel>>(i, clone);
@@ -187,7 +188,7 @@ namespace Accord.MachineLearning
                     History[i] = copy;
 
                     // Check if we should store the value as current maximum or minimum
-                    if (MinValidationValue.Value == null || MinValidationValue.Value == null)
+                    if (MinValidationValue.Value == null || MaxValidationValue.Value == null)
                     {
                         // If this is the first iteration, store the first model as current maximum and minimum
                         CrossValidationValues<TModel> clone = cloneValue(value, includeModel: true);

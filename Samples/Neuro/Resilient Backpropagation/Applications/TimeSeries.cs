@@ -1,7 +1,7 @@
 // Accord.NET Sample Applications
 // http://accord-framework.net
 //
-// Copyright © 2009-2014, César Souza
+// Copyright © 2009-2017, César Souza
 // All rights reserved. 3-BSD License:
 //
 //   Redistribution and use in source and binary forms, with or without
@@ -42,13 +42,14 @@ using System.Threading;
 using System.Windows.Forms;
 using Accord.Neuro.Learning;
 using AForge;
-using AForge.Controls;
-using AForge.Neuro;
+using Accord.Controls;
+using Accord.Neuro;
 using Accord.IO;
 using System.Globalization;
 using Accord.Math;
+using Accord;
 
-namespace Samples.Rprop
+namespace SampleApp
 {
     public class TimeSeries : System.Windows.Forms.Form
     {
@@ -58,7 +59,7 @@ namespace Samples.Rprop
         private System.Windows.Forms.ColumnHeader estimatedYColumnHeader;
         private System.Windows.Forms.Button loadDataButton;
         private System.Windows.Forms.GroupBox groupBox2;
-        private AForge.Controls.Chart chart;
+        private Accord.Controls.Chart chart;
         private System.Windows.Forms.OpenFileDialog openFileDialog;
         private System.Windows.Forms.Button stopButton;
         private System.Windows.Forms.Button startButton;
@@ -104,12 +105,8 @@ namespace Samples.Rprop
         private GroupBox groupBox3;
         private double[,] predictionDelimiter = new double[2, 2] { { 0, 0 }, { 0, 0 } };
 
-        // Constructor
         public TimeSeries()
         {
-            //
-            // Required for Windows Form Designer support
-            //
             InitializeComponent();
 
             // initialize chart control
@@ -153,7 +150,7 @@ namespace Samples.Rprop
             this.estimatedYColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.loadDataButton = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.chart = new AForge.Controls.Chart();
+            this.chart = new Accord.Controls.Chart();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.stopButton = new System.Windows.Forms.Button();
             this.startButton = new System.Windows.Forms.Button();
@@ -242,8 +239,6 @@ namespace Samples.Rprop
             // 
             this.chart.Location = new System.Drawing.Point(16, 29);
             this.chart.Name = "chart";
-            this.chart.RangeX = ((AForge.Range)(resources.GetObject("chart.RangeX")));
-            this.chart.RangeY = ((AForge.Range)(resources.GetObject("chart.RangeY")));
             this.chart.Size = new System.Drawing.Size(448, 512);
             this.chart.TabIndex = 0;
             // 
@@ -471,6 +466,7 @@ namespace Samples.Rprop
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "TimeSeries";
             this.Text = "Time Series Prediction using Multi-Layer Neural Network (Resilient Backpropagatio" +
@@ -567,7 +563,7 @@ namespace Samples.Rprop
                     return;
                 }
 
-                dataToShow = Matrix.Stack(Matrix.Indices(0, data.Length).ToDouble(), data).Transpose();
+                dataToShow = Matrix.Stack(Vector.Range(0, data.Length).ToDouble(), data).Transpose();
 
                 // update list and chart
                 UpdateDataListView();

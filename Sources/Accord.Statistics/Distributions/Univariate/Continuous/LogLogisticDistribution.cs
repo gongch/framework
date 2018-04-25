@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ namespace Accord.Statistics.Distributions.Univariate
 {
     using System;
     using Accord.Math;
-    using AForge;
+    using Accord.Compat;
 
     /// <summary>
     ///   Log-Logistic distribution.
@@ -95,13 +95,12 @@ namespace Accord.Statistics.Distributions.Univariate
         private double beta;    // shape β
 
         /// <summary>
-        ///   Constructs a Log-Logistic distribution
-        ///   with unit scale and unit shape.
+        ///   Constructs a Log-Logistic distribution with unit scale and unit shape.
         /// </summary>
         /// 
         public LogLogisticDistribution()
         {
-            initialize(0, 1);
+            initialize(1, 1);
         }
 
         /// <summary>
@@ -109,7 +108,7 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   with the given scale and unit shape.
         /// </summary>
         /// 
-        /// <param name="alpha">The distribution's scale value α (alpha).</param>
+        /// <param name="alpha">The distribution's scale value α (alpha). Default is 1.</param>
         /// 
         public LogLogisticDistribution([Positive] double alpha)
         {
@@ -124,8 +123,8 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   with the given scale and shape parameters.
         /// </summary>
         /// 
-        /// <param name="alpha">The distribution's scale value α (alpha).</param>
-        /// <param name="beta">The distribution's shape value β (beta).</param>
+        /// <param name="alpha">The distribution's scale value α (alpha). Default is 1.</param>
+        /// <param name="beta">The distribution's shape value β (beta). Default is 1.</param>
         /// 
         public LogLogisticDistribution([Positive] double alpha, [Positive] double beta)
         {
@@ -189,7 +188,7 @@ namespace Accord.Statistics.Distributions.Univariate
         {
             get
             {
-                System.Diagnostics.Debug.Assert(alpha == base.Median);
+                Accord.Diagnostics.Debug.Assert(alpha == base.Median);
                 return alpha;
             }
         }
@@ -250,7 +249,7 @@ namespace Accord.Statistics.Distributions.Univariate
         /// </summary>
         /// 
         /// <value>
-        ///   A <see cref="AForge.DoubleRange" /> containing
+        ///   A <see cref="DoubleRange" /> containing
         ///   the support interval for this distribution.
         /// </value>
         /// 
@@ -266,11 +265,8 @@ namespace Accord.Statistics.Distributions.Univariate
         /// 
         /// <param name="x">A single point in the distribution range.</param>
         /// 
-        public override double DistributionFunction(double x)
+        protected internal override double InnerDistributionFunction(double x)
         {
-            if (x < 0)
-                return 0;
-
             double xb = Math.Pow(x, beta);
             double ab = Math.Pow(alpha, beta);
 
@@ -289,11 +285,8 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   in the current distribution.
         /// </returns>
         /// 
-        public override double ProbabilityDensityFunction(double x)
+        protected internal override double InnerProbabilityDensityFunction(double x)
         {
-            if (x < 0)
-                return 0;
-
             double ba = beta / alpha;
             double xa = x / alpha;
 
@@ -313,16 +306,16 @@ namespace Accord.Statistics.Distributions.Univariate
         /// 
         /// <returns>
         ///   A sample which could original the given probability
-        ///   value when applied in the <see cref="DistributionFunction"/>.
+        ///   value when applied in the <see cref="UnivariateContinuousDistribution.DistributionFunction(double)"/>.
         /// </returns>
         /// 
-        public override double InverseDistributionFunction(double p)
+        protected internal override double InnerInverseDistributionFunction(double p)
         {
             return alpha * Math.Pow(p / (1 - p), 1 / beta);
         }
 
         /// <summary>
-        ///   Gets the first derivative of the <see cref="InverseDistributionFunction">
+        ///   Gets the first derivative of the <see cref="UnivariateContinuousDistribution.InverseDistributionFunction(double)">
         ///   inverse distribution function</see> (icdf) for this distribution evaluated
         ///   at probability <c>p</c>. 
         /// </summary>
@@ -333,7 +326,7 @@ namespace Accord.Statistics.Distributions.Univariate
         {
             double qdf = (alpha / beta) * Math.Pow(p / (1 - p), 1 / beta - 1);
 
-            System.Diagnostics.Debug.Assert(qdf == base.QuantileDensityFunction(p));
+            Accord.Diagnostics.Debug.Assert(qdf == base.QuantileDensityFunction(p));
 
             return qdf;
         }
@@ -352,17 +345,14 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   minus the CDF.
         /// </remarks>
         /// 
-        public override double ComplementaryDistributionFunction(double x)
+        protected internal override double InnerComplementaryDistributionFunction(double x)
         {
-            if (x < 0)
-                return 1;
-
             double xa = x / alpha;
             double den = 1 + Math.Pow(xa, beta);
 
             double icdf = 1 / den;
 
-            System.Diagnostics.Debug.Assert(icdf.IsRelativelyEqual(base.ComplementaryDistributionFunction(x), 1e-10));
+            Accord.Diagnostics.Debug.Assert(icdf.IsEqual(base.InnerComplementaryDistributionFunction(x), 1e-10));
 
             return icdf;
         }
@@ -398,7 +388,7 @@ namespace Accord.Statistics.Distributions.Univariate
 
             double h = num / den;
 
-            System.Diagnostics.Debug.Assert(h.IsRelativelyEqual(base.HazardFunction(x), 1e-10));
+            Accord.Diagnostics.Debug.Assert(h.IsEqual(base.HazardFunction(x), 1e-10));
 
             return h;
         }

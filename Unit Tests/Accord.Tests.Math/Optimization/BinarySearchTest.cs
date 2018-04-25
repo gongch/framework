@@ -1,7 +1,7 @@
 ﻿// The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -21,13 +21,39 @@
 
 namespace Accord.Tests.Math
 {
+    using System.Linq;
     using Accord.Math.Optimization;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using Accord.Math;
+    using Accord;
+
+    [TestFixture]
+    public class BinarySearchTest2
+    {
+        [Datapoint]
+        public int[] a = { -3, -2, -1, 0, 1, 2, 3 };
+        [Datapoint]
+        public int[] b = { -3, -2, -1, 0, 1, 2, 3, 4, 5 };
+        [Datapoint]
+        public int[] c = { -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5 };
+        [Datapoint]
+        public int[] d = { 3, 2, 1, 0, -1, -2, -3 };
+        [Datapoint]
+        public int[] e = { 3, 2, 1, 0, -1, -2, -3, -4, -5 };
+        [Datapoint]
+        public int[] f = { 5, 4, 3, 2, 1, 0, -1, -2, -3 };
+        [Theory]
+        public void AccordBinarySearchShouldWorkWithArray(int[] data)
+        {
+            var zeroIndex = data.ToList().FindIndex(v => v == 0);
+            var index = new BinarySearch(i => data[i], 0, data.Length - 1).FindRoot();
+            Assert.AreEqual(zeroIndex, index, String.Format("For {0}", String.Join(",", data)));
+        }
+    }
 
 
-    [TestClass()]
+    [TestFixture]
     public class BinarySearchTest
     {
         double[] elements;
@@ -56,7 +82,7 @@ namespace Accord.Tests.Math
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             // https://www.wolframalpha.com/input/?i=%28x%2B1%29+*+%28x%2B1%29+*+%28x%2B1%29+%2B+2+*+%28x%2B1%29+*+%28x%2B1%29+%3D+0%2C+x+is+integer
@@ -75,7 +101,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(-3, r2);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest4()
         {
             // (x+5)^3 + 2(x+5)^2 - 10(x+5)
@@ -90,7 +116,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(-5, root);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest1()
         {
             Func<int, double> function = x => elements[x];
@@ -106,7 +132,7 @@ namespace Accord.Tests.Math
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest2()
         {
             Func<int, double> function = x => elements[x];

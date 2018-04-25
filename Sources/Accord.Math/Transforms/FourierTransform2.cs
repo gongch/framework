@@ -49,26 +49,26 @@
 
 namespace Accord.Math.Transforms
 {
-    using AForge.Math;
     using System;
     using System.Runtime.CompilerServices;
-
-    // #if NET35
-    using Complex = AForge.Math.Complex;
-    // #else
-    //     using Complex = System.Numerics.Complex;
-    // #endif
+    using Accord.Compat;
+    using System.Numerics;
 
     /// <summary>
     ///   Fourier Transform (for arbitrary size matrices).
     /// </summary>
     /// 
     /// <remarks>
-    ///   This fourier transform accepts arbitrary-length matrices and is not
-    ///   restricted only to matrices that have dimensions which are powers of
-    ///   two. It also provides results which are more equivalent with other
-    ///   mathematical packages, such as MATLAB and Octave.
+    /// <para>
+    ///   The transforms in this class accept arbitrary-length matrices and are not restricted to 
+    ///   only matrices that have dimensions which are powers of two. It also provides results which 
+    ///   are more equivalent with other mathematical packages, such as MATLAB and Octave.</para>
+    /// <para>
+    ///   This class had been created as an alternative to <see cref="FourierTransform">AForge.NET's 
+    ///   original FourierTransform class</see> that would provide more expected results.</para>
     /// </remarks>
+    /// 
+    /// <seealso cref="FourierTransform"/>
     /// 
     public static class FourierTransform2
     {
@@ -77,8 +77,10 @@ namespace Accord.Math.Transforms
         ///   1-D Discrete Fourier Transform.
         /// </summary>
         /// 
-        /// <param name="data">The data to transform..</param>
+        /// <param name="data">The data to transform.</param>
         /// <param name="direction">The transformation direction.</param>
+        /// 
+        /// <code source="Unit Tests\Accord.Tests.Math\FourierTransformTest.cs" region="doc_dft" />
         /// 
         public static void DFT(Complex[] data, FourierTransform.Direction direction)
         {
@@ -95,8 +97,8 @@ namespace Accord.Math.Transforms
                 // sum source elements
                 for (int j = 0; j < n; j++)
                 {
-                    double re = data[j].Re();
-                    double im = data[j].Im();
+                    double re = data[j].Real;
+                    double im = data[j].Imaginary;
                     double cosw = Math.Cos(phim * j);
                     double sinw = Math.Sin(phim * j);
 
@@ -129,41 +131,61 @@ namespace Accord.Math.Transforms
         /// <param name="data">The data to transform.</param>
         /// <param name="direction">The transformation direction.</param>
         /// 
+        /// <code source="Unit Tests\Accord.Tests.Math\FourierTransformTest.cs" region="doc_dft2" />
+        /// 
         public static void DFT2(Complex[][] data, FourierTransform.Direction direction)
         {
-            int n = data.Length;
-            int m = data[0].Length;
+            int m = data.Columns();
 
-            // process rows
-            var row = new Complex[m];
-            for (int i = 0; i < n; i++)
+            if (direction == FourierTransform.Direction.Forward)
             {
-                // copy row
-                for (int j = 0; j < row.Length; j++)
-                    row[j] = data[i][j];
+                // process rows
+                for (int i = 0; i < data.Length; i++)
+                {
+                    // transform it
+                    DFT(data[i], FourierTransform.Direction.Forward);
+                }
 
-                // transform it
-                DFT(row, direction);
+                // process columns
+                var col = new Complex[data.Length];
+                for (int j = 0; j < m; j++)
+                {
+                    // copy column
+                    for (int i = 0; i < col.Length; i++)
+                        col[i] = data[i][j];
 
-                // copy back
-                for (int j = 0; j < row.Length; j++)
-                    data[i][j] = row[j];
+                    // transform it
+                    DFT(col, FourierTransform.Direction.Forward);
+
+                    // copy back
+                    for (int i = 0; i < col.Length; i++)
+                        data[i][j] = col[i];
+                }
             }
-
-            // process columns
-            var col = new Complex[n];
-            for (int j = 0; j < n; j++)
+            else
             {
-                // copy column
-                for (int i = 0; i < col.Length; i++)
-                    col[i] = data[i][j];
+                // process columns
+                var col = new Complex[data.Length];
+                for (int j = 0; j < m; j++)
+                {
+                    // copy column
+                    for (int i = 0; i < col.Length; i++)
+                        col[i] = data[i][j];
 
-                // transform it
-                DFT(col, direction);
+                    // transform it
+                    DFT(col, FourierTransform.Direction.Backward);
 
-                // copy back
-                for (int i = 0; i < col.Length; i++)
-                    data[i][j] = col[i];
+                    // copy back
+                    for (int i = 0; i < col.Length; i++)
+                        data[i][j] = col[i];
+                }
+
+                // process rows
+                for (int i = 0; i < data.Length; i++)
+                {
+                    // transform it
+                    DFT(data[i], FourierTransform.Direction.Backward);
+                }
             }
         }
 
@@ -173,6 +195,8 @@ namespace Accord.Math.Transforms
         /// 
         /// <param name="data">The data to transform..</param>
         /// <param name="direction">The transformation direction.</param>
+        /// 
+        /// <code source="Unit Tests\Accord.Tests.Math\FourierTransformTest.cs" region="doc_fft" />
         /// 
         public static void FFT(Complex[] data, FourierTransform.Direction direction)
         {
@@ -184,7 +208,7 @@ namespace Accord.Math.Transforms
             if (direction == FourierTransform.Direction.Backward)
             {
                 for (int i = 0; i < data.Length; i++)
-                    data[i] = new Complex(data[i].Im(), data[i].Re());
+                    data[i] = new Complex(data[i].Imaginary, data[i].Real);
             }
 
             if ((n & (n - 1)) == 0)
@@ -202,8 +226,8 @@ namespace Accord.Math.Transforms
             {
                 for (int i = 0; i < data.Length; i++)
                 {
-                    double im = data[i].Im();
-                    double re = data[i].Re();
+                    double im = data[i].Imaginary;
+                    double re = data[i].Real;
                     data[i] = new Complex(im / n, re / n);
                 }
             }
@@ -216,6 +240,8 @@ namespace Accord.Math.Transforms
         /// <param name="real">The real part of the complex numbers to transform.</param>
         /// <param name="imag">The imaginary part of the complex numbers to transform.</param>
         /// <param name="direction">The transformation direction.</param>
+        /// 
+        /// <code source="Unit Tests\Accord.Tests.Math\FourierTransformTest.cs" region="doc_fft" />
         /// 
         public static void FFT(double[] real, double[] imag, FourierTransform.Direction direction)
         {
@@ -242,8 +268,10 @@ namespace Accord.Math.Transforms
         ///   2-D Fast Fourier Transform.
         /// </summary>
         /// 
-        /// <param name="data">The data to transform..</param>
+        /// <param name="data">The data to transform.</param>
         /// <param name="direction">The Transformation direction.</param>
+        /// 
+        /// <code source="Unit Tests\Accord.Tests.Math\FourierTransformTest.cs" region="doc_fft2" />
         /// 
         public static void FFT2(Complex[][] data, FourierTransform.Direction direction)
         {
@@ -317,7 +345,7 @@ namespace Accord.Math.Transforms
                 return;
 
             for (int i = 0; i < data.Length; i++)
-                data[i] = new Complex(data[i].Im(), data[i].Re());
+                data[i] = new Complex(data[i].Imaginary, data[i].Real);
 
             if ((n & (n - 1)) == 0)
             {
@@ -332,8 +360,8 @@ namespace Accord.Math.Transforms
 
             for (int i = 0; i < data.Length; i++)
             {
-                double im = data[i].Im();
-                double re = data[i].Re();
+                double im = data[i].Imaginary;
+                double re = data[i].Real;
                 data[i] = new Complex(im, re);
             }
         }
@@ -476,14 +504,14 @@ namespace Accord.Math.Transforms
                     for (int j = i, k = 0; j < i + halfsize; j++, k += tablestep)
                     {
                         int h = j + halfsize;
-                        double re = complex[h].Re();
-                        double im = complex[h].Im();
+                        double re = complex[h].Real;
+                        double im = complex[h].Imaginary;
 
                         double tpre = +re * cosTable[k] + im * sinTable[k];
                         double tpim = -re * sinTable[k] + im * cosTable[k];
 
-                        double rej = complex[j].Re();
-                        double imj = complex[j].Im();
+                        double rej = complex[j].Real;
+                        double imj = complex[j].Imaginary;
 
                         complex[h] = new Complex(rej - tpre, imj - tpim);
                         complex[j] = new Complex(rej + tpre, imj + tpim);
@@ -573,8 +601,8 @@ namespace Accord.Math.Transforms
 
             for (int i = 0; i < data.Length; i++)
             {
-                double re = data[i].Re();
-                double im = data[i].Im();
+                double re = data[i].Real;
+                double im = data[i].Imaginary;
 
                 areal[i] = +re * cosTable[i] + im * sinTable[i];
                 aimag[i] = -re * sinTable[i] + im * cosTable[i];
@@ -628,10 +656,10 @@ namespace Accord.Math.Transforms
 
             for (int i = 0; i < x.Length; i++)
             {
-                double xreal = x[i].Re();
-                double ximag = x[i].Im();
-                double yreal = y[i].Re();
-                double yimag = y[i].Im();
+                double xreal = x[i].Real;
+                double ximag = x[i].Imaginary;
+                double yreal = y[i].Real;
+                double yimag = y[i].Imaginary;
 
                 double re = xreal * yreal - ximag * yimag;
                 double im = ximag * yreal + xreal * yimag;

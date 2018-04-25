@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,30 +24,13 @@ namespace Accord.Tests.Statistics
 {
     using System.Globalization;
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class LogisticDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest1()
         {
             var log = new LogisticDistribution(location: 0.42, scale: 1.2);
@@ -92,6 +75,12 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(5.9341438201615064, range2.Max);
             Assert.AreEqual(-5.0941438201615075, range3.Min);
             Assert.AreEqual(5.9341438201615064, range3.Max);
+
+            Assert.AreEqual(double.NegativeInfinity, log.Support.Min);
+            Assert.AreEqual(double.PositiveInfinity, log.Support.Max);
+
+            Assert.AreEqual(log.InverseDistributionFunction(0), log.Support.Min);
+            Assert.AreEqual(log.InverseDistributionFunction(1), log.Support.Max);
         }
 
     }

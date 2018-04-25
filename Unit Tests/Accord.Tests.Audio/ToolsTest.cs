@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -20,47 +20,24 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-using Accord.Audio;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using AForge.Math;
-using Accord.Math;
-using Tools = Accord.Audio.Tools;
-
 namespace Accord.Tests.Audio
 {
-    
-    
-    /// <summary>
-    ///This is a test class for ToolsTest and is intended
-    ///to contain all ToolsTest Unit Tests
-    ///</summary>
-    [TestClass()]
+    using NUnit.Framework;
+    using Accord.Math;
+    using Tools = Accord.Audio.Tools;
+    using Accord.Compat;
+    using System.Numerics;
+
+    [TestFixture]
     public class ToolsTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void GetPowerCepstrumTest()
         {
             // http://mi.eng.cam.ac.uk/~ajr/SpeechAnalysis/node33.html
 
-            Complex[] source = 
+            Complex[] source =
             {
                 (Complex)(-1.0), (Complex)(+0.5),
                 (Complex)(+0.3), (Complex)(-0.4),
@@ -68,20 +45,20 @@ namespace Accord.Tests.Audio
                 (Complex)(-0.2), (Complex)(-0.5),
             };
 
-            double[] expected = 
+            double[] expected =
             {
                 0.3319, 0.1285, -0.0218, 0.2303, -0.2639, 0.2303, -0.0218, 0.1285
             };
 
             double[] actual = Tools.GetPowerCepstrum(source);
 
-            Assert.IsTrue(expected.IsEqual(actual, 1e-4));
+            Assert.IsTrue(expected.IsEqual(actual, atol: 1e-4));
         }
 
-        [TestMethod()]
+        [Test]
         public void InterleaveTest()
         {
-            float[,] channels = 
+            float[,] channels =
             {
                 {  0.1f, -5.1f },
                 { -0.2f, -6.0f },
@@ -90,7 +67,7 @@ namespace Accord.Tests.Audio
                 {  0.6f, -1.7f },
             };
 
-            float[] expected = 
+            float[] expected =
             {
                 0.1f, -5.1f,
                -0.2f, -6.0f,

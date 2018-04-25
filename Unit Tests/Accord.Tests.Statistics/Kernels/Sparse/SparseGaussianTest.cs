@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,31 +24,21 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Kernels.Sparse;
     using Accord.Statistics.Kernels;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    ///</summary>
-    [TestClass()]
+    [TestFixture]
     public class SparseGaussianTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
+        [Test]
+        public void FunctionTest2()
         {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
+            SparseLinearTest.SparseTest(new Gaussian(), new SparseGaussian());
+            SparseLinearTest.SparseTest(new Gaussian(0), new SparseGaussian(0));
+            SparseLinearTest.SparseTest(new Gaussian(3.6), new SparseGaussian(3.6));
         }
 
-
-
-        [TestMethod()]
+        [Test]
         public void FunctionTest()
         {
             Gaussian dense = new Gaussian(3.6);
@@ -77,7 +67,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistanceTest()
         {
             Gaussian dense = new Gaussian(3.6);

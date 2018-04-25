@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,6 +24,9 @@ namespace Accord.Statistics.Testing
 {
     using System;
     using Accord.Statistics.Distributions.Univariate;
+    using System.Linq;
+    using Accord.Math;
+    using System.Collections.Generic;
 
     /// <summary>
     ///   Base class for Wilcoxon's W tests.
@@ -42,12 +45,13 @@ namespace Accord.Statistics.Testing
     /// 
     public class WilcoxonTest : HypothesisTest<WilcoxonDistribution>
     {
+        private bool hasTies;
 
         /// <summary>
         ///   Gets the number of samples being tested.
         /// </summary>
         /// 
-        public int Samples { get { return StatisticDistribution.Samples; } }
+        public int NumberOfSamples { get { return StatisticDistribution.NumberOfSamples; } }
 
         /// <summary>
         ///   Gets the signs for each of the <see cref="Delta"/> differences.
@@ -67,6 +71,23 @@ namespace Accord.Statistics.Testing
         /// 
         public double[] Ranks { get; protected set; }
 
+        /// <summary>
+        ///   Gets wether the samples to be ranked contain zeros.
+        /// </summary>
+        /// 
+        public bool HasZeros { get; private set; }
+
+        /// <summary>
+        ///   Gets wether the samples to be ranked contain ties.
+        /// </summary>
+        /// 
+        public bool HasTies { get { return hasTies; } }
+
+        /// <summary>
+        ///   Gets whether we are using a exact test.
+        /// </summary>
+        /// 
+        public bool IsExact { get; private set; }
 
         /// <summary>
         ///   Creates a new Wilcoxon's W+ test.
@@ -78,7 +99,7 @@ namespace Accord.Statistics.Testing
         /// 
         public WilcoxonTest(int[] signs, double[] diffs, DistributionTail tail)
         {
-            Compute(signs, diffs, tail);
+            Compute(signs, diffs, tail, null, adjustForTies: true);
         }
 
         /// <summary>
@@ -93,26 +114,63 @@ namespace Accord.Statistics.Testing
         ///   Computes the Wilcoxon Signed-Rank test.
         /// </summary>
         /// 
-        protected void Compute(int[] signs, double[] diffs, DistributionTail tail)
+        protected void Compute(int[] signs, double[] diffs, DistributionTail tail, 
+            bool? exact, bool adjustForTies)
         {
-            Signs = signs;
-            Delta = diffs;
-            Ranks = Accord.Statistics.Tools.Rank(Delta);
+            int[] nonZeros = diffs.Find(x => x != 0);
+            this.HasZeros = nonZeros.Length != diffs.Length;
+
+            if (HasZeros)
+            {
+                // It is actually necessary to discard zeros before the test procedure
+                // https://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test#Test_procedure
+                // http://vassarstats.net/textbook/ch12a.html
+                signs = signs.Get(nonZeros);
+                diffs = diffs.Get(nonZeros);
+            }
+
+            this.Signs = signs;
+            this.Delta = diffs;
+            this.Ranks = Delta.Rank(hasTies: out hasTies, adjustForTies: adjustForTies);
 
             double W = WilcoxonDistribution.WPositive(Signs, Ranks);
 
-            this.Compute(W, Ranks, tail);
+            this.Compute(W, Ranks, tail, exact);
         }
 
         /// <summary>
         ///   Computes the Wilcoxon Signed-Rank test.
         /// </summary>
         /// 
-        protected void Compute(double statistic, double[] ranks, DistributionTail tail)
+        protected void Compute(double statistic, double[] ranks, DistributionTail tail, bool? exact)
         {
+            if (this.HasZeros)
+            {
+                if (!exact.HasValue)
+                    exact = false;
+
+                if (exact == true)
+                    throw new ArgumentException("An exact test cannot be computed when there are zeros in the samples (or when paired samples are the same in a paired test).");
+            }
+
             this.Statistic = statistic;
-            this.StatisticDistribution = new WilcoxonDistribution(ranks);
             this.Tail = tail;
+
+            if (ranks.Length != 0)
+            {
+                this.StatisticDistribution = new WilcoxonDistribution(ranks, exact)
+                {
+                    Correction = (Tail == DistributionTail.TwoTail) ? ContinuityCorrection.Midpoint : ContinuityCorrection.KeepInside
+                };
+
+                this.IsExact = this.StatisticDistribution.Exact;
+            }
+            else
+            {
+                this.StatisticDistribution = null;
+                this.IsExact = exact.GetValueOrDefault(false);
+            }
+
             this.PValue = StatisticToPValue(Statistic);
 
             this.OnSizeChanged();
@@ -128,20 +186,24 @@ namespace Accord.Statistics.Testing
         /// 
         public override double StatisticToPValue(double x)
         {
+            if (StatisticDistribution == null)
+                return Double.NaN; // return NaN to match R's behavior
+
             double p;
             switch (Tail)
             {
                 case DistributionTail.TwoTail:
                     double a = StatisticDistribution.DistributionFunction(x);
                     double b = StatisticDistribution.ComplementaryDistributionFunction(x);
-                    p = 2 * Math.Min(a, b);
-                    break;
-
-                case DistributionTail.OneUpper:
-                    p = StatisticDistribution.DistributionFunction(x);
+                    double c = Math.Min(a, b);
+                    p = Math.Min(2 * c, 1);
                     break;
 
                 case DistributionTail.OneLower:
+                    p = StatisticDistribution.DistributionFunction(x);
+                    break;
+
+                case DistributionTail.OneUpper:
                     p = StatisticDistribution.ComplementaryDistributionFunction(x);
                     break;
 
@@ -173,7 +235,8 @@ namespace Accord.Statistics.Testing
                 case DistributionTail.TwoTail:
                     b = StatisticDistribution.InverseDistributionFunction(1.0 - p / 2.0);
                     break;
-                default: throw new InvalidOperationException();
+                default:
+                    throw new InvalidOperationException();
             }
 
             return b;

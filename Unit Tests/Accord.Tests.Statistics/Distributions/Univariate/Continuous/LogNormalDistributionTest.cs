@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,32 +23,16 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using Accord.Statistics.Distributions.Fitting;
     using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class LogNormalDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             var log = new LognormalDistribution(location: 0.42, shape: 1.1);
@@ -94,9 +78,15 @@ namespace Accord.Tests.Statistics
             var range3 = log.GetRange(0.01);
             Assert.AreEqual(0.11777446636476173, range3.Min);
             Assert.AreEqual(19.667797655030668, range3.Max);
+
+            Assert.AreEqual(0, log.Support.Min);
+            Assert.AreEqual(double.PositiveInfinity, log.Support.Max);
+
+            Assert.AreEqual(log.InverseDistributionFunction(0), log.Support.Min);
+            Assert.AreEqual(log.InverseDistributionFunction(1), log.Support.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogNormalDistributionConstructorTest()
         {
             double location = 9.2;
@@ -106,7 +96,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(shape, target.Shape);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogNormalDistributionConstructorTest1()
         {
             double location = 4.1;
@@ -114,7 +104,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(location, target.Location);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogNormalDistributionConstructorTest2()
         {
             LognormalDistribution target = new LognormalDistribution();
@@ -122,7 +112,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1, target.Shape);
         }
 
-        [TestMethod()]
+        [Test]
         public void CloneTest()
         {
             LognormalDistribution target = new LognormalDistribution(1.7, 4.2);
@@ -138,7 +128,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.Variance, clone.Variance);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest()
         {
             LognormalDistribution target = new LognormalDistribution(1.7, 4.2);
@@ -150,7 +140,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void EstimateTest()
         {
             double[] observations = { 2, 2, 2, 2, 2 };
@@ -162,7 +152,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(System.Math.Sqrt(0.1), actual.Shape);
         }
 
-        [TestMethod()]
+        [Test]
         public void EstimateTest1()
         {
             double[] observations = 
@@ -181,7 +171,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expectedShape, actual.Shape, 1e-14);
         }
 
-        [TestMethod()]
+        [Test]
         public void EstimateTest2()
         {
             double[] observations = { 0.04, 0.12, 1.52 };
@@ -193,7 +183,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1.6893403335885702, actual.Shape);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest()
         {
             LognormalDistribution target = new LognormalDistribution(1.7, 4.2);
@@ -205,7 +195,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionTest()
         {
             LognormalDistribution target = new LognormalDistribution(1.7, 4.2);
@@ -217,7 +207,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void MeanTest()
         {
             LognormalDistribution target = new LognormalDistribution(0.42, 0.56);
@@ -226,7 +216,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(Double.IsNaN(actual));
         }
 
-        [TestMethod()]
+        [Test]
         public void StandardTest()
         {
             LognormalDistribution actual = LognormalDistribution.Standard;
@@ -239,7 +229,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void VarianceTest()
         {
             LognormalDistribution target = new LognormalDistribution(0.42, 0.56);
@@ -247,7 +237,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1.1674914219333172, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -263,7 +253,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(5, actual.Shape, 0.01);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest2()
         {
             LognormalDistribution target = new LognormalDistribution(4, 2);
@@ -279,7 +269,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2, actual.Shape, 0.01);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             LognormalDistribution target = new LognormalDistribution(7, 0.6);

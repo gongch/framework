@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -253,8 +253,7 @@ namespace Accord.Controls
 
             formThread = new Thread(() =>
             {
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
+                Accord.Controls.Tools.ConfigureWindowsFormsApplication();
 
                 // Show control in a form
                 form = new DataGridBox();

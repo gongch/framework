@@ -1,7 +1,7 @@
 ﻿// Accord.NET Sample Applications
 // http://accord-framework.net
 //
-// Copyright © 2009-2014, César Souza
+// Copyright © 2009-2017, César Souza
 // All rights reserved. 3-BSD License:
 //
 //   Redistribution and use in source and binary forms, with or without
@@ -36,9 +36,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using Accord.Imaging;
 using Accord.Imaging.Filters;
-using Corners.SURF.Properties;
 
-namespace Corners.SURF
+namespace SampleApp
 {
     public partial class MainForm : Form
     {
@@ -51,7 +50,7 @@ namespace Corners.SURF
         private void button1_Click(object sender, EventArgs e)
         {
             // Open a image
-            Bitmap lenna = Resources.lena512;
+            Bitmap lenna = Properties.Resources.lena512;
 
             float threshold = (float)numThreshold.Value;
             int octaves = (int)numOctaves.Value;

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -20,11 +20,30 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
+// A note on compatibility: Up to version 3.5, users were supposed to implement their own probability
+// distributions by inheriting from this class and overriding the public members ProbabilityDensityFunction,
+// DistributionFunction, etc. However, since those were public methods this meant that users (and I) had to
+// write validation checks on every method override, resulting in lots of duplicated code. Starting from version
+// 3.6, users should override methods that start with "Inner" in their name, such as InnerProbabilityDensityFunction 
+// and InnerDistributionFunction. The framework will have already validated the inputs of those functions, and
+// will also take care to check whether the implementation of those functions is correct.
+
+// For now, compatibility mode is enabled for release builds, meaning that old code that has been written
+// using the old way will keep working. However, debug (development) builds will have this feature turned
+// off to force new classes to be implemented using this new way.
+
+# if !DEBUG
+#define COMPATIBILITY
+#endif
+
 namespace Accord.Statistics.Distributions.Multivariate
 {
     using System;
     using Accord.Math;
     using Accord.Statistics.Distributions.Fitting;
+    using Accord.Statistics.Distributions.Sampling;
+    using Accord.Math.Random;
+    using Accord.Compat;
 
     /// <summary>
     ///   Abstract class for multivariate discrete probability distributions.
@@ -61,10 +80,16 @@ namespace Accord.Statistics.Distributions.Multivariate
     [Serializable]
     public abstract class MultivariateDiscreteDistribution : DistributionBase,
         IMultivariateDistribution, IMultivariateDistribution<int[]>,
+        IMultivariateDistribution<double[]>,
+        ISampleableDistribution<int[]>, ISampleableDistribution<double[]>,
         IDistribution<double[]>, IFormattable
     {
 
         private int dimension;
+
+        [NonSerialized]
+        private MetropolisHasting<int> generator;
+
 
         /// <summary>
         ///   Constructs a new MultivariateDiscreteDistribution class.
@@ -142,26 +167,35 @@ namespace Accord.Statistics.Distributions.Multivariate
             get { return Mean; }
         }
 
+        /// <summary>
+        ///   Gets the support interval for this distribution.
+        /// </summary>
+        /// 
+        /// <value>A <see cref="IntRange"/> containing
+        ///  the support interval for this distribution.</value>
+        ///  
+        public abstract IntRange[] Support { get; }
+
         #region IDistribution explicit members
 
         double IDistribution.DistributionFunction(double[] x)
         {
-            return DistributionFunction(Array.ConvertAll<double, int>(x, Convert.ToInt32));
+            return DistributionFunction(x.Apply(Convert.ToInt32));
         }
 
         double IDistribution.ProbabilityFunction(double[] x)
         {
-            return ProbabilityMassFunction(Array.ConvertAll<double, int>(x, Convert.ToInt32));
+            return ProbabilityMassFunction(x.Apply(Convert.ToInt32));
         }
 
         double IDistribution.LogProbabilityFunction(double[] x)
         {
-            return LogProbabilityMassFunction(Array.ConvertAll<double, int>(x, Convert.ToInt32));
+            return LogProbabilityMassFunction(x.Apply(Convert.ToInt32));
         }
 
         double IDistribution.ComplementaryDistributionFunction(double[] x)
         {
-            return ComplementaryDistributionFunction(Array.ConvertAll<double, int>(x, Convert.ToInt32));
+            return ComplementaryDistributionFunction(x.Apply(Convert.ToInt32));
         }
 
         void IDistribution.Fit(Array observations)
@@ -237,7 +271,39 @@ namespace Accord.Statistics.Distributions.Multivariate
         ///   probability that a given value or any value smaller than it will occur.
         /// </remarks>
         /// 
-        public abstract double DistributionFunction(int[] x);
+        public
+#if COMPATIBILITY
+        virtual
+#endif
+         double DistributionFunction(int[] x)
+        {
+            if (x == null)
+                throw new ArgumentNullException("x");
+
+            return InnerDistributionFunction(x);
+        }
+
+        /// <summary>
+        ///   Gets the cumulative distribution function (cdf) for
+        ///   this distribution evaluated at point <c>x</c>.
+        /// </summary>
+        /// 
+        /// <param name="x">
+        ///   A single point in the distribution range.</param>
+        ///   
+        /// <remarks>
+        ///   The Cumulative Distribution Function (CDF) describes the cumulative
+        ///   probability that a given value or any value smaller than it will occur.
+        /// </remarks>
+        /// 
+#if COMPATIBILITY
+        protected internal virtual double InnerDistributionFunction(int[] x)
+        {
+            throw new NotImplementedException();
+        }
+#else
+        protected internal abstract double InnerDistributionFunction(int[] x);
+#endif
 
         /// <summary>
         ///   Gets the probability mass function (pmf) for
@@ -256,7 +322,43 @@ namespace Accord.Statistics.Distributions.Multivariate
         ///   The probability of <c>x</c> occurring
         ///   in the current distribution.</returns>
         ///   
-        public abstract double ProbabilityMassFunction(int[] x);
+        public
+#if COMPATIBILITY
+        virtual
+#endif
+         double ProbabilityMassFunction(int[] x)
+        {
+            if (x == null)
+                throw new ArgumentNullException("x");
+
+            return InnerProbabilityMassFunction(x);
+        }
+
+        /// <summary>
+        ///   Gets the probability mass function (pmf) for
+        ///   this distribution evaluated at point <c>x</c>.
+        /// </summary>
+        /// 
+        /// <param name="x">
+        ///   A single point in the distribution range.</param>
+        ///   
+        /// <remarks>
+        ///   The Probability Mass Function (PMF) describes the
+        ///   probability that a given value <c>x</c> will occur.
+        /// </remarks>
+        /// 
+        /// <returns>
+        ///   The probability of <c>x</c> occurring
+        ///   in the current distribution.</returns>
+        ///   
+#if COMPATIBILITY
+        protected internal virtual double InnerProbabilityMassFunction(int[] x)
+        {
+            throw new NotImplementedException();
+        }
+#else
+        protected internal abstract double InnerProbabilityMassFunction(int[] x);
+#endif
 
         /// <summary>
         ///   Gets the log-probability mass function (pmf) for
@@ -275,13 +377,64 @@ namespace Accord.Statistics.Distributions.Multivariate
         ///   The logarithm of the probability of <c>x</c> 
         ///   occurring in the current distribution.</returns>
         ///   
-        public abstract double LogProbabilityMassFunction(int[] x);
+        public
+#if COMPATIBILITY
+        virtual
+#endif
+        double LogProbabilityMassFunction(int[] x)
+        {
+            if (x == null)
+                throw new ArgumentNullException("x");
+
+            return InnerLogProbabilityMassFunction(x);
+        }
+
+        /// <summary>
+        ///   Gets the log-probability mass function (pmf) for
+        ///   this distribution evaluated at point <c>x</c>.
+        /// </summary>
+        /// 
+        /// <param name="x">
+        ///   A single point in the distribution range.</param>
+        ///   
+        /// <remarks>
+        ///   The Probability Mass Function (PMF) describes the
+        ///   probability that a given value <c>x</c> will occur.
+        /// </remarks>
+        /// 
+        /// <returns>
+        ///   The logarithm of the probability of <c>x</c> 
+        ///   occurring in the current distribution.</returns>
+        ///   
+#if COMPATIBILITY
+        protected internal virtual double InnerLogProbabilityMassFunction(int[] x)
+        {
+            throw new NotImplementedException();
+        }
+#else
+        protected internal virtual double InnerLogProbabilityMassFunction(int[] x)
+        {
+            return Math.Log(ProbabilityMassFunction(x));
+        }
+#endif
 
         /// <summary>
         ///   Not supported.
         /// </summary>
         /// 
-        public virtual int[] InverseDistributionFunction(double p)
+        public
+#if COMPATIBILITY
+        virtual
+#endif
+         int[] InverseDistributionFunction(double p)
+        {
+            return InnerInverseDistributionFunction(p);
+        }
+
+        /// <summary>
+        ///   Not supported.
+        /// </summary>
+        protected internal int[] InnerInverseDistributionFunction(double p)
         {
             throw new NotImplementedException();
         }
@@ -298,9 +451,109 @@ namespace Accord.Statistics.Distributions.Multivariate
         ///   minus the CDF.
         /// </remarks>
         /// 
-        public virtual double ComplementaryDistributionFunction(int[] x)
+        public
+#if COMPATIBILITY
+        virtual
+#endif
+         double ComplementaryDistributionFunction(int[] x)
+        {
+            if (x == null)
+                throw new ArgumentNullException("x");
+
+            return InnerComplementaryDistributionFunction(x);
+        }
+
+        /// <summary>
+        ///   Gets the complementary cumulative distribution function
+        ///   (ccdf) for this distribution evaluated at point <c>x</c>.
+        ///   This function is also known as the Survival function.
+        /// </summary>
+        /// 
+        /// <remarks>
+        ///   The Complementary Cumulative Distribution Function (CCDF) is
+        ///   the complement of the Cumulative Distribution Function, or 1
+        ///   minus the CDF.
+        /// </remarks>
+        /// 
+        protected internal double InnerComplementaryDistributionFunction(int[] x)
         {
             return 1.0 - DistributionFunction(x);
+        }
+
+        /// <summary>
+        ///   Gets the marginal distribution of a given variable.
+        /// </summary>
+        /// 
+        /// <param name="index">The variable index.</param>
+        /// 
+        public double[] MarginalDistributionFunction(int index)
+        {
+            double[] num = new double[Support[index].Length];
+            double den = 0;
+
+            int[] symbols = Support.Apply(x => x.Length);
+            int[] probe = new int[Dimension];
+
+            foreach (int[] input in Combinatorics.Sequences(symbols, inPlace: true))
+            {
+                for (int i = 0; i < probe.Length; i++)
+                    probe[i] = input[i] + Support[i].Min;
+
+                double p = ProbabilityMassFunction(probe);
+
+                for (int k = 0; k < probe.Length; k++)
+                {
+                    if (k == index)
+                        continue;
+
+                    for (int j = 0; j < Support[k].Length; j++)
+                    {
+                        if (probe[k] == Support[k].Min + j)
+                            num[j] += p;
+                    }
+                }
+
+                den += p;
+            }
+
+            return num.Apply(v => v == 0 ? 0 : v / den);
+        }
+
+        /// <summary>
+        ///   Gets the marginal distribution of a given variable evaluated at a given value.
+        /// </summary>
+        /// 
+        /// <param name="index">The variable index.</param>
+        /// <param name="value">The variable value.</param>
+        /// 
+        public double MarginalDistributionFunction(int index, int value)
+        {
+            double num = 0;
+            double den = 0;
+
+            int[] symbols = Support.Apply(x => x.Length);
+            int[] probe = new int[Dimension];
+
+            foreach (int[] input in Combinatorics.Sequences(symbols, inPlace: true))
+            {
+                for (int i = 0; i < probe.Length; i++)
+                    probe[i] = input[i] + Support[i].Min;
+
+                double p = ProbabilityMassFunction(probe);
+
+                for (int k = 0; k < probe.Length; k++)
+                {
+                    if (k == index)
+                        continue;
+
+                    if (probe[k] == Support[k].Min + value)
+                        num += p;
+                }
+
+                den += p;
+            }
+
+            return num == 0 ? 0 : num / den;
         }
 
         /// <summary>
@@ -445,18 +698,179 @@ namespace Accord.Statistics.Distributions.Multivariate
         /// 
         public virtual void Fit(double[][] observations, int[] weights, IFittingOptions options)
         {
-            if (weights == null)
-            {
-                Fit(observations, (double[])null, options);
-            }
-            else
-            {
+            if (weights != null)
                 throw new NotSupportedException();
-            }
+
+            Fit(observations, (double[])null, options);
         }
 
 
-      
+
+
+        /// <summary>
+        ///   Generates a random vector of observations from the current distribution.
+        /// </summary>
+        /// 
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <returns>A random vector of observations drawn from this distribution.</returns>
+        /// 
+        public int[][] Generate(int samples)
+        {
+            return Generate(samples, Accord.Math.Random.Generator.Random);
+        }
+
+        /// <summary>
+        ///   Generates a random vector of observations from the current distribution.
+        /// </summary>
+        /// 
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        ///
+        /// <returns>A random vector of observations drawn from this distribution.</returns>
+        /// 
+        public double[][] Generate(int samples, double[][] result)
+        {
+            return Generate(samples, result, Accord.Math.Random.Generator.Random);
+        }
+
+        /// <summary>
+        ///   Generates a random vector of observations from the current distribution.
+        /// </summary>
+        /// 
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        ///
+        /// <returns>A random vector of observations drawn from this distribution.</returns>
+        /// 
+        public int[][] Generate(int samples, int[][] result)
+        {
+            return Generate(samples, result, Accord.Math.Random.Generator.Random);
+        }
+
+        /// <summary>
+        ///   Generates a random observation from the current distribution.
+        /// </summary>
+        /// 
+        /// <returns>A random observations drawn from this distribution.</returns>
+        /// 
+        public int[] Generate()
+        {
+            return Generate(Accord.Math.Random.Generator.Random);
+        }
+
+        /// <summary>
+        ///   Generates a random observation from the current distribution.
+        /// </summary>
+        /// 
+        /// <returns>A random observations drawn from this distribution.</returns>
+        /// 
+        public double[] Generate(double[] result)
+        {
+            return Generate(result, Accord.Math.Random.Generator.Random);
+        }
+
+        /// <summary>
+        ///   Generates a random observation from the current distribution.
+        /// </summary>
+        /// 
+        /// <returns>A random observations drawn from this distribution.</returns>
+        /// 
+        public int[] Generate(int[] result)
+        {
+            return Generate(result, Accord.Math.Random.Generator.Random);
+        }
+
+
+
+
+        /// <summary>
+        ///   Generates a random vector of observations from the current distribution.
+        /// </summary>
+        /// 
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        /// 
+        /// <returns>A random vector of observations drawn from this distribution.</returns>
+        /// 
+        public int[][] Generate(int samples, Random source)
+        {
+            return Generate(samples, Jagged.Create<int>(samples, dimension), source);
+        }
+
+        /// <summary>
+        ///   Generates a random vector of observations from the current distribution.
+        /// </summary>
+        /// 
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///
+        /// <returns>A random vector of observations drawn from this distribution.</returns>
+        /// 
+        public virtual double[][] Generate(int samples, double[][] result, Random source)
+        {
+            return Generate(samples, source).ToDouble(result: result);
+        }
+
+        /// <summary>
+        ///   Generates a random vector of observations from the current distribution.
+        /// </summary>
+        /// 
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///
+        /// <returns>A random vector of observations drawn from this distribution.</returns>
+        /// 
+        public virtual int[][] Generate(int samples, int[][] result, Random source)
+        {
+            if (generator == null)
+                generator = MetropolisHasting.Discrete(Dimension, this);
+
+            if (generator.RandomSource != source)
+                generator.RandomSource = source;
+
+            return generator.Generate(samples, result);
+        }
+
+        /// <summary>
+        ///   Generates a random observation from the current distribution.
+        /// </summary>
+        /// 
+        /// <returns>A random observations drawn from this distribution.</returns>
+        /// 
+        public int[] Generate(Random source)
+        {
+            return Generate(1, source: source)[0];
+        }
+
+        /// <summary>
+        ///   Generates a random observation from the current distribution.
+        /// </summary>
+        /// 
+        /// <returns>A random observations drawn from this distribution.</returns>
+        /// 
+        public double[] Generate(double[] result, Random source)
+        {
+            return Generate(1, result: new[] { result }, source: source)[0];
+        }
+
+        /// <summary>
+        ///   Generates a random observation from the current distribution.
+        /// </summary>
+        /// 
+        /// <returns>A random observations drawn from this distribution.</returns>
+        /// 
+        public int[] Generate(int[] result, Random source)
+        {
+            return Generate(1, result: new[] { result }, source: source)[0];
+        }
+
+
+
         double IDistribution<int[]>.ProbabilityFunction(int[] x)
         {
             return ProbabilityMassFunction(x);
@@ -487,6 +901,26 @@ namespace Accord.Statistics.Distributions.Multivariate
         double IDistribution<double[]>.ComplementaryDistributionFunction(double[] x)
         {
             return (this as IDistribution).ComplementaryDistributionFunction(x);
+        }
+
+        double[] IRandomNumberGenerator<double[]>.Generate()
+        {
+            return Generate(new double[dimension]);
+        }
+
+        double[][] IRandomNumberGenerator<double[]>.Generate(int samples)
+        {
+            return Generate(samples, Jagged.Create<double>(samples, dimension));
+        }
+
+        double[][] ISampleableDistribution<double[]>.Generate(int samples, Random source)
+        {
+            return Generate(samples, Jagged.Create<double>(samples, dimension), source);
+        }
+
+        double[] ISampleableDistribution<double[]>.Generate(Random source)
+        {
+            return Generate(new double[dimension], source);
         }
 
     }

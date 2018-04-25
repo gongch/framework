@@ -1,10 +1,12 @@
 bin
 obj
 
+.vs
 *.user
 *.pidb
 *.suo
 *.vsp
+*.ipch
 
 /Setup/Accord.Setup.dll
 /Setup/Accord.Setup.pdb
@@ -20,7 +22,24 @@ obj
 /Docs
 /Unit Tests/Accord.Tests.Math.Cpp/Debug
 /Unit Tests/Accord.Tests.Math.Cpp/Release
+/Unit Tests/packages
+
 /Sources/Debug
 /Sources/Release
 
 /Sources/*.opensdf
+/autom4te.cache/
+/Makefile.in
+/Makefile
+/configure
+/config.status
+/config.log
+*.m4
+/accord.pc
+
+html
+
+/install-sh
+/missing
+
+!Externals/NUnit/*/bin

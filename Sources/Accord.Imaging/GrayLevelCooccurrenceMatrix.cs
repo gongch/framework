@@ -5,7 +5,7 @@
 // Copyright © Diego Catalano, 2013
 // diego.catalano at live.com
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,8 +25,11 @@
 
 namespace Accord.Imaging
 {
-    using AForge.Imaging;
+    using Filters;
+    using System;
     using System.Drawing;
+    using System.Drawing.Imaging;
+    using System.Collections.Generic;
 
     /// <summary>
     ///   Co-occurrence Degree.
@@ -38,25 +41,25 @@ namespace Accord.Imaging
         ///   Find co-occurrences at 0° degrees.
         /// </summary>
         /// 
-        Degree0,
+        Degree0 = 0,
 
         /// <summary>
         ///   Find co-occurrences at 45° degrees.
         /// </summary>
         /// 
-        Degree45,
+        Degree45 = 45,
 
         /// <summary>
         ///   Find co-occurrences at 90° degrees.
         /// </summary>
         /// 
-        Degree90,
+        Degree90 = 90,
 
         /// <summary>
         ///   Find co-occurrences at 135° degrees.
         /// </summary>
         /// 
-        Degree135
+        Degree135 = 135
     };
 
 
@@ -64,9 +67,49 @@ namespace Accord.Imaging
     ///   Gray-Level Co-occurrence Matrix (GLCM).
     /// </summary>
     /// 
-    public class GrayLevelCooccurrenceMatrix
+    /// <remarks>
+    /// <para>
+    ///   A co-occurrence matrix or co-occurrence distribution is a matrix that is defined over an image to 
+    ///   be the distribution of co-occurring pixel values (grayscale values, or colors) at a given offset.</para>
+    ///   
+    /// <para>
+    ///   Any matrix or pair of matrices can be used to generate a co-occurrence matrix, though their most 
+    ///   common application has been in measuring texture in images, so the typical definition, as above, 
+    ///   assumes that the matrix is an image. It is also possible to define the matrix across two different
+    ///   images.Such a matrix can then be used for color mapping.</para>
+    /// </remarks>
+    /// 
+    /// <remarks>
+    /// <para>
+    ///   References:
+    ///   <list type="bullet">
+    ///     <item><description>
+    ///       Mryka Hall-Beyer, "The GLCM Tutorial Home Page", The GLCM Tutorial Home Page.
+    ///       Available in: http://www.fp.ucalgary.ca/mhallbey/tutorial.htm </description></item>
+    ///     <item><description><a href="https://en.wikipedia.org/wiki/Co-occurrence_matrix">
+    ///       Wikipedia contributors. "Co-occurrence matrix." Wikipedia, The Free Encyclopedia. 
+    ///       Wikipedia, The Free Encyclopedia, 7 Sep. 2016. Web. 27 Jan. 2017. Available in 
+    ///       https://en.wikipedia.org/wiki/Co-occurrence_matrix </a></description></item>
+    ///   </list>
+    /// </para>   
+    /// </remarks>
+    /// 
+    /// <example>
+    /// <para>
+    ///   Gray-level Cooccurrence matrices can be computed directly from images:</para>
+    ///   <code source="Unit Tests\Accord.Tests.Imaging\GrayLevelCooccurrenceMatrixTest.cs" region="doc_learn" />
+    ///   
+    /// <para>
+    ///   These matrices also play a major role in the computation of <see cref="Haralick"/> descriptors. For
+    ///   more examples, including on how to use those matrices for image classification, please see <see cref="Haralick"/>
+    ///   and <see cref="HaralickDescriptor"/> documentation pages.</para>
+    /// </example>
+    /// 
+    /// <seealso cref="Haralick"/>
+    /// <seealso cref="HaralickDescriptor"/>
+    /// 
+    public class GrayLevelCooccurrenceMatrix : ICloneable
     {
-
         private CooccurrenceDegree degree;
         private bool autoGray = true;
         private bool normalize = true;
@@ -102,7 +145,8 @@ namespace Accord.Imaging
         }
 
         /// <summary>
-        ///   Gets or sets the direction at which the co-occurrence should be found.
+        ///   Gets or sets the direction at which the co-occurrence should 
+        ///   be found. Default is <see cref="CooccurrenceDegree.Degree0"/>.
         /// </summary>
         /// 
         public CooccurrenceDegree Degree
@@ -136,27 +180,18 @@ namespace Accord.Imaging
         ///   Initializes a new instance of the <see cref="GrayLevelCooccurrenceMatrix"/> class.
         /// </summary>
         /// 
-        public GrayLevelCooccurrenceMatrix() { }
-
-        /// <summary>
-        ///   Initializes a new instance of the <see cref="GrayLevelCooccurrenceMatrix"/> class.
-        /// </summary>
-        /// 
-        /// <param name="distance">The distance at which the texture should be analyzed.</param>
-        /// 
-        public GrayLevelCooccurrenceMatrix(int distance)
+        public GrayLevelCooccurrenceMatrix()
         {
-            this.distance = distance;
         }
 
         /// <summary>
         ///   Initializes a new instance of the <see cref="GrayLevelCooccurrenceMatrix"/> class.
         /// </summary>
         /// 
-        /// <param name="distance">The distance at which the texture should be analyzed.</param>
-        /// <param name="degree">The direction to look for co-occurrences.</param>
+        /// <param name="distance">The distance at which the texture should be analyzed. Default is 1.</param>
+        /// <param name="degree">The direction to look for co-occurrences. Default is <see cref="CooccurrenceDegree.Degree0"/>.</param>
         /// 
-        public GrayLevelCooccurrenceMatrix(int distance, CooccurrenceDegree degree)
+        public GrayLevelCooccurrenceMatrix(int distance = 1, CooccurrenceDegree degree = CooccurrenceDegree.Degree0)
         {
             this.distance = distance;
             this.degree = degree;
@@ -166,8 +201,8 @@ namespace Accord.Imaging
         ///   Initializes a new instance of the <see cref="GrayLevelCooccurrenceMatrix"/> class.
         /// </summary>
         /// 
-        /// <param name="distance">The distance at which the texture should be analyzed.</param>
-        /// <param name="degree">The direction to look for co-occurrences.</param>
+        /// <param name="distance">The distance at which the texture should be analyzed. Default is 1.</param>
+        /// <param name="degree">The direction to look for co-occurrences. Default is <see cref="CooccurrenceDegree.Degree0"/>.</param>
         /// <param name="autoGray">Whether the maximum value of gray should be
         ///   automatically computed from the image. Default is true.</param>
         /// <param name="normalize">Whether the produced GLCM should be normalized,
@@ -180,6 +215,46 @@ namespace Accord.Imaging
             this.degree = degree;
             this.normalize = normalize;
             this.autoGray = autoGray;
+        }
+
+        /// <summary>
+        ///   Computes the Gray-level Co-occurrence Matrix (GLCM) 
+        ///   for the given source image.
+        /// </summary>
+        /// 
+        /// <param name="source">The source image.</param>
+        /// 
+        /// <returns>A square matrix of double-precision values containing
+        /// the GLCM for the given <paramref name="source"/>.</returns>
+        /// 
+        public double[,] Compute(Bitmap source)
+        {
+            var bitmapData = source.LockBits(ImageLockMode.ReadOnly);
+
+            try
+            {
+                return Compute(bitmapData);
+            }
+            finally
+            {
+                source.UnlockBits(bitmapData);
+            }
+        }
+
+        /// <summary>
+        ///   Computes the Gray-level Co-occurrence Matrix (GLCM) 
+        ///   for the given source image.
+        /// </summary>
+        /// 
+        /// <param name="source">The source image.</param>
+        /// 
+        /// <returns>A square matrix of double-precision values containing
+        /// the GLCM for the given <paramref name="source"/>.</returns>
+        /// 
+        public double[,] Compute(BitmapData source)
+        {
+            using (var unmanagedImage = new UnmanagedImage(source))
+                return Compute(unmanagedImage);
         }
 
         /// <summary>
@@ -208,8 +283,11 @@ namespace Accord.Imaging
         /// <returns>A square matrix of double-precision values containing the GLCM for the
         ///   <paramref name="region"/> of the given <paramref name="source"/>.</returns>
         /// 
-        public unsafe double[,] Compute(UnmanagedImage source, Rectangle region)
+        public double[,] Compute(UnmanagedImage source, Rectangle region)
         {
+            if (source.PixelFormat != PixelFormat.Format8bppIndexed)
+                throw new UnsupportedImageFormatException("Only grayscale 8bpp images are supported.");
+
             int width = region.Width;
             int height = region.Height;
             int stride = source.Stride;
@@ -219,83 +297,86 @@ namespace Accord.Imaging
             int startX = region.X;
             int startY = region.Y;
 
-            byte* src = (byte*)source.ImageData.ToPointer() + startY * stride + startX;
-
-            if (autoGray)
-                maxGray = max(width, height, offset, src);
-
-            numPairs = 0;
-            int size = maxGray + 1;
-            double[,] cooccurrence = new double[size, size];
-
-
-            switch (degree)
+            unsafe
             {
-                case CooccurrenceDegree.Degree0:
-                    for (int y = startY; y < height; y++)
-                    {
-                        for (int x = startX + distance; x < width; x++)
-                        {
-                            byte a = src[stride * y + (x - distance)];
-                            byte b = src[stride * y + x];
-                            cooccurrence[a, b]++;
-                            numPairs++;
-                        }
-                    }
-                    break;
+                byte* src = (byte*)source.ImageData.ToPointer() + startY * stride + startX;
 
-                case CooccurrenceDegree.Degree45:
-                    for (int y = startY + distance; y < height; y++)
-                    {
-                        for (int x = startX; x < width - distance; x++)
-                        {
-                            byte a = src[stride * y + x];
-                            byte b = src[stride * (y - distance) + (x + distance)];
-                            cooccurrence[a, b]++;
-                            numPairs++;
-                        }
-                    }
-                    break;
+                if (autoGray)
+                    maxGray = max(width, height, offset, src);
 
-                case CooccurrenceDegree.Degree90:
-                    for (int y = startY + distance; y < height; y++)
-                    {
-                        for (int x = startX; x < width; x++)
-                        {
-                            byte a = src[stride * (y - distance) + x];
-                            byte b = src[stride * y + x];
-                            cooccurrence[a, b]++;
-                            numPairs++;
-                        }
-                    }
-                    break;
+                numPairs = 0;
+                int size = maxGray + 1;
+                double[,] cooccurrence = new double[size, size];
 
-                case CooccurrenceDegree.Degree135:
-                    for (int y = startY + distance; y < height; y++)
-                    {
-                        int steps = width - 1;
-                        for (int x = startX; x < width - distance; x++)
-                        {
-                            byte a = src[stride * y + (steps - x)];
-                            byte b = src[stride * (y - distance) + (steps - distance - x)];
-                            cooccurrence[a, b]++;
-                            numPairs++;
-                        }
-                    }
-                    break;
-            }
 
-            if (normalize && numPairs > 0)
-            {
-                fixed (double* ptrMatrix = cooccurrence)
+                switch (degree)
                 {
-                    double* c = ptrMatrix;
-                    for (int i = 0; i < cooccurrence.Length; i++, c++)
-                        *c /= numPairs;
-                }
-            }
+                    case CooccurrenceDegree.Degree0:
+                        for (int y = startY; y < height; y++)
+                        {
+                            for (int x = startX + distance; x < width; x++)
+                            {
+                                byte a = src[stride * y + (x - distance)];
+                                byte b = src[stride * y + x];
+                                cooccurrence[a, b]++;
+                                numPairs++;
+                            }
+                        }
+                        break;
 
-            return cooccurrence;
+                    case CooccurrenceDegree.Degree45:
+                        for (int y = startY + distance; y < height; y++)
+                        {
+                            for (int x = startX; x < width - distance; x++)
+                            {
+                                byte a = src[stride * y + x];
+                                byte b = src[stride * (y - distance) + (x + distance)];
+                                cooccurrence[a, b]++;
+                                numPairs++;
+                            }
+                        }
+                        break;
+
+                    case CooccurrenceDegree.Degree90:
+                        for (int y = startY + distance; y < height; y++)
+                        {
+                            for (int x = startX; x < width; x++)
+                            {
+                                byte a = src[stride * (y - distance) + x];
+                                byte b = src[stride * y + x];
+                                cooccurrence[a, b]++;
+                                numPairs++;
+                            }
+                        }
+                        break;
+
+                    case CooccurrenceDegree.Degree135:
+                        for (int y = startY + distance; y < height; y++)
+                        {
+                            int steps = width - 1;
+                            for (int x = startX; x < width - distance; x++)
+                            {
+                                byte a = src[stride * y + (steps - x)];
+                                byte b = src[stride * (y - distance) + (steps - distance - x)];
+                                cooccurrence[a, b]++;
+                                numPairs++;
+                            }
+                        }
+                        break;
+                }
+
+                if (normalize && numPairs > 0)
+                {
+                    fixed (double* ptrMatrix = cooccurrence)
+                    {
+                        double* c = ptrMatrix;
+                        for (int i = 0; i < cooccurrence.Length; i++, c++)
+                            *c /= numPairs;
+                    }
+                }
+
+                return cooccurrence;
+            }
         }
 
         unsafe private static int max(int width, int height, int offset, byte* src)
@@ -310,5 +391,25 @@ namespace Accord.Imaging
 
             return maxGray;
         }
+
+        /// <summary>
+        ///   Creates a new object that is a copy of the current instance.
+        /// </summary>
+        /// 
+        /// <returns>
+        ///   A new object that is a copy of this instance.
+        /// </returns>
+        /// 
+        public object Clone()
+        {
+            var clone = new GrayLevelCooccurrenceMatrix();
+            clone.autoGray = autoGray;
+            clone.degree = degree;
+            clone.distance = distance;
+            clone.normalize = normalize;
+            clone.numPairs = numPairs;
+            return clone;
+        }
+
     }
 }

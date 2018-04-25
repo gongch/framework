@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -28,6 +28,8 @@ namespace Accord.Statistics.Distributions.Multivariate
     using Accord.Statistics.Distributions.DensityKernels;
     using Accord.Statistics.Distributions.Fitting;
     using Tools = Accord.Statistics.Tools;
+    using Accord.Math.Random;
+    using Accord.Compat;
 
     /// <summary>
     ///   Multivariate empirical distribution.
@@ -69,44 +71,22 @@ namespace Accord.Statistics.Distributions.Multivariate
     /// </remarks>
     /// 
     /// <example>
-    /// <code>
-    ///   // Suppose we have the following data, and we would
-    ///   // like to estimate a distribution from this data
-    ///   
-    ///   double[][] samples =
-    ///   {
-    ///       new double[] { 0, 1 },
-    ///       new double[] { 1, 2 },
-    ///       new double[] { 5, 1 },
-    ///       new double[] { 7, 1 },
-    ///       new double[] { 6, 1 },
-    ///       new double[] { 5, 7 },
-    ///       new double[] { 2, 1 },
-    ///   };
-    ///   
-    ///   // Start by specifying a density kernel
-    ///   IDensityKernel kernel = new EpanechnikovKernel(dimension: 2);
-    ///   
-    ///   // Create a multivariate Empirical distribution from the samples
-    ///   var dist = new MultivariateEmpiricalDistribution(kernel, samples);
-    ///   
-    ///   
-    ///   // Common measures
-    ///   double[] mean = dist.Mean;     // { 3.71, 2.00 }
-    ///   double[] median = dist.Median; // { 3.71, 2.00 }
-    ///   double[] var = dist.Variance;  // { 7.23, 5.00 } (diagonal from cov)
-    ///   double[,] cov = dist.Covariance; // { { 7.23, 0.83 }, { 0.83, 5.00 } }
-    ///   
-    ///   // Probability mass functions
-    ///   double pdf1 = dist.ProbabilityDensityFunction(new double[] { 2, 1 }); // 0.039131176997318849
-    ///   double pdf2 = dist.ProbabilityDensityFunction(new double[] { 4, 2 }); // 0.010212109770266639
-    ///   double pdf3 = dist.ProbabilityDensityFunction(new double[] { 5, 7 }); // 0.02891906722705221
-    ///   double lpdf = dist.LogProbabilityDensityFunction(new double[] { 5, 7 }); // -3.5432541357714742
-    /// </code>
+    /// <para>
+    ///   The first example shows how to fit a <see cref="MultivariateEmpiricalDistribution"/> 
+    ///   using <see cref="GaussianKernel">Gaussian kernels</see>:</para>
+    ///   <code source="Unit Tests\Accord.Tests.Statistics\Distributions\Multivariate\Continuous\MultivariateEmpiricalDistributionTest.cs" region="doc_fit_gaussian" />
+    /// 
+    /// <para>
+    ///   The second example shows how to the same as above, but using 
+    ///   <see cref="EpanechnikovKernel">Epanechnikov kernels</see> instead.</para>
+    ///   <code source="Unit Tests\Accord.Tests.Statistics\Distributions\Multivariate\Continuous\MultivariateEmpiricalDistributionTest.cs" region="doc_fit_epanechnikov" />
     /// </example>
     /// 
     /// <seealso cref="IDensityKernel"/>
     /// <seealso cref="Accord.Statistics.Distributions.Univariate.EmpiricalDistribution"/>
+    /// 
+    /// <seealso cref="GaussianKernel"/>
+    /// <seealso cref="EpanechnikovKernel"/>
     /// 
     [Serializable]
     public class MultivariateEmpiricalDistribution : MultivariateContinuousDistribution,
@@ -404,13 +384,13 @@ namespace Accord.Statistics.Distributions.Multivariate
                 if (mean == null)
                 {
                     if (type == WeightType.None)
-                        mean = Tools.Mean(samples);
+                        mean = Measures.Mean(samples, dimension: 0);
 
                     else if (type == WeightType.Repetition)
-                        mean = Tools.WeightedMean(samples, repeats);
+                        mean = Measures.WeightedMean(samples, repeats);
 
                     else if (type == WeightType.Fraction)
-                        mean = Tools.WeightedMean(samples, weights);
+                        mean = Measures.WeightedMean(samples, weights);
                 }
 
                 return mean;
@@ -432,13 +412,13 @@ namespace Accord.Statistics.Distributions.Multivariate
                 if (variance == null)
                 {
                     if (type == WeightType.None)
-                        variance = Tools.Variance(samples);
+                        variance = Measures.Variance(samples);
 
                     else if (type == WeightType.Repetition)
-                        variance = Tools.WeightedVariance(samples, repeats);
+                        variance = Measures.WeightedVariance(samples, repeats);
 
                     else if (type == WeightType.Fraction)
-                        variance = Tools.WeightedVariance(samples, weights);
+                        variance = Measures.WeightedVariance(samples, weights);
                 }
 
                 return variance;
@@ -460,13 +440,13 @@ namespace Accord.Statistics.Distributions.Multivariate
                 if (covariance == null)
                 {
                     if (type == WeightType.None)
-                        covariance = Tools.Covariance(samples, Mean);
+                        covariance = Measures.Covariance(samples, Mean).ToMatrix(); // TODO: Switch to double[][]
 
                     else if (type == WeightType.Repetition)
-                        covariance = Tools.WeightedCovariance(samples, repeats);
+                        covariance = Measures.WeightedCovariance(samples, repeats);
 
                     else if (type == WeightType.Fraction)
-                        covariance = Tools.WeightedCovariance(samples, weights);
+                        covariance = Measures.WeightedCovariance(samples, weights);
                 }
 
                 return covariance;
@@ -490,7 +470,7 @@ namespace Accord.Statistics.Distributions.Multivariate
         ///   probability that a given value <c>x</c> will occur.
         /// </remarks>
         /// 
-        public override double ProbabilityDensityFunction(double[] x)
+        protected internal override double InnerProbabilityDensityFunction(params double[] x)
         {
             // http://www.buch-kromann.dk/tine/nonpar/Nonparametric_Density_Estimation_multidim.pdf
             // http://sfb649.wiwi.hu-berlin.de/fedc_homepage/xplore/ebooks/html/spm/spmhtmlnode18.html
@@ -564,7 +544,7 @@ namespace Accord.Statistics.Distributions.Multivariate
         ///   probability that a given value <c>x</c> will occur.
         /// </remarks>
         /// 
-        public override double DistributionFunction(params double[] x)
+        protected internal override double InnerDistributionFunction(params double[] x)
         {
             if (type == WeightType.None)
             {
@@ -642,6 +622,22 @@ namespace Accord.Statistics.Distributions.Multivariate
         ///   Fits the underlying distribution to a given set of observations.
         /// </summary>
         /// 
+        /// <param name="observations">The array of observations to fit the model against. The array
+        ///   elements can be either of type double (for univariate data) or
+        ///   type double[] (for multivariate data).</param>
+        /// <param name="weights">The weight vector containing the weight for each of the samples.</param>
+        /// <param name="options">Optional arguments which may be used during fitting, such
+        ///   as regularization constants and additional parameters.</param>
+        ///   
+        public override void Fit(double[][] observations, int[] weights, IFittingOptions options)
+        {
+            Fit(observations, weights, options as MultivariateEmpiricalOptions);
+        }
+
+        /// <summary>
+        ///   Fits the underlying distribution to a given set of observations.
+        /// </summary>
+        /// 
         /// <param name="observations">The array of observations to fit the model against.</param>
         /// <param name="weights">The weight vector containing the weight for each of the samples.</param>
         /// <param name="options">Optional arguments which may be used during fitting, such
@@ -649,12 +645,6 @@ namespace Accord.Statistics.Distributions.Multivariate
         ///
         public void Fit(double[][] observations, double[] weights, MultivariateEmpiricalOptions options)
         {
-            if (weights != null)
-                throw new ArgumentException("This distribution does not support weighted samples.", "weights");
-
-            if (options != null)
-                throw new ArgumentException("This method does not accept fitting options.");
-
             double[,] smoothing = null;
             bool inPlace = false;
 
@@ -683,12 +673,6 @@ namespace Accord.Statistics.Distributions.Multivariate
         ///
         public void Fit(double[][] observations, int[] weights, MultivariateEmpiricalOptions options)
         {
-            if (weights != null)
-                throw new ArgumentException("This distribution does not support weighted samples.", "weights");
-
-            if (options != null)
-                throw new ArgumentException("This method does not accept fitting options.");
-
             double[,] smoothing = null;
             bool inPlace = false;
 
@@ -806,7 +790,7 @@ namespace Accord.Statistics.Distributions.Multivariate
             // Silverman's rule
             //  - http://en.wikipedia.org/wiki/Multivariate_kernel_density_estimation
 
-            double[] sigma = Tools.StandardDeviation(observations);
+            double[] sigma = observations.StandardDeviation();
 
             double d = sigma.Length;
             double n = observations.Length;
@@ -835,7 +819,7 @@ namespace Accord.Statistics.Distributions.Multivariate
             // Silverman's rule
             //  - http://en.wikipedia.org/wiki/Multivariate_kernel_density_estimation
 
-            double[] sigma = Tools.WeightedStandardDeviation(observations, weights);
+            double[] sigma = observations.WeightedStandardDeviation(weights);
 
             double d = sigma.Length;
             double n = weights.Sum();
@@ -864,7 +848,7 @@ namespace Accord.Statistics.Distributions.Multivariate
             // Silverman's rule
             //  - http://en.wikipedia.org/wiki/Multivariate_kernel_density_estimation
 
-            double[] sigma = Tools.WeightedStandardDeviation(observations, weights);
+            double[] sigma = observations.WeightedStandardDeviation(weights);
 
             double d = sigma.Length;
             double n = weights.Sum();
@@ -919,32 +903,21 @@ namespace Accord.Statistics.Distributions.Multivariate
         /// </summary>
         /// 
         /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///
         /// <returns>A random vector of observations drawn from this distribution.</returns>
-        /// 
-        public double[][] Generate(int samples)
+        ///
+        public override double[][] Generate(int samples, double[][] result, Random source)
         {
-            var generator = Accord.Math.Tools.Random;
-
-            var s = new double[samples][];
-            for (int i = 0; i < s.Length; i++)
-                s[i] = this.samples[generator.Next(this.samples.Length)];
-
-            return s;
+            for (int i = 0; i < samples; i++)
+            {
+                int j = source.Next(this.samples.Length);
+                Array.Copy(this.samples[j], result[i], Dimension);
+            }
+            return result;
         }
-
-        /// <summary>
-        ///   Generates a random observation from the current distribution.
-        /// </summary>
-        /// 
-        /// <returns>A random observations drawn from this distribution.</returns>
-        /// 
-        public double[] Generate()
-        {
-            var generator = Accord.Math.Tools.Random;
-
-            return this.samples[generator.Next(this.samples.Length)];
-        }
-
 
         /// <summary>
         ///   Returns a <see cref="System.String" /> that represents this instance.

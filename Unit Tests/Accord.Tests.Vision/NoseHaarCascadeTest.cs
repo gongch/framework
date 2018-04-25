@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,37 +23,24 @@
 namespace Accord.Tests.Vision
 {
     using Accord.Vision.Detection.Cascades;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Vision.Detection;
     using System.IO;
+#if NETSTANDARD2_0
+    using Resources = Accord.Tests.Vision.Properties.Resources_Standard;
+#endif
 
-    [TestClass()]
+    [TestFixture]
     public class NoseHaarCascadeTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void NoseHaarCascadeConstructorTest()
         {
             NoseHaarCascade actual = new NoseHaarCascade();
 
-            HaarCascade expected = HaarCascade.FromXml(new StringReader(Properties.Resources.haarcascade_mcs_nose));
+            string fileName = Path.Combine(TestContext.CurrentContext.TestDirectory, "Resources", "haarcascade_mcs_nose.xml");
+            HaarCascade expected = HaarCascade.FromXml(new StreamReader(fileName));
 
             Assert.AreNotEqual(expected, actual);
             Assert.AreEqual(expected.HasTiltedFeatures, actual.HasTiltedFeatures);
@@ -89,7 +76,7 @@ namespace Accord.Tests.Vision
 
                         Assert.AreNotEqual(eNode, aNode);
                         Assert.AreEqual(eNode.LeftNodeIndex, aNode.LeftNodeIndex);
-                        Assert.AreEqual(eNode.LeftValue, aNode.LeftValue);
+                        Assert.AreEqual(eNode.LeftValue, aNode.LeftValue, 1e-10);
                         Assert.AreEqual(eNode.RightNodeIndex, aNode.RightNodeIndex, 1e-16);
                         Assert.AreEqual(eNode.RightValue, aNode.RightValue, 1e-16);
                         Assert.AreEqual(eNode.Threshold, aNode.Threshold, 1e-16);

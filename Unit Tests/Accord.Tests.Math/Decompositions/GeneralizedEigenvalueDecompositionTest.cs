@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,30 +23,14 @@
 namespace Accord.Tests.Math
 {
     using Accord.Math.Decompositions;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Math;
 
-    [TestClass()]
+    [TestFixture]
     public class GeneralizedEigenvalueDecompositionTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void GeneralizedEigenvalueDecompositionConstructorTest()
         {
             // Suppose we have the following 
@@ -105,7 +89,7 @@ namespace Accord.Tests.Math
             Assert.IsTrue(Matrix.IsEqual(gevd.DiagonalMatrix, expectedValues, 0.00000000001));
         }
 
-        [TestMethod()]
+        [Test]
         public void GeneralizedEigenvalueDecompositionConstructorTest2()
         {
             double[,] A = Matrix.Identity(100);
@@ -120,15 +104,15 @@ namespace Accord.Tests.Math
             Assert.IsTrue(Matrix.IsEqual(gevd.DiagonalMatrix, expectedValues));
         }
 
-        [TestMethod()]
+        [Test]
         public void GeneralizedEigenvalueDecompositionConstructorTest3()
         {
             for (int i = 0; i < 10000; i++)
             {
                 for (int j = 1; j < 6; j++)
                 {
-                    var A = Matrix.Random(j, j, -1, 1);
-                    var B = Matrix.Random(j, j, -1, 1);
+                    var A = Matrix.Random(j, j, -1.0, 1.0);
+                    var B = Matrix.Random(j, j, -1.0, 1.0);
 
                     var gevd = new GeneralizedEigenvalueDecomposition(A, B);
 
@@ -136,8 +120,8 @@ namespace Accord.Tests.Math
                     var D = gevd.DiagonalMatrix;
 
                     // A*V = B*V*D
-                    var AV = A.Multiply(V);
-                    var BVD = B.Multiply(V).Multiply(D);
+                    var AV = Matrix.Multiply(A, V);
+                    var BVD = Matrix.Multiply(Matrix.Multiply(B, V), D);
 
                     Assert.IsTrue(Matrix.IsEqual(AV, BVD, 0.0000001));
                 }
@@ -146,8 +130,8 @@ namespace Accord.Tests.Math
             for (int i = 0; i < 100; i++)
             {
                 int j = 50;
-                var A = Matrix.Random(j, j, -1, 1);
-                var B = Matrix.Random(j, j, -1, 1);
+                var A = Matrix.Random(j, j, -1.0, 1.0);
+                var B = Matrix.Random(j, j, -1.0, 1.0);
 
                 var gevd = new GeneralizedEigenvalueDecomposition(A, B);
 
@@ -155,14 +139,14 @@ namespace Accord.Tests.Math
                 var D = gevd.DiagonalMatrix;
 
                 // A*V = B*V*D
-                var AV = A.Multiply(V);
-                var BVD = B.Multiply(V).Multiply(D);
+                var AV = Matrix.Multiply(A, V);
+                var BVD = Matrix.Multiply(Matrix.Multiply(B, V), D);
 
                 Assert.IsTrue(Matrix.IsEqual(AV, BVD, 0.0000001));
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void GeneralizedEigenvalueDecompositionConstructorTest4()
         {
             var A = new double[3, 3];
@@ -195,8 +179,8 @@ namespace Accord.Tests.Math
             var D = gevd.DiagonalMatrix;
 
             // A*V = B*V*D
-            var AV = A.Multiply(V);
-            var BVD = B.Multiply(V).Multiply(D);
+            var AV = Matrix.Multiply(A, V);
+            var BVD = Matrix.Multiply(Matrix.Multiply(B, V), D);
             Assert.IsTrue(Matrix.IsEqual(AV, BVD, 0.000001));
 
             double[,] expectedVectors =

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 // This code has been submitted as an user contribution by darko.juric2
@@ -39,7 +39,7 @@ namespace Accord.Vision
     ///   robust and smooth estimates of the detected regions.
     /// </remarks>
     /// 
-    public class GroupMatching : GroupMatching<Rectangle>
+    public sealed class GroupMatching : GroupMatching<Rectangle>
     {
         private double threshold;
 
@@ -65,7 +65,7 @@ namespace Accord.Vision
         ///   two rectangles as neighbors. Default is 0.2.
         /// </summary>
         /// 
-        protected double Threshold
+        public double Threshold
         {
             get { return threshold; }
         }

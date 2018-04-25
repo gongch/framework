@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -20,47 +20,34 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-using Accord.Imaging;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Accord.Math;
-using System.Drawing;
-
-using Tools = Accord.Imaging.Tools;
-using System.Drawing.Imaging;
-using Accord.Math.Decompositions;
-using System;
-using AForge.Imaging;
-using Accord.Imaging.Converters;
-
 namespace Accord.Tests.Imaging
 {
+    using Accord.Imaging;
+    using NUnit.Framework;
+    using Accord.Math;
+    using System.Drawing;
+    using Tools = Accord.Imaging.Tools;
+    using System.Drawing.Imaging;
+    using Accord.Math.Decompositions;
+    using System;
+    using Accord.Imaging.Converters;
+    using Accord.Statistics;
+    using Accord.Tests.Imaging.Properties;
+#if NO_BITMAP
+    using Resources = Accord.Tests.Imaging.Properties.Resources_Standard;
+#endif
 
-
-    [TestClass()]
+    [TestFixture]
     public class ToolsTest
     {
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
 
 #pragma warning disable 0618
 
 
-        [TestMethod()]
+        [Test]
         public void NormalizeTest()
         {
-            PointH[] points = new PointH[] 
+            PointH[] points = new PointH[]
             {
                 new PointH(1, 2),
                 new PointH(5, 2),
@@ -97,12 +84,12 @@ namespace Accord.Tests.Imaging
 
         }
 
-        [TestMethod()]
+        [Test]
         public void MultiplyTest()
         {
             MatrixH matrix = new MatrixH(Matrix.Identity(3));
 
-            PointH[] points = new PointH[] 
+            PointH[] points = new PointH[]
             {
                 new PointH(1, 2),
                 new PointH(5, 2),
@@ -112,7 +99,7 @@ namespace Accord.Tests.Imaging
             };
 
 
-            PointH[] expected = new PointH[] 
+            PointH[] expected = new PointH[]
             {
                 new PointH(1, 2),
                 new PointH(5, 2),
@@ -132,7 +119,7 @@ namespace Accord.Tests.Imaging
 
         }
 
-        [TestMethod()]
+        [Test]
         public void ColinearTest()
         {
             bool actual;
@@ -156,10 +143,10 @@ namespace Accord.Tests.Imaging
         }
 
 
-        [TestMethod()]
+        [Test]
         public void HomographyTest()
         {
-            PointH[] x1 = 
+            PointH[] x1 =
             {
                 new PointH(0, 0),
                 new PointH(1, 0),
@@ -167,7 +154,7 @@ namespace Accord.Tests.Imaging
                 new PointH(1, 1),
             };
 
-            PointH[] x2 = 
+            PointH[] x2 =
             {
                 new PointH(0, 0),
                 new PointH(1, 0),
@@ -186,7 +173,7 @@ namespace Accord.Tests.Imaging
             Assert.IsTrue(Matrix.IsEqual(expected, actual, 1e-4));
 
 
-            x1 = new PointH[] 
+            x1 = new PointH[]
             {
                 new PointH(2, 0),
                 new PointH(1, 0),
@@ -197,7 +184,7 @@ namespace Accord.Tests.Imaging
                 new PointH(1, 1),
             };
 
-            x2 = new PointH[] 
+            x2 = new PointH[]
             {
                 new PointH(9, 1),
                 new PointH(1, 5),
@@ -223,10 +210,10 @@ namespace Accord.Tests.Imaging
 
         }
 
-        [TestMethod()]
+        [Test]
         public void HomographyTestF()
         {
-            PointF[] x1 = 
+            PointF[] x1 =
             {
                 new PointF(0, 0),
                 new PointF(1, 0),
@@ -234,7 +221,7 @@ namespace Accord.Tests.Imaging
                 new PointF(1, 1),
             };
 
-            PointF[] x2 = 
+            PointF[] x2 =
             {
                 new PointF(0, 0),
                 new PointF(1, 0),
@@ -251,7 +238,7 @@ namespace Accord.Tests.Imaging
                     actual[i, j] /= actual[2, 2];
 
 
-            Assert.IsTrue(Matrix.IsEqual(expected, actual, 1e-5));
+            Assert.IsTrue(Matrix.IsEqual(expected, actual, 1e-5f));
 
 
             x1 = new PointF[]
@@ -287,16 +274,16 @@ namespace Accord.Tests.Imaging
 
             actual = (float[,])Tools.Homography(x1, x2);
 
-            Assert.IsTrue(Matrix.IsEqual(expected, actual, 0.01));
+            Assert.IsTrue(Matrix.IsEqual(expected, actual, 0.01f));
 
         }
 
-        [TestMethod()]
+        [Test]
         public void ToDoubleArrayTest()
         {
-            Bitmap image = Properties.Resources.image1;
+            Bitmap image = Accord.Imaging.Image.Clone(Resources.image1);
 
-            double[] actual = Tools.ToDoubleArray(image, 0, 0, 1);
+            double[] actual; new ImageToArray(min: 0, max: 1).Convert(image, out actual);
 
 
             for (int i = 0; i < 256; i++)
@@ -311,7 +298,7 @@ namespace Accord.Tests.Imaging
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ColinearTest1()
         {
             bool actual;
@@ -333,10 +320,10 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(false, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void SumTest()
         {
-            Bitmap image = Properties.Resources.image1;
+            Bitmap image = Accord.Imaging.Image.Clone(Resources.image1);
 
             int expected = 0;
 
@@ -348,10 +335,10 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void SumTest1()
         {
-            Bitmap image = Properties.Resources.image2;
+            Bitmap image = Accord.Imaging.Image.Clone(Resources.image2);
 
             int expected = 0;
 
@@ -360,7 +347,7 @@ namespace Accord.Tests.Imaging
                     expected += image.GetPixel(i, j).R;
 
 
-            BitmapData data = image.LockBits(new Rectangle(Point.Empty, image.Size),
+            BitmapData data = image.LockBits(new Rectangle(System.Drawing.Point.Empty, image.Size),
                 ImageLockMode.ReadOnly, image.PixelFormat);
 
             int actual = Tools.Sum(data, new Rectangle(3, 2, 9 - 3, 10 - 2));
@@ -369,10 +356,10 @@ namespace Accord.Tests.Imaging
             image.UnlockBits(data);
         }
 
-        [TestMethod()]
+        [Test]
         public void SumTest2()
         {
-            Bitmap image = Properties.Resources.image2;
+            Bitmap image = Accord.Imaging.Image.Clone(Resources.image2);
 
             int expected = 0;
 
@@ -385,23 +372,25 @@ namespace Accord.Tests.Imaging
 
         }
 
-        [TestMethod()]
+        [Test]
         public void ToBitmapTest1()
         {
-            double[][] pixels = 
+            double[][] pixels =
             {
                 new double[] { 0,0,0 }, new double[] { 0,0,1 }, new double[] { 0,1,0 },
                 new double[] { 0,1,1 }, new double[] { 1,0,0 }, new double[] { 1,0,1 },
                 new double[] { 1,1,0 }, new double[] { 1,1,1 }, new double[] { 0,0.5,0 },
             };
 
-            int width = 3;
-            int height = 3;
             double min = 0;
             double max = 1;
 
 
-            Bitmap actual = Tools.ToBitmap(pixels, width, height, min, max);
+            Bitmap actual;
+            new ArrayToImage(min: min, max: max, width: 3, height: 3).Convert(pixels, out actual);
+
+            Assert.AreEqual(3, actual.Width);
+            Assert.AreEqual(3, actual.Height);
 
             // Accord.Controls.ImageBox.Show(actual, PictureBoxSizeMode.Zoom);
 
@@ -417,44 +406,42 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(Color.FromArgb(255, 255, 255), actual.GetPixel(1, 2));
             Assert.AreEqual(Color.FromArgb(000, 127, 000), actual.GetPixel(2, 2));
 
-            double[][] actualArray = actual.ToDoubleArray(min, max);
+            double[][] actualArray; new ImageToArray(min: min, max: max).Convert(actual, out actualArray);
             Assert.IsTrue(Matrix.IsEqual(pixels, actualArray, 0.01));
 
         }
 
-        [TestMethod()]
+        [Test]
         public void ToBitmapTest()
         {
-            double[] array = 
+            double[] array =
             {
                 0,0,0,
                 0,1,0,
                 0,0,0,
             };
 
-            int width = 3;
-            int height = 3;
             double min = 0;
             double max = 1;
 
-            Bitmap actual = Accord.Imaging.Tools.ToBitmap(array, width, height, min, max);
+            Bitmap actual; new ArrayToImage(min: min, max: max, width: 3, height: 3).Convert(array, out actual);
 
-            double[] actualarray = actual.ToDoubleArray(0, min, max);
+            double[] actualarray; new ImageToArray(min: min, max: max).Convert(actual, out actualarray);
 
             Assert.IsTrue(Matrix.IsEqual(array, actualarray));
-
         }
 
 
-        [TestMethod()]
+        [Test]
         public void MeanTest()
         {
-            Bitmap image = new byte[,]
+            Bitmap image;
+            new MatrixToImage().Convert(new byte[,]
             {
                 { 1, 2, 3 },
                 { 4, 5, 6 },
                 { 7, 8, 9 },
-            }.ToBitmap();
+            }, out image);
 
             {
                 Rectangle rectangle = new Rectangle(0, 0, 1, 2);
@@ -470,7 +457,8 @@ namespace Accord.Tests.Imaging
             }
         }
 
-        [TestMethod()]
+        [Test]
+        [Category("MonoNotSupported")]
         public void MeanTest2()
         {
             // Test for 16 bpp images
@@ -496,7 +484,8 @@ namespace Accord.Tests.Imaging
         }
 
 
-        [TestMethod()]
+        [Test]
+        [Category("MonoNotSupported")]
         public void MeanTest3()
         {
             UnmanagedImage image = UnmanagedImage.FromManagedImage(new byte[,]
@@ -522,19 +511,20 @@ namespace Accord.Tests.Imaging
 
 
 
-        [TestMethod()]
+        [Test]
         public void StandardDeviationTest()
         {
             double[] values = { 5, 2, 7, 5, 3, 5, 1, 1, 2 };
 
-            Bitmap image = values.ToBitmap(3, 3, 0, 255);
-            double mean = Accord.Statistics.Tools.Mean(values);
-            double expected = Accord.Statistics.Tools.StandardDeviation(values);
+            Bitmap image; new ArrayToImage(3, 3, 0, 255).Convert(values, out image);
+            double mean = Measures.Mean(values);
+            double expected = Measures.StandardDeviation(values);
             double actual = Tools.StandardDeviation(image, mean);
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
+        [Category("MonoNotSupported")]
         public void StandardDeviationTest2()
         {
             short[,] values =
@@ -544,14 +534,16 @@ namespace Accord.Tests.Imaging
                 { 1, 1, 2 }
             };
 
-            Bitmap image = values.ToBitmap();
-            double mean = Accord.Statistics.Tools.Mean(values.Reshape().ToDouble());
-            double expected = Accord.Statistics.Tools.StandardDeviation(values.Reshape().ToDouble());
+            Bitmap image; new MatrixToImage().Convert(values, out image);
+
+            double mean = Measures.Mean(values.Reshape().ToDouble());
+            double expected = Measures.StandardDeviation(values.Reshape().ToDouble());
             double actual = Tools.StandardDeviation(image, mean);
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
+        [Category("MonoNotSupported")]
         public void StandardDeviationTest3()
         {
             short[,] values =
@@ -564,15 +556,15 @@ namespace Accord.Tests.Imaging
             Rectangle rect = new Rectangle(1, 1, 2, 1);
 
             Bitmap image = values.ToBitmap();
-            double mean = Accord.Statistics.Tools.Mean(new double[] { 3, 5 });
-            double expected = Accord.Statistics.Tools.StandardDeviation(new double[] { 3, 5 });
+            double mean = Measures.Mean(new double[] { 3, 5 });
+            double expected = Measures.StandardDeviation(new double[] { 3, 5 });
             double actual = Tools.StandardDeviation(image, rect, mean);
             Assert.AreEqual(expected, actual);
         }
 
 
 
-        [TestMethod()]
+        [Test]
         public void MaxTest2()
         {
             Bitmap image = new byte[,]
@@ -595,7 +587,7 @@ namespace Accord.Tests.Imaging
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void MinTest2()
         {
             Bitmap image = new byte[,]

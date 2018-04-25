@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,11 +24,11 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Analysis;
     using Accord.Statistics.Testing;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Math;
     
 
-    [TestClass()]
+    [TestFixture]
     public class StuartMaxwellTestTest
     {
 
@@ -49,7 +49,7 @@ namespace Accord.Tests.Statistics
 
 
      
-        [TestMethod()]
+        [Test]
         public void StuartMaxwellTestConstructorTest()
         {
             // Example from http://www.john-uebersax.com/stat/mcnemar.htm#stuart

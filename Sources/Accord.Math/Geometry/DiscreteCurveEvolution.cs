@@ -5,7 +5,7 @@
 // Copyright © Diego Catalano, 2014
 // diego.catalano at live.com
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -37,9 +37,8 @@ namespace Accord.Math.Geometry
     using System;
     using System.Collections.Generic;
     using Accord.Math;
-    using AForge;
-    using AForge.Math;
-    using AForge.Math.Geometry;
+    using Accord.Compat;
+    using System.Numerics;
 
     /// <summary>
     ///   Discrete Curve Evolution.
@@ -89,10 +88,8 @@ namespace Accord.Math.Geometry
             get { return vertices; }
             set
             {
-                if (value <= 0 || value > 3)
-                    throw new ArgumentOutOfRangeException("value", 
-                        "Number of vertices should be between 0 and 3.");
-
+                if (value <= 0)
+                    throw new ArgumentOutOfRangeException("value", "Number of vertices should be higher than zero.");
                 vertices = value;
             }
         }
@@ -146,7 +143,7 @@ namespace Accord.Math.Geometry
             var newShape = new List<IntPoint>(complex.Count);
 
             for (int i = 0; i < complex.Count; i++)
-                newShape.Add(new IntPoint((int)complex[i].Re, (int)complex[i].Im));
+                newShape.Add(new IntPoint((int)complex[i].Real, (int)complex[i].Imaginary));
 
             return newShape;
         }

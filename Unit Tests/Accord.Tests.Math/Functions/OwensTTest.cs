@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,10 +23,10 @@
 namespace Accord.Tests.Math
 {
     using Accord.Math;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
 
-    [TestClass()]
+    [TestFixture]
     public class OwensTTest
     {
 
@@ -46,14 +46,14 @@ namespace Accord.Tests.Math
         }
 
         
-        [TestMethod()]
+        [Test]
         public void ExampleTest()
         {
             double x = OwensT.Function(h: 2, a: 42);
             Assert.AreEqual(0.011375065974089608, x);
         }
 
-        [TestMethod()]
+        [Test]
         public void FunctionTest()
         {
 

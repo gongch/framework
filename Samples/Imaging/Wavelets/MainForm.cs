@@ -1,7 +1,7 @@
 ﻿// Accord.NET Sample Applications
 // http://accord-framework.net
 //
-// Copyright © 2009-2014, César Souza
+// Copyright © 2009-2017, César Souza
 // All rights reserved. 3-BSD License:
 //
 //   Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@ using System.Windows.Forms;
 using Accord.Imaging.Filters;
 using Accord.Math.Wavelets;
 
-namespace Wavelets
+namespace SampleApp
 {
     public partial class MainForm : Form
     {
@@ -50,10 +50,10 @@ namespace Wavelets
 
             cbWavelet.DataSource = new String[] { "Haar", "CDF" };
 
-            lenna = Wavelets.Properties.Resources.lena512;
+            lenna = Properties.Resources.lena512;
 
             // Use 16bpp for enhanced precision
-            lenna = AForge.Imaging.Image.Convert8bppTo16bpp( lenna);
+            lenna = Accord.Imaging.Image.Convert8bppTo16bpp( lenna);
 
             pictureBox.Image = lenna;
         }

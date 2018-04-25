@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -26,7 +26,10 @@ namespace Accord.Imaging
     using System.Drawing;
     using System.Drawing.Imaging;
     using AForge;
-    using AForge.Imaging;
+    using Accord.Imaging;
+    using System;
+    using System.Linq;
+    using Accord.Compat;
 
     /// <summary>
     ///   Feature detector based on corners.
@@ -35,17 +38,15 @@ namespace Accord.Imaging
     /// <remarks>
     ///   This class can be used as an adapter for classes implementing
     ///   AForge.NET's ICornersDetector interface, so they can be used
-    ///   where an <see cref="IFeatureDetector{T}"/> is needed.
+    ///   where an <see cref="IImageFeatureExtractor{T}"/> is needed.
     /// </remarks>
     /// 
     /// <example>
     ///   For an example on how to use this class, please take a look
-    ///   on the example section for <see cref="BagOfVisualWords{T}"/>.
+    ///   on the example section for <c>BagOfVisualWords{T}</c>.
     /// </example>
     /// 
-    /// <seealso cref="BagOfVisualWords{T}"/>
-    /// 
-    public class CornerFeaturesDetector : IFeatureDetector<CornerFeaturePoint>
+    public class CornerFeaturesDetector : BaseSparseFeatureExtractor<CornerFeaturePoint>
     {
 
         /// <summary>
@@ -64,54 +65,50 @@ namespace Accord.Imaging
         public CornerFeaturesDetector(ICornersDetector detector)
         {
             this.Detector = detector;
+            this.SupportedFormats.UnionWith(detector.SupportedFormats);
         }
 
         /// <summary>
-        ///   Process image looking for interest points.
+        /// This method should be implemented by inheriting classes to implement the
+        /// actual corners detection, transforming the input image into a list of points.
         /// </summary>
         /// 
-        /// <param name="image">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found interest points.</returns>
-        /// 
-        public List<CornerFeaturePoint> ProcessImage(Bitmap image)
+        protected override IEnumerable<CornerFeaturePoint> InnerTransform(UnmanagedImage input)
         {
-            List<IntPoint> corners = Detector.ProcessImage(image);
-            return corners.ConvertAll(convert);
+            return Detector.ProcessImage(input).Select(x => new CornerFeaturePoint(x)).ToList();
         }
 
         /// <summary>
-        ///   Process image looking for interest points.
+        /// Creates a new object that is a copy of the current instance.
         /// </summary>
         /// 
-        /// <param name="imageData">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found interest points.</returns>
-        /// 
-        public List<CornerFeaturePoint> ProcessImage(BitmapData imageData)
+        protected override object Clone(ISet<PixelFormat> supportedFormats)
         {
-            List<IntPoint> corners = Detector.ProcessImage(imageData);
-            return corners.ConvertAll(convert);
+            return new CornerFeaturesDetector((ICornersDetector)this.Detector.Clone())
+            {
+                SupportedFormats = supportedFormats
+            };
         }
 
         /// <summary>
-        ///   Process image looking for interest points.
+        ///   Releases unmanaged and - optionally - managed resources.
         /// </summary>
         /// 
-        /// <param name="image">Source image data to process.</param>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged
+        ///   resources; <c>false</c> to release only unmanaged resources.</param>
         /// 
-        /// <returns>Returns list of found interest points.</returns>
-        /// 
-        public List<CornerFeaturePoint> ProcessImage(UnmanagedImage image)
+        protected override void Dispose(bool disposing)
         {
-            List<IntPoint> corners = Detector.ProcessImage(image);
-            return corners.ConvertAll(convert);
+            if (disposing)
+            {
+                var d = Detector as IDisposable;
+                if (d != null)
+                    d.Dispose();
+            }
+
+            // free native resources if there are any.
+            Detector = null;
         }
 
-
-        private CornerFeaturePoint convert(IntPoint point)
-        {
-            return new CornerFeaturePoint(point);
-        }
     }
 }

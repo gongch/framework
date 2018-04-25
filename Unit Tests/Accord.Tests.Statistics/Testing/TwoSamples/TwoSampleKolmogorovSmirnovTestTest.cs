@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,31 +25,14 @@ namespace Accord.Tests.Statistics
     using System;
     using Accord.Statistics.Distributions.Univariate;
     using Accord.Statistics.Testing;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Math;
 
-    [TestClass()]
+    [TestFixture]
     public class TwoSampleKolmogorovSmirnovTestTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void TwoSampleKolmogorovSmirnovTestConstructorTest()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -61,10 +44,10 @@ namespace Accord.Tests.Statistics
             // see the difference:
 
             // Generate 15 points from a Normal distribution with mean 5 and sigma 2
-            double[] sample1 = new NormalDistribution(mean: 5, stdDev: 1).Generate(25);
+            double[] sample1 = new NormalDistribution(mean: 5, stdDev: 1).Generate(50);
 
             // Generate 15 points from an uniform distribution from 0 to 10
-            double[] sample2 = new UniformContinuousDistribution(a: 0, b: 10).Generate(25);
+            double[] sample2 = new UniformContinuousDistribution(a: 0, b: 10).Generate(50);
 
             // Now we can create a K-S test and test the unequal hypothesis:
             var test = new TwoSampleKolmogorovSmirnovTest(sample1, sample2,
@@ -73,12 +56,12 @@ namespace Accord.Tests.Statistics
             bool significant = test.Significant; // outputs true
 
             Assert.IsTrue(test.Significant);
-            Assert.AreEqual(0.44, test.Statistic, 1e-15);
+            Assert.AreEqual(0.4, test.Statistic, 1e-15);
             Assert.IsFalse(Double.IsNaN(test.Statistic));
-            Assert.AreEqual(0.00826, test.PValue, 1e-5);
+            Assert.AreEqual(0.0004018, test.PValue, 1e-5);
         }
 
-        [TestMethod()]
+        [Test]
         public void TwoSampleKolmogorovSmirnovTestConstructorTest2()
         {
             // The following example comes from the stats page of the College 
@@ -128,7 +111,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.270697775095498, oneTailLesser.PValue, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void TwoSampleKolmogorovSmirnovTestConstructorTest3()
         {
             double[] x = { 1, 2, 3, 4, 5 };

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ namespace Accord.Statistics.Testing
     using System;
     using Accord.Math;
     using Accord.Statistics.Distributions.Univariate;
+    using Accord.Compat;
 
     /// <summary>
     ///   Shapiro-Wilk test for normality.
@@ -32,8 +33,23 @@ namespace Accord.Statistics.Testing
     /// 
     /// <remarks>
     /// <para>
-    ///   The Shapiro–Wilk test is a test of normality in frequentist statistics. It was published in 1965 by Samuel Sanford Shapiro and Martin Wilk.
-    /// </para>
+    ///   The Shapiro–Wilk test is a test of normality in frequentist statistics. It was 
+    ///   published in 1965 by Samuel Sanford Shapiro and Martin Wilk. The The Shapiro–Wilk 
+    ///   test tests the null hypothesis that a sample came from a normally distributed 
+    ///   population.</para>
+    ///   
+    /// <para>
+    ///   The null-hypothesis of this test is that the population is normally distributed. Thus,
+    ///   if the <see cref="HypothesisTest{T}.PValue">p-value</see> is less than the chosen 
+    ///   <see cref="HypothesisTest{T}.Size">alpha level</see>, then the null hypothesis is rejected
+    ///   and there is evidence that the data tested are not from a normally distributed population; 
+    ///   in other words, the data are not normal. On the contrary, if the p-value is greater than
+    ///   the chosen alpha level, then the null hypothesis that the data came from a normally 
+    ///   distributed population cannot be rejected (e.g., for an alpha level of 0.05, a data 
+    ///   set with a p-value of 0.02 rejects the null hypothesis that the data are from a normally
+    ///   distributed population). However, since the test is biased by sample size, the 
+    ///   test may be statistically significant from a normal distribution in any large samples. 
+    ///   Thus a Q–Q plot is required for verification in addition to the test.</para>
     /// 
     /// <para>    
     ///   References:
@@ -43,6 +59,10 @@ namespace Accord.Statistics.Testing
     ///       http://en.wikipedia.org/wiki/Shapiro%E2%80%93Wilk_test </a></description></item>
     ///   </list></para>
     /// </remarks>
+    /// 
+    /// <example>
+    ///   <code source="Unit Tests\Accord.Tests.Statistics\Testing\ShapiroWilkTestTest.cs" region="doc_test"/>
+    /// </example>
     /// 
     [Serializable]
     public class ShapiroWilkTest : HypothesisTest<ShapiroWilkDistribution>,
@@ -65,8 +85,7 @@ namespace Accord.Statistics.Testing
 
             if (n < 4)
             {
-                throw new ArgumentException(
-                    "The sample must contain at least 4 observations.", "sample");
+                throw new ArgumentException("The sample must contain at least 4 observations.", "sample");
             }
 
             double mean = sample.Mean();
@@ -90,7 +109,7 @@ namespace Accord.Statistics.Testing
                 m[i] = NormalDistribution.Standard.InverseDistributionFunction(num / den);
             }
 
-            double mm = m.InnerProduct(m);
+            double mm = m.Dot(m);
 
             double[] c = m.Divide(Math.Sqrt(mm));
 
@@ -139,9 +158,9 @@ namespace Accord.Statistics.Testing
             }
 
             double W = (Wnum * Wnum) / Wden;
-            this.Statistic = W;
 
-            this.PValue = StatisticDistribution.ComplementaryDistributionFunction(W);
+            this.Statistic = W;
+            this.PValue = this.StatisticToPValue(W);
         }
 
         /// <summary>
@@ -154,7 +173,7 @@ namespace Accord.Statistics.Testing
         /// 
         public override double PValueToStatistic(double p)
         {
-            throw new NotSupportedException();
+            return StatisticDistribution.InverseDistributionFunction(p);
         }
 
         /// <summary>
@@ -167,7 +186,7 @@ namespace Accord.Statistics.Testing
         /// 
         public override double StatisticToPValue(double x)
         {
-            return StatisticDistribution.ComplementaryDistributionFunction(x);
+            return StatisticDistribution.DistributionFunction(x);
         }
     }
 }

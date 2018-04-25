@@ -1,8 +1,8 @@
-// Accord Math Library
+﻿// Accord Math Library
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 // Original work copyright © Lutz Roeder, 2000
@@ -29,9 +29,10 @@ namespace Accord.Math.Decompositions
 {
     using System;
     using Accord.Math;
+	using Accord.Compat;
 
     /// <summary>
-    ///     Determines the eigenvalues and eigenvectors of a real square matrix.
+    ///    Determines the eigenvalues and eigenvectors of a real square matrix.
     /// </summary>
     /// <remarks>
     ///   <para>
@@ -60,29 +61,56 @@ namespace Accord.Math.Decompositions
         private Double[] ort;       // storage for nonsymmetric algorithm.
         private bool symmetric;
 
+		private int? rank;
+		private Double[,] diagonalMatrix;
+
+        private const Double eps = 2 * Constants.DoubleEpsilon;
+        
+
         /// <summary>
-        ///   Construct an eigenvalue decomposition.</summary>
-        /// <param name="value">
-        ///   The matrix to be decomposed.</param>
-        public EigenvalueDecomposition(Double[,] value)
-            : this(value, value.IsSymmetric(), false)
+        ///   Returns the effective numerical matrix rank.
+        /// </summary>
+        ///
+        /// <value>Number of non-negligible eigen values.</value>
+        ///
+        public int Rank
         {
+            get
+            {
+				if (this.rank.HasValue)
+					return this.rank.Value;
+
+                Double tol = n * d[0] * eps;
+
+                int r = 0;
+                for (int i = 0; i < d.Length; i++)
+                    if (d[i] > tol) r++;
+
+                return (int)(this.rank = r);
+            }
         }
 
         /// <summary>
         ///   Construct an eigenvalue decomposition.</summary>
+        ///
         /// <param name="value">
         ///   The matrix to be decomposed.</param>
-        /// <param name="assumeSymmetric">
-        ///   Defines if the matrix should be assumed as being symmetric
-        ///   regardless if it is or not. Default is <see langword="false"/>.</param>
-        public EigenvalueDecomposition(Double[,] value, bool assumeSymmetric)
-            : this(value, assumeSymmetric, false)
+        /// <param name="inPlace">
+        ///   Pass <see langword="true"/> to perform the decomposition in place. The matrix
+        ///   <paramref name="value"/> will be destroyed in the process, resulting in less
+        ///   memory comsumption.</param>
+        /// <param name="sort">
+        ///   Pass <see langword="true"/> to sort the eigenvalues and eigenvectors at the end
+        ///   of the decomposition.</param>
+        ///
+        public EigenvalueDecomposition(Double[,] value, bool inPlace = false, bool sort = false)
+            : this(value, assumeSymmetric: value.IsSymmetric(), inPlace: inPlace, sort: sort)
         {
-        }
+        } 
 
         /// <summary>
         ///   Construct an eigenvalue decomposition.</summary>
+        ///
         /// <param name="value">
         ///   The matrix to be decomposed.</param>
         /// <param name="assumeSymmetric">
@@ -92,17 +120,18 @@ namespace Accord.Math.Decompositions
         ///   Pass <see langword="true"/> to perform the decomposition in place. The matrix
         ///   <paramref name="value"/> will be destroyed in the process, resulting in less
         ///   memory comsumption.</param>
-        public EigenvalueDecomposition(Double[,] value, bool assumeSymmetric, bool inPlace)
+        /// <param name="sort">
+        ///   Pass <see langword="true"/> to sort the eigenvalues and eigenvectors at the end
+        ///   of the decomposition.</param>
+        ///
+        public EigenvalueDecomposition(Double[,] value, bool assumeSymmetric,
+            bool inPlace = false, bool sort = false)
         {
             if (value == null)
-            {
                 throw new ArgumentNullException("value", "Matrix cannot be null.");
-            }
 
             if (value.GetLength(0) != value.GetLength(1))
-            {
                 throw new ArgumentException("Matrix is not a square matrix.", "value");
-            }
 
             n = value.GetLength(1);
             V = new Double[n, n];
@@ -134,6 +163,22 @@ namespace Accord.Math.Decompositions
                 // Reduce Hessenberg to real Schur form.
                 this.hqr2();
             }
+
+            if (sort)
+            {
+                // Sort eigenvalues and vectors in descending order
+                var idx = Vector.Range(n);
+                Array.Sort(idx, (i, j) => 
+                {
+                    if (Math.Abs(d[i]) == Math.Abs(d[j]))
+                        return -Math.Abs(e[i]).CompareTo(Math.Abs(e[j]));
+                    return -Math.Abs(d[i]).CompareTo(Math.Abs(d[j]));
+                });
+
+                this.d = this.d.Get(idx);
+                this.e = this.e.Get(idx);
+                this.V = this.V.Get(null, idx);
+            }
         }
 
 
@@ -160,6 +205,9 @@ namespace Accord.Math.Decompositions
         {
             get
             {
+				if (this.diagonalMatrix != null)
+					return this.diagonalMatrix;
+
                 var x = new Double[n, n];
 
                 for (int i = 0; i < n; i++)
@@ -178,7 +226,7 @@ namespace Accord.Math.Decompositions
                     }
                 }
 
-                return x;
+                return this.diagonalMatrix = x;
             }
         }
 
@@ -982,6 +1030,14 @@ namespace Accord.Math.Decompositions
         }
         #endregion
 
+        /// <summary>
+        ///   Reverses the decomposition, reconstructing the original matrix <c>X</c>.
+        /// </summary>
+        /// 
+        public Double[,] Reverse()
+        {
+            return V.DotWithDiagonal(d).Divide(V);
+        }
 
 
         #region ICloneable Members

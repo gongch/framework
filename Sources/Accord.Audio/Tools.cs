@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,11 +22,12 @@
 
 namespace Accord.Audio
 {
+    using Accord.Math;
     using System;
     using System.Runtime.InteropServices;
-    using AForge.Math;
-    using Accord.Math;
     using System.Collections.Generic;
+    using Accord.Compat;
+    using System.Numerics;
 
     /// <summary>
     ///   Tool functions for audio processing.
@@ -100,16 +101,17 @@ namespace Accord.Audio
         /// 
         public static double[] GetPowerSpectrum(Complex[] fft)
         {
-            if (fft == null) throw new ArgumentNullException("fft");
+            if (fft == null) 
+                throw new ArgumentNullException("fft");
 
             int n = (int)System.Math.Ceiling((fft.Length + 1) / 2.0);
 
             double[] mx = new double[n];
 
-            mx[0] = fft[0].SquaredMagnitude / fft.Length;
+            mx[0] = fft[0].SquaredMagnitude() / fft.Length;
 
             for (int i = 1; i < n; i++)
-                mx[i] = fft[i].SquaredMagnitude * 2.0 / fft.Length;
+                mx[i] = fft[i].SquaredMagnitude() * 2.0 / fft.Length;
 
             return mx;
         }
@@ -139,11 +141,11 @@ namespace Accord.Audio
         public static double[] GetFrequencyVector(int length, int sampleRate)
         {
             int numUniquePts = (int)System.Math.Ceiling((length + 1) / 2.0);
+
             double[] freq = new double[numUniquePts];
             for (int i = 0; i < numUniquePts; i++)
-            {
-                freq[i] = (double)i * sampleRate / length;
-            }
+                freq[i] = i * sampleRate / (double)length;
+
             return freq;
         }
 
@@ -153,7 +155,7 @@ namespace Accord.Audio
         /// 
         public static double GetSpectralResolution(int samplingRate, int samples)
         {
-            return samplingRate / samples;
+            return samplingRate / (double)samples;
         }
 
         /// <summary>
@@ -162,13 +164,14 @@ namespace Accord.Audio
         /// 
         public static double[] GetPowerCepstrum(Complex[] signal)
         {
-            if (signal == null) throw new ArgumentNullException("signal");
+            if (signal == null)
+                throw new ArgumentNullException("signal");
 
             FourierTransform.FFT(signal, FourierTransform.Direction.Backward);
 
             Complex[] logabs = new Complex[signal.Length];
             for (int i = 0; i < logabs.Length; i++)
-                logabs[i].Re = System.Math.Log(signal[i].Magnitude);
+                logabs[i] = new Complex(System.Math.Log(signal[i].Magnitude), 0);
 
             FourierTransform.FFT(logabs, FourierTransform.Direction.Forward);
 
@@ -337,7 +340,9 @@ namespace Accord.Audio
         {
             Type type = typeof(T);
 
+#pragma warning disable CS0618 // Type or member is obsolete
             int rawsize = Marshal.SizeOf(type);
+#pragma warning restore CS0618 // Type or member is obsolete
 
             if (rawsize > (rawData.Length - position))
             {
@@ -346,7 +351,9 @@ namespace Accord.Audio
 
             IntPtr buffer = Marshal.AllocHGlobal(rawsize);
             Marshal.Copy(rawData, position, buffer, rawsize);
+#pragma warning disable CS0618 // Type or member is obsolete
             T obj = (T)Marshal.PtrToStructure(buffer, type);
+#pragma warning restore CS0618 // Type or member is obsolete
             Marshal.FreeHGlobal(buffer);
             return obj;
         }

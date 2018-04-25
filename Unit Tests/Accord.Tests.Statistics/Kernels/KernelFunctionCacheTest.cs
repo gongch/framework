@@ -1,35 +1,39 @@
-﻿
+﻿// Accord Unit Tests
+// The Accord.NET Framework
+// http://accord-framework.net
+//
+// Copyright © César Souza, 2009-2017
+// cesarsouza at gmail.com
+//
+//    This library is free software; you can redistribute it and/or
+//    modify it under the terms of the GNU Lesser General Public
+//    License as published by the Free Software Foundation; either
+//    version 2.1 of the License, or (at your option) any later version.
+//
+//    This library is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//    Lesser General Public License for more details.
+//
+//    You should have received a copy of the GNU Lesser General Public
+//    License along with this library; if not, write to the Free Software
+//    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+//
 
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Kernels;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using System.Collections.Generic;
     using Accord.Math;
     using System.Linq;
 
-    [TestClass()]
+    [TestFixture]
     public class KernelFunctionCacheTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-        double[][] inputs = 
+        double[][] inputs =
         {
             new double[] { 0 },
             new double[] { 1 },
@@ -44,7 +48,7 @@ namespace Accord.Tests.Statistics
         };
 
 
-        [TestMethod()]
+        [Test]
         public void KernelFunctionCacheConstructorTest()
         {
             IKernel kernel = new Linear(1);
@@ -56,6 +60,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0, target.Size);
             Assert.AreEqual(0, target.Hits);
             Assert.AreEqual(0, target.Misses);
+            Assert.IsFalse(target.Enabled);
 
             for (int i = 0; i < inputs.Length; i++)
             {
@@ -83,18 +88,19 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void KernelFunctionCacheConstructorTest2()
         {
             IKernel kernel = new Linear(1);
 
-            int cacheSize = inputs.Length;
+            int cacheSize = inputs.Length - 1;
 
             KernelFunctionCache target = new KernelFunctionCache(kernel, inputs, cacheSize);
 
-            Assert.AreEqual(10, target.Size);
+            Assert.AreEqual(9, target.Size);
             Assert.AreEqual(0, target.Hits);
             Assert.AreEqual(0, target.Misses);
+            Assert.IsTrue(target.Enabled);
 
             for (int i = 0; i < inputs.Length; i++)
             {
@@ -106,8 +112,8 @@ namespace Accord.Tests.Statistics
 
             Assert.AreEqual(0, target.Hits);
 
-            int[] hits = { 0, 1, 3, 6, 10, 15, 21, 28, 36, 45 };
-            int[] miss = { 9, 17, 24, 30, 35, 39, 42, 44, 45, 45 };
+            int[] hits = { 0, 9, 18, 27, 36, 45, 54, 63, 72, 81 };
+            int[] miss = { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 };
 
             for (int i = 0; i < inputs.Length; i++)
             {
@@ -134,12 +140,12 @@ namespace Accord.Tests.Statistics
                 }
             }
 
-            Assert.AreEqual(45, target.Misses);
-            Assert.AreEqual(135, target.Hits);
+            Assert.AreEqual(9, target.Misses);
+            Assert.AreEqual(171, target.Hits);
             Assert.AreEqual(1.0, target.Usage);
         }
 
-        [TestMethod()]
+        [Test]
         public void KernelFunctionCacheConstructorTest6()
         {
             IKernel kernel = new Gaussian(0.6);
@@ -151,6 +157,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(10, target.Size);
             Assert.AreEqual(0, target.Hits);
             Assert.AreEqual(0, target.Misses);
+            Assert.IsTrue(target.Enabled);
 
             for (int i = 0; i < inputs.Length; i++)
             {
@@ -185,23 +192,24 @@ namespace Accord.Tests.Statistics
                 }
             }
 
-            Assert.AreEqual(45, target.Misses);
-            Assert.AreEqual(135, target.Hits);
-            Assert.AreEqual(1.0, target.Usage);
+            Assert.AreEqual(0, target.Misses);
+            Assert.AreEqual(0, target.Hits);
+            Assert.AreEqual(0, target.Usage);
         }
 
-        [TestMethod()]
+        [Test]
         public void KernelFunctionCacheConstructorTest5()
         {
             IKernel kernel = new Linear(1);
 
-            int cacheSize = inputs.Length;
+            int cacheSize = inputs.Length - 1;
 
             KernelFunctionCache target = new KernelFunctionCache(kernel, inputs, cacheSize);
 
-            Assert.AreEqual(10, target.Size);
+            Assert.AreEqual(9, target.Size);
             Assert.AreEqual(0, target.Hits);
             Assert.AreEqual(0, target.Misses);
+            Assert.IsTrue(target.Enabled);
 
             // upper half
             for (int i = 0; i < inputs.Length; i++)
@@ -216,8 +224,8 @@ namespace Accord.Tests.Statistics
             }
 
 
-            Assert.AreEqual(45, target.Misses);
-            Assert.AreEqual(0, target.Hits);
+            Assert.AreEqual(9, target.Misses);
+            Assert.AreEqual(36, target.Hits);
             Assert.AreEqual(1.0, target.Usage);
 
             // lower half
@@ -233,13 +241,74 @@ namespace Accord.Tests.Statistics
             }
 
 
-            Assert.AreEqual(45, target.Misses);
-            Assert.AreEqual(45, target.Hits);
+            Assert.AreEqual(9, target.Misses);
+            Assert.AreEqual(81, target.Hits);
             Assert.AreEqual(1.0, target.Usage);
         }
 
-        [TestMethod()]
+        [Test]
         public void KernelFunctionCacheConstructorTest7()
+        {
+            double[][] inputs =
+            {
+                new double[] { 0, 1 },
+                new double[] { 1, 0 },
+                new double[] { 1, 1 },
+                new double[] { },
+            };
+
+            IKernel kernel = new Polynomial(2);
+
+            int cacheSize = inputs.Length - 1;
+
+            KernelFunctionCache target = new KernelFunctionCache(kernel, inputs, cacheSize);
+
+            Assert.AreEqual(3, target.Size);
+            Assert.AreEqual(0, target.Hits);
+            Assert.AreEqual(0, target.Misses);
+            Assert.IsTrue(target.Enabled);
+
+            // upper half
+            for (int i = 0; i < inputs.Length - 1; i++)
+            {
+                for (int j = i + 1; j < inputs.Length - 1; j++)
+                {
+                    double expected = kernel.Function(inputs[i], inputs[j]);
+                    double actual = target.GetOrCompute(i, j);
+
+                    Assert.AreEqual(expected, actual);
+                }
+            }
+
+            var lruList1 = target.GetLeastRecentlyUsedList();
+
+            Assert.AreEqual(2, target.Misses);
+            Assert.AreEqual(1, target.Hits);
+            Assert.AreEqual(0.66666, target.Usage, 1e-4);
+
+            // upper half, backwards
+            for (int i = inputs.Length - 2; i >= 0; i--)
+            {
+                for (int j = inputs.Length - 2; j >= i; j--)
+                {
+                    double expected = kernel.Function(inputs[i], inputs[j]);
+                    double actual = target.GetOrCompute(j, i);
+
+                    Assert.AreEqual(expected, actual);
+                }
+            }
+
+            var lruList2 = target.GetLeastRecentlyUsedList();
+
+            Assert.IsTrue(lruList2.SequenceEqual(new[] { lruList1[1], lruList1[2], lruList1[0] }));
+
+            Assert.AreEqual(2, target.Misses);
+            Assert.AreEqual(4, target.Hits);
+            Assert.AreEqual(0.666666, target.Usage, 1e-5);
+        }
+
+        [Test]
+        public void KernelFunctionCacheConstructorTest8()
         {
             double[][] inputs =
             {
@@ -257,11 +326,12 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(3, target.Size);
             Assert.AreEqual(0, target.Hits);
             Assert.AreEqual(0, target.Misses);
+            Assert.IsTrue(target.Enabled);
 
             // upper half
-            for (int i = 0; i < inputs.Length; i++)
+            for (int i = 0; i < inputs.Length - 1; i++)
             {
-                for (int j = i + 1; j < inputs.Length; j++)
+                for (int j = i + 1; j < inputs.Length - 1; j++)
                 {
                     double expected = kernel.Function(inputs[i], inputs[j]);
                     double actual = target.GetOrCompute(i, j);
@@ -270,33 +340,10 @@ namespace Accord.Tests.Statistics
                 }
             }
 
-            var lruList1 = target.GetLeastRecentlyUsedList();
-
-            Assert.AreEqual(3, target.Misses);
-            Assert.AreEqual(0, target.Hits);
-            Assert.AreEqual(1.0, target.Usage);
-
-            // upper half, backwards
-            for (int i = inputs.Length - 1; i >= 0; i--)
-            {
-                for (int j = inputs.Length - 1; j >= i; j--)
-                {
-                    double expected = kernel.Function(inputs[i], inputs[j]);
-                    double actual = target.GetOrCompute(j, i);
-
-                    Assert.AreEqual(expected, actual);
-                }
-            }
-
-            var lruList2 = target.GetLeastRecentlyUsedList();
-
-            Assert.IsTrue(lruList2.SequenceEqual(lruList1.Reverse())); 
-
-            Assert.AreEqual(3, target.Misses);
-            Assert.AreEqual(3, target.Hits);
-            Assert.AreEqual(1.0, target.Usage);
+            Assert.Throws<InvalidOperationException>(() => target.GetLeastRecentlyUsedList(), "The cache is not using a LRU list.");
         }
-        [TestMethod()]
+
+        [Test]
         public void KernelFunctionCacheConstructorTest3()
         {
             IKernel kernel = new Linear(1);
@@ -331,8 +378,8 @@ namespace Accord.Tests.Statistics
                 }
             }
 
-            Assert.AreEqual(9, target.Hits);
-            Assert.AreEqual(81, target.Misses);
+            Assert.AreEqual(51, target.Hits);
+            Assert.AreEqual(39, target.Misses);
 
             var snapshot = target.GetDataCache();
 
@@ -345,13 +392,13 @@ namespace Accord.Tests.Statistics
             }
 
 
-            Assert.AreEqual(81, target.Misses);
-            Assert.AreEqual(29, target.Hits);
+            Assert.AreEqual(39, target.Misses);
+            Assert.AreEqual(121, target.Hits);
             Assert.AreEqual(1.0, target.Usage);
         }
 
 
-        [TestMethod()]
+        [Test]
         public void KernelFunctionCacheConstructorTest4()
         {
             IKernel kernel = new Linear();

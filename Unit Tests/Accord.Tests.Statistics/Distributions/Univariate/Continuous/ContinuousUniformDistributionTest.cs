@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,33 +23,17 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using Accord.Statistics.Distributions.Fitting;
     using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class UniformDistributionTest
     {
 
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             var uniform = new UniformContinuousDistribution(a: 0.42, b: 1.1);
@@ -94,27 +78,51 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1.0932000000000002, range2.Max);
             Assert.AreEqual(0.42680000000000001, range3.Min);
             Assert.AreEqual(1.0932000000000002, range3.Max);
+
+            Assert.AreEqual(0.42, uniform.Support.Min);
+            Assert.AreEqual(1.1, uniform.Support.Max);
+
+            Assert.AreEqual(uniform.InverseDistributionFunction(0), uniform.Support.Min);
+            Assert.AreEqual(uniform.InverseDistributionFunction(1), uniform.Support.Max);
         }
 
-        [TestMethod()]
+        [Test]
+        public void RTest()
+        {
+            var target = new UniformContinuousDistribution(3, 6);
+
+            Assert.AreEqual(0, target.ProbabilityDensityFunction(2));
+            Assert.AreEqual(1 / 3.0, target.ProbabilityDensityFunction(3), 1e-10);
+            Assert.AreEqual(1 / 3.0, target.ProbabilityDensityFunction(4), 1e-10);
+            Assert.AreEqual(1 / 3.0, target.ProbabilityDensityFunction(5), 1e-10);
+            Assert.AreEqual(1 / 3.0, target.ProbabilityDensityFunction(6), 1e-10);
+            Assert.AreEqual(0, target.ProbabilityDensityFunction(7));
+
+            Assert.AreEqual(0, target.DistributionFunction(2));
+            Assert.AreEqual(0, target.DistributionFunction(3));
+            Assert.AreEqual(1 / 3.0, target.DistributionFunction(4), 1e-10);
+            Assert.AreEqual(2 / 3.0, target.DistributionFunction(5), 1e-10);
+            Assert.AreEqual(1, target.DistributionFunction(6), 1e-10);
+            Assert.AreEqual(1, target.DistributionFunction(7));
+        }
+
+        [Test]
         public void IntervalTest()
         {
             var target = new UniformContinuousDistribution(-10, 10);
 
             for (int k = -15; k < 15; k++)
             {
-                double expected = target.ProbabilityDensityFunction(k);
-
                 double a = target.DistributionFunction(k);
-                double b = target.DistributionFunction(k - 1);
-                double c = a - b;
+                double b = target.DistributionFunction(k + 1);
+                double c = b - a; 
 
-                Assert.AreEqual(expected, c, 1e-15);
-                Assert.AreEqual(c, target.DistributionFunction(k - 1, k), 1e-15);
+                double actual = target.DistributionFunction(k, k + 1);
+                Assert.AreEqual(c, actual, 1e-15);
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void UniformDistributionConstructorTest()
         {
             double a = 1;
@@ -124,20 +132,20 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.Maximum, b);
         }
 
-        [TestMethod()]
+        [Test]
         public void UniformDistributionConstructorTest1()
         {
             double a = 6;
             double b = 5;
-            
+
             bool thrown = false;
             try { UniformContinuousDistribution target = new UniformContinuousDistribution(a, b); }
             catch (ArgumentOutOfRangeException) { thrown = true; }
-            
+
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void VarianceTest()
         {
             double a = 5;
@@ -148,7 +156,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void MeanTest()
         {
             double a = -1;
@@ -159,7 +167,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void EntropyTest()
         {
             double a = 1;
@@ -170,7 +178,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             double a = 1;
@@ -180,7 +188,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.Median, target.InverseDistributionFunction(0.5));
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest()
         {
             double a = -5;
@@ -192,7 +200,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
 
             x = -5;
-            expected = 0.0;
+            expected = 0.0625;
             actual = target.ProbabilityDensityFunction(x);
             Assert.AreEqual(expected, actual);
 
@@ -212,7 +220,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionTest()
         {
             double a = -5;
@@ -239,12 +247,12 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
 
             x = 12;
-            expected =System.Math.Log( 0.0);
+            expected = System.Math.Log(0.0);
             actual = target.LogProbabilityDensityFunction(x);
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest()
         {
             UniformContinuousDistribution target = new UniformContinuousDistribution();
@@ -255,7 +263,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(5.0, target.Maximum);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest()
         {
             double a = -2;
@@ -280,13 +288,13 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void CloneTest()
         {
-            double a = 12; 
-            double b = 72; 
+            double a = 12;
+            double b = 72;
             UniformContinuousDistribution target = new UniformContinuousDistribution(a, b);
-            
+
             UniformContinuousDistribution clone = (UniformContinuousDistribution)target.Clone();
 
             Assert.AreNotSame(target, clone);
@@ -298,7 +306,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest()
         {
             UniformContinuousDistribution target = new UniformContinuousDistribution(0, 2);
@@ -318,7 +326,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2, newTarget.Maximum, 1e-5);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest2()
         {
             UniformContinuousDistribution target = new UniformContinuousDistribution(0, 2);

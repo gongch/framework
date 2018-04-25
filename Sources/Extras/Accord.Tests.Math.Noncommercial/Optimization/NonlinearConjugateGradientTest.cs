@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -20,17 +20,17 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-namespace Accord.Tests.Math
+namespace Accord.Tests.Extras.Math.Noncommercial
 {
     using Accord.Math.Optimization;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
 
-    [TestClass()]
+    [TestFixture]
     public class NonlinearConjugateGradientTest
     {
 
-        [TestMethod()]
+        [Test]
         public void MinimizeTest()
         {
             Func<double[], double> f = rosenbrockFunction;
@@ -70,7 +70,7 @@ namespace Accord.Tests.Math
             Assert.IsFalse(double.IsNaN(d[1]));
         }
 
-        [TestMethod()]
+        [Test]
         public void expDiffTest()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -114,7 +114,7 @@ namespace Accord.Tests.Math
             };
         }
 
-        [TestMethod]
+        [Test]
         public void ConstructorTest2()
         {
             Func<double[], double> function = // min f(x) = 10 * (x+1)^2 + y^2

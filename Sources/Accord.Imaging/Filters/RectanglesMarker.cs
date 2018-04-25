@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,8 +25,7 @@ namespace Accord.Imaging.Filters
     using System.Collections.Generic;
     using System.Drawing;
     using System.Drawing.Imaging;
-    using AForge.Imaging;
-    using AForge.Imaging.Filters;
+    using System.Linq;
 
     /// <summary>
     ///   Filter to mark (highlight) rectangles in a image.
@@ -60,7 +59,16 @@ namespace Accord.Imaging.Filters
             get { return fillColor; }
             set { fillColor = value; }
         }
-            
+
+        /// <summary>
+        ///   The set of rectangles.
+        /// </summary>
+        /// 
+        public Rectangle SingleRectangle
+        {
+            get { return rectangles.First(); }
+            set { rectangles = new[] { value }; }
+        }
 
         /// <summary>
         ///   The set of rectangles.

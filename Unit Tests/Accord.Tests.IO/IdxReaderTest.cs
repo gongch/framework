@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,18 +25,19 @@ namespace Accord.Tests.IO
     using System.IO;
     using Accord.IO;
     using Accord.Tests.IO.Properties;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class IdxReaderTest
     {
 
-        [TestMethod()]
+
+        [Test]
         public void ReadSampleTest()
         {
-            MemoryStream file = new MemoryStream(Resources.t10k_images_idx3_ubyte);
+            string fileName = Path.Combine(TestContext.CurrentContext.TestDirectory, "Resources", "t10k-images-idx3-ubyte.gz");
 
-            IdxReader reader = new IdxReader(file, compressed: true);
+            IdxReader reader = new IdxReader(fileName, compressed: true);
 
             Assert.AreEqual(IdxDataType.UnsignedByte, reader.DataType);
             Assert.AreEqual(10000, reader.Samples);
@@ -45,7 +46,7 @@ namespace Accord.Tests.IO
 
             for (int i = 0; i < samples.Length; i++)
                 samples[i] = reader.ReadMatrix<byte>();
-            
+
             for (int i = 0; i < samples.Length; i++)
             {
                 Assert.AreEqual(28, samples[i].GetLength(0));
@@ -53,11 +54,12 @@ namespace Accord.Tests.IO
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ReadSampleTest2()
         {
-            MemoryStream file = new MemoryStream(Resources.t10k_images_idx3_ubyte);
-            IdxReader reader = new IdxReader(file, compressed: true);
+            string fileName = Path.Combine(TestContext.CurrentContext.TestDirectory, "Resources", "t10k-images-idx3-ubyte.gz");
+
+            IdxReader reader = new IdxReader(fileName, compressed: true);
 
             var samples = reader.ReadToEndAsMatrices<byte>();
 
@@ -68,11 +70,13 @@ namespace Accord.Tests.IO
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ReadSampleTest3()
         {
-            MemoryStream file = new MemoryStream(Resources.t10k_images_idx3_ubyte);
-            IdxReader reader = new IdxReader(file, compressed: true);
+            string fileName = Path.Combine(TestContext.CurrentContext.TestDirectory, "Resources", "t10k-images-idx3-ubyte.gz");
+            var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+
+            IdxReader reader = new IdxReader(stream, compressed: true);
 
             var samples = reader.ReadToEndAsVectors<byte>();
 

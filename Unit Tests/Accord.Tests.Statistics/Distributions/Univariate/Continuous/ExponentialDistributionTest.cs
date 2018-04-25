@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,33 +23,20 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Moving;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Statistics;
     using Accord.Statistics.Distributions.Univariate;
     using System.Globalization;
     using System.Threading;
+#if NO_CULTURE
+    using CultureInfo = Accord.Compat.CultureInfoEx;
+#endif
 
-    [TestClass()]
+    [TestFixture]
     public class ExponentialDistributionTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             ExponentialDistribution n = new ExponentialDistribution(3.42521);
@@ -58,7 +45,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.085236497078375897, n.Variance);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest2()
         {
             var exp = new ExponentialDistribution(rate: 0.42);
@@ -105,7 +92,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(10.964690919019265, range3.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDistributionTest()
         {
             ExponentialDistribution n = new ExponentialDistribution(3);
@@ -123,7 +110,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDistributionTest2()
         {
             ExponentialDistribution n = new ExponentialDistribution(0.42);
@@ -142,7 +129,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void CumulativeDistributionTest()
         {
             ExponentialDistribution n = new ExponentialDistribution(3);
@@ -160,7 +147,22 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
+        public void Issue_632()
+        {
+            // https://github.com/accord-net/framework/issues/632
+
+            var n = new ExponentialDistribution(4.2);
+            Assert.AreEqual(0, n.DistributionFunction(-10));
+            Assert.AreEqual(0, n.ProbabilityDensityFunction(-10));
+            Assert.AreEqual(System.Math.Log(0), n.LogProbabilityDensityFunction(-10));
+
+            Assert.AreEqual(0, n.DistributionFunction(0));
+            Assert.AreEqual(4.2, n.ProbabilityDensityFunction(0));
+            Assert.AreEqual(System.Math.Log(4.2), n.LogProbabilityDensityFunction(0));
+        }
+
+        [Test]
         public void MedianTest()
         {
             ExponentialDistribution target = new ExponentialDistribution(2.5);
@@ -168,7 +170,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.Median, target.InverseDistributionFunction(0.5));
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest()
         {
             ExponentialDistribution target = new ExponentialDistribution(2.5);
@@ -181,7 +183,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2.5, actual.Rate, 0.01);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest2()
         {
             ExponentialDistribution target = new ExponentialDistribution(2.5);
@@ -196,10 +198,10 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2.5, actual.Rate, 0.01);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest1()
         {
-            double[] values = 
+            double[] values =
             {
                 0, 1, 2, 4, 2, 3, 5, 7, 4, 3, 2, 1, 4,
             };
@@ -210,8 +212,13 @@ namespace Accord.Tests.Statistics
 
             string actual;
 
-            Thread.CurrentThread.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
-
+            var cultureInfo = CultureInfo.GetCultureInfo("fr-FR");
+#if NETCORE
+            System.Globalization.CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+            System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
+#else
+            Thread.CurrentThread.CurrentCulture = cultureInfo;
+#endif
             actual = exp.ToString("G3", CultureInfo.InvariantCulture);
             Assert.AreEqual("Exp(x; λ = 0.342)", actual);
 

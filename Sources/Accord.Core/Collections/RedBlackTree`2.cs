@@ -5,7 +5,7 @@
 // Copyright © Steven G. Johnson, 2008
 // stevenj@alum.mit.edu
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -53,6 +53,7 @@ namespace Accord.Collections
 {
     using System;
     using System.Collections.Generic;
+    using Accord.Compat;
 
     /// <summary>
     ///   Red-black tree specialized for key-based value retrieval.
@@ -117,8 +118,8 @@ namespace Accord.Collections
         ///   Pass <c>true</c> to allow duplicate elements 
         ///   in the tree; <c>false</c> otherwise.</param>
         /// 
-        public RedBlackTree(IComparer<KeyValuePair<TKey, TValue>> comparer,
-            bool allowDuplicates) : base(comparer, allowDuplicates)
+        public RedBlackTree(IComparer<KeyValuePair<TKey, TValue>> comparer, bool allowDuplicates) 
+            : base(comparer, allowDuplicates)
         {
         }
 

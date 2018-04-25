@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,31 +23,15 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Statistics.Distributions;
     using System;
     using Accord.Statistics.Distributions.Fitting;
     using Accord.Math;
 
-    [TestClass()]
+    [TestFixture]
     public class UnivariateContinuousDistributionTest
     {
-
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
 
         internal virtual UnivariateContinuousDistribution CreateUnivariateContinuousDistribution()
         {
@@ -59,7 +43,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void VarianceTest()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -70,7 +54,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void StandardDeviationTest()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -79,7 +63,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void MeanTest()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -89,7 +73,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void EntropyTest()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -101,7 +85,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -113,7 +97,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionTest()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -125,8 +109,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-10);
         }
 
-        [TestMethod()]
-        [DeploymentItem("Accord.Statistics.dll")]
+        [Test]
         public void ProbabilityFunctionTest()
         {
             IDistribution target = CreateUnivariateContinuousDistribution();
@@ -140,7 +123,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest1()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -151,8 +134,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
-        [DeploymentItem("Accord.Statistics.dll")]
+        [Test]
         public void DistributionFunctionTest()
         {
             IDistribution target = CreateUnivariateContinuousDistribution();
@@ -164,24 +146,39 @@ namespace Accord.Tests.Statistics
         }
 
 
-
-        [TestMethod()]
-        public void FitTest7()
+        [Test]
+        public void fit_example()
         {
-            UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
+            #region doc_fit
+            // Let's say we have a UnivariateContinuousDistribution that we have
+            // built somehow, either using a constructor for a common distribution
+            // or that we have received as the output of a method we have called:
+            UnivariateContinuousDistribution dist = new NormalDistribution();
 
+            // Let's say we have a set of observations, and some optional weights:
             double[] observations = { 0.12, 2, 0.52 };
-            double[] weights = { 0.25, 0.25, 0.50 };
 
-            target.Fit(observations, weights);
+            // Note: the weights are optional. You do not need to have different weights 
+            // for the different observations you would like to fit, but we will use them 
+            // as an example to show that it is also possible to specify them if we would 
+            // like to, but we could also set them to null in case we do not need them:
+            double[] weights = { 0.25, 0.25, 0.50 }; // could also be null
 
-            double expected = 0.79;
-            double actual = target.Mean;
+            // Now, we can finally fit the distribution to the observations that we have:
+            dist.Fit(observations, weights); // changes 'dist' to become the dist we need
 
-            Assert.AreEqual(expected, actual);
+            // Now we can verify that the distribution has been updated:
+            double mean = dist.Mean;                // should be 0.79
+            double var = dist.Variance;             // should be 0.82352
+            double stdDev = dist.StandardDeviation; // should be 0.90748002732842559
+            #endregion
+
+            Assert.AreEqual(0.79, mean);
+            Assert.AreEqual(0.82352, var);
+            Assert.AreEqual(0.90748002732842559, stdDev);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest6()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -196,7 +193,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest5()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -213,7 +210,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest4()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -229,7 +226,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest3()
         {
             IDistribution target = CreateUnivariateContinuousDistribution();
@@ -245,7 +242,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest2()
         {
             IDistribution target = CreateUnivariateContinuousDistribution();
@@ -260,7 +257,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest1()
         {
             IDistribution target = CreateUnivariateContinuousDistribution();
@@ -277,7 +274,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest()
         {
             IDistribution target = CreateUnivariateContinuousDistribution();
@@ -294,7 +291,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest()
         {
             UniformContinuousDistribution target = new UniformContinuousDistribution(2, 5);
@@ -308,7 +305,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(5, actual.Maximum, 1e-4);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest2()
         {
             UniformContinuousDistribution target = new UniformContinuousDistribution(-1, 4);
@@ -324,7 +321,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(4, actual.Maximum, 1e-4);
         }
 
-        [TestMethod()]
+        [Test]
         public void GetRangeTest()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -341,7 +338,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(27.767594425958258, range3.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void GetRangeTest_RangeException()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();
@@ -357,7 +354,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void GetRangeTest2()
         {
             UnivariateContinuousDistribution target = CreateUnivariateContinuousDistribution();

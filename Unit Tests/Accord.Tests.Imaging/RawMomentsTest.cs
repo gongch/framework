@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,36 +25,23 @@ namespace Accord.Tests.Imaging
     using System.Drawing;
     using Accord.Imaging.Moments;
     using Accord.Tests.Imaging.Properties;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Imaging.Converters;
     using Accord.Math;
+    using Accord.Imaging;
+#if NO_BITMAP
+    using Resources = Accord.Tests.Imaging.Properties.Resources_Standard;
+#endif
 
-
-    [TestClass()]
+    [TestFixture]
     public class RawMomentsTest
     {
 
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void RawMomentsConstructorTest()
         {
-            Bitmap image = Resources.hu;
+            Bitmap image = Accord.Imaging.Image.Clone(Resources.hu);
 
             RawMoments target = new RawMoments(image, order: 3);
 
@@ -72,14 +59,19 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(4.599169E+11 / target.M03, 1, 1e-8);
         }
 
-        [TestMethod()]
+        [Test]
         public void RawMomentsConstructorTest2()
         {
-            float[,] image; new ImageToMatrix()
-                {
-                    Min = 0,
-                    Max = 255
-                }.Convert(Resources.hu, out image);
+            var hu = Accord.Imaging.Image.Clone(Resources.hu);
+            hu.SetGrayscalePalette();
+
+            float[,] image;
+            
+            new ImageToMatrix()
+            {
+                Min = 0,
+                Max = 255
+            }.Convert(hu, out image);
 
             RawMoments target = new RawMoments(image, order: 3);
 
@@ -97,7 +89,7 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(4.599169E+11 / target.M03, 1, 1e-8);
         }
 
-        [TestMethod()]
+        [Test]
         public void RawMomentsConstructorTest3()
         {
             float[,] img = 
@@ -108,7 +100,7 @@ namespace Accord.Tests.Imaging
                 { 16, 17, 18, 19, 20 },
             };
 
-            double sum = img.Sum().Sum();
+            double sum = img.Sum();
 
             RawMoments raw = new RawMoments(img);
 

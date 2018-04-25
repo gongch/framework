@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,29 +23,15 @@
 namespace Accord.Tests.Math
 {
     using Accord.Math.Decompositions;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Math;
     using System;
 
-    [TestClass()]
+    [TestFixture]
     public class LuDecompositionTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-        [TestMethod()]
+        [Test]
         public void InverseTestNaN()
         {
             int n = 5;
@@ -61,17 +47,16 @@ namespace Accord.Tests.Math
                     value[i, j] = double.NaN;
 
                     var target = new LuDecomposition(value);
+                    Assert.IsTrue(Matrix.IsEqual(target.Solve(I), target.Inverse()));
 
-                    var solution = target.Solve(I);
-                    var inverse = target.Inverse();
-
-                    Assert.IsTrue(Matrix.IsEqual(solution, inverse));
+                    var target2 = new JaggedLuDecomposition(value.ToJagged());
+                    Assert.IsTrue(Matrix.IsEqual(target2.Solve(I.ToJagged()), target2.Inverse()));
                 }
             }
         }
 
 
-        [TestMethod()]
+        [Test]
         public void SolveTest1()
         {
             double[,] value =
@@ -90,14 +75,18 @@ namespace Accord.Tests.Math
                 0.5217,
             };
 
-            LuDecomposition target = new LuDecomposition(value);
-
+            var target = new LuDecomposition(value);
             double[] actual = target.Solve(rhs);
+            Assert.IsTrue(Matrix.IsEqual(expected, actual, 1e-3));
+            Assert.IsTrue(Matrix.IsEqual(value, target.Reverse()));
 
-            Assert.IsTrue(Matrix.IsEqual(expected, actual, 0.001));
+            var target2 = new JaggedLuDecomposition(value.ToJagged());
+            actual = target2.Solve(rhs);
+            Assert.IsTrue(Matrix.IsEqual(expected, actual, 1e-3));
+            Assert.IsTrue(Matrix.IsEqual(value, target2.Reverse()));
         }
 
-        [TestMethod()]
+        [Test]
         public void InverseTest()
         {
             double[,] value =
@@ -114,15 +103,18 @@ namespace Accord.Tests.Math
                 { 0.0435,    0.0870,    0.3043 },
             };
 
-            LuDecomposition target = new LuDecomposition(value);
-
+            var target = new LuDecomposition(value);
             double[,] actualInverse = target.Inverse();
-
             Assert.IsTrue(Matrix.IsEqual(expectedInverse, actualInverse, 0.001));
+            Assert.IsTrue(Matrix.IsEqual(value, target.Reverse()));
 
+            var target2 = new JaggedLuDecomposition(value.ToJagged());
+            actualInverse = target2.Inverse().ToMatrix();
+            Assert.IsTrue(Matrix.IsEqual(expectedInverse, actualInverse, 0.001));
+            Assert.IsTrue(Matrix.IsEqual(value, target2.Reverse()));
         }
 
-        [TestMethod()]
+        [Test]
         public void SolveTest()
         {
             double[,] value =
@@ -146,14 +138,11 @@ namespace Accord.Tests.Math
                 {  1.8261,    0.2609,    0.5217 },
             };
 
-            LuDecomposition target = new LuDecomposition(value);
-
-            double[,] actual = target.Solve(rhs);
-
-            Assert.IsTrue(Matrix.IsEqual(expected, actual, 0.001));
+            Assert.IsTrue(Matrix.IsEqual(expected, new LuDecomposition(value).Solve(rhs), 1e-3));
+            Assert.IsTrue(Matrix.IsEqual(expected, new JaggedLuDecomposition(value.ToJagged()).Solve(rhs.ToJagged()), 1e-3));
         }
 
-        [TestMethod()]
+        [Test]
         public void SolveTest3()
         {
             double[,] value =
@@ -179,12 +168,11 @@ namespace Accord.Tests.Math
                 { 0.000, 3.500, 1.000  },
             };
 
-
-            Assert.IsTrue(Matrix.IsEqual(expectedL, L, 0.001));
-            Assert.IsTrue(Matrix.IsEqual(expectedU, U, 0.001));
+            Assert.IsTrue(Matrix.IsEqual(expectedL, L, 1e-3));
+            Assert.IsTrue(Matrix.IsEqual(expectedU, U, 1e-3));
         }
 
-        [TestMethod()]
+        [Test]
         public void SolveTest4()
         {
             double[,] value =
@@ -197,14 +185,14 @@ namespace Accord.Tests.Math
 
             double[] expected = {  3.1839, -0.1891 };
 
-            LuDecomposition target = new LuDecomposition(value);
+            var target1 = new LuDecomposition(value);
+            var target2 = new JaggedLuDecomposition(value.ToJagged());
 
-            double[] actual = target.Solve(rhs);
-
-            Assert.IsTrue(Matrix.IsEqual(expected, actual, 0.001));
+            Assert.IsTrue(Matrix.IsEqual(expected, target1.Solve(rhs), 1e-3));
+            Assert.IsTrue(Matrix.IsEqual(expected, target2.Solve(rhs), 1e-3));
         }
 
-        [TestMethod()]
+        [Test]
         public void SolveTest5()
         {
             double[,] value =
@@ -233,7 +221,7 @@ namespace Accord.Tests.Math
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void SolveTransposeTest()
         {
             double[,] a = 
@@ -257,21 +245,41 @@ namespace Accord.Tests.Math
                  { 0.8063,   -0.2188,    0.2875 },
             };
 
-            double[,] actual = new LuDecomposition(b, true).SolveTranspose(a);
-            Assert.IsTrue(Matrix.IsEqual(expected, actual, 0.001));
+            Assert.IsTrue(Matrix.IsEqual(expected, new LuDecomposition(b, true).SolveTranspose(a), 1e-3));
+            Assert.IsTrue(Matrix.IsEqual(expected, new JaggedLuDecomposition(b.ToJagged(), true).SolveTranspose(a.ToJagged()), 1e-3));
+
+            var target = new LuDecomposition(b, true);
+            var p = target.PivotPermutationVector;
+            int[] idx = p.ArgSort();
+
+            var r = target.LowerTriangularFactor.Dot(target.UpperTriangularFactor)
+                .Submatrix(idx, null).Transpose();
+            Assert.IsTrue(Matrix.IsEqual(b, r, 1e-3));
+            Assert.IsTrue(Matrix.IsEqual(b.Transpose(), target.Reverse(), 1e-3));
+            Assert.IsTrue(Matrix.IsEqual(b.Transpose(), new JaggedLuDecomposition(b.ToJagged(), true).Reverse(), 1e-3));
         }
 
-        [TestMethod()]
+        [Test]
         public void LuDecompositionConstructorTest()
         {
-            double[,] value =
+            #region doc_ctor
+            // Let's say we would like to compute the
+            // LU decomposition of the following matrix:
+            double[,] matrix =
             {
                {  2, -1,  0 },
                { -1,  2, -1 },
                {  0, -1,  2 }
             };
 
+            // Compute the LU decomposition with:
+            var lu = new LuDecomposition(matrix);
 
+
+            // Retrieve the lower triangular factor L:
+            double[,] L = lu.LowerTriangularFactor;
+
+            // Should be equal to
             double[,] expectedL =
             {
                 {  1.0000,         0,         0 },
@@ -280,6 +288,10 @@ namespace Accord.Tests.Math
             };
 
 
+            // Retrieve the upper triangular factor U:
+            double[,] U = lu.UpperTriangularFactor;
+
+            // Should be equal to
             double[,] expectedU =
             {
                 { 2.0000,   -1.0000,         0 },
@@ -288,25 +300,34 @@ namespace Accord.Tests.Math
              };
 
 
-            LuDecomposition target = new LuDecomposition(value);
+            // Certify that the decomposition has worked as expected by
+            // trying to reconstruct the original matrix with R = L * U:
+            double[,] reconstruction = L.Dot(U);
 
-            double[,] actualL = target.LowerTriangularFactor;
-            double[,] actualU = target.UpperTriangularFactor;
+            // reconstruction should be equal to
+            // {
+            //     {  2, -1,  0 },
+            //     { -1,  2, -1 },
+            //     {  0, -1,  2 }
+            // };
+            #endregion
 
-            Assert.IsTrue(Matrix.IsEqual(expectedL, actualL, 0.001));
-            Assert.IsTrue(Matrix.IsEqual(expectedU, actualU, 0.001));
+
+            Assert.IsTrue(Matrix.IsEqual(matrix, reconstruction, 1e-4));
+            Assert.IsTrue(Matrix.IsEqual(expectedL, L, 1e-4));
+            Assert.IsTrue(Matrix.IsEqual(expectedU, U, 1e-4));
 
 
-            target = new LuDecomposition(value.Transpose(), true);
+            lu = new LuDecomposition(matrix.Transpose(), true);
 
-            actualL = target.LowerTriangularFactor;
-            actualU = target.UpperTriangularFactor;
+            L = lu.LowerTriangularFactor;
+            U = lu.UpperTriangularFactor;
 
-            Assert.IsTrue(Matrix.IsEqual(expectedL, actualL, 0.001));
-            Assert.IsTrue(Matrix.IsEqual(expectedU, actualU, 0.001));
+            Assert.IsTrue(Matrix.IsEqual(expectedL, L, 0.001));
+            Assert.IsTrue(Matrix.IsEqual(expectedU, U, 0.001));
         }
 
-        [TestMethod()]
+        [Test]
         public void LogDeterminantTest()
         {
             LuDecomposition lu = new LuDecomposition(CholeskyDecompositionTest.bigmatrix);
@@ -315,7 +336,7 @@ namespace Accord.Tests.Math
             Assert.IsTrue(lu.Nonsingular);
         }
 
-        [TestMethod()]
+        [Test]
         public void DeterminantTest()
         {
             double[,] value =
@@ -325,12 +346,27 @@ namespace Accord.Tests.Math
                {  0, -1,  3 }
             };
 
-            LuDecomposition lu = new LuDecomposition(value);
+            var lu = new LuDecomposition(value);
             Assert.AreEqual(23, lu.Determinant);
             Assert.IsTrue(lu.Nonsingular);
         }
 
-        [TestMethod()]
+        [Test]
+        public void JaggedDeterminantTest()
+        {
+            double[,] value =
+            {
+               {  2,  3,  0 },
+               { -1,  2,  1 },
+               {  0, -1,  3 }
+            };
+
+            var lu = new JaggedLuDecomposition(value.ToJagged());
+            Assert.AreEqual(23, lu.Determinant);
+            Assert.IsTrue(lu.Nonsingular);
+        }
+
+        [Test]
         public void LogDeterminantTest2()
         {
             double[,] value =
@@ -340,12 +376,11 @@ namespace Accord.Tests.Math
                {  0, -1,  3 }
             };
 
-            LuDecomposition lu = new LuDecomposition(value);
+            var lu = new LuDecomposition(value);
             Assert.AreEqual(23, lu.Determinant);
 
             double expected = System.Math.Log(23);
             double actual = lu.LogDeterminant;
-
             Assert.AreEqual(expected, actual);
         }
 

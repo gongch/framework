@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ namespace Accord.Statistics.Visualizations
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using Accord.Math;
-    using AForge;
+    using Accord.Compat;
 
     /// <summary>
     ///   Scatter Plot.
@@ -210,7 +210,7 @@ namespace Accord.Statistics.Visualizations
             if (values == null)
                 throw new ArgumentNullException("values");
 
-            double[] idx = Matrix.Interval(0.0, values.Length - 1, 1.0);
+            double[] idx = Vector.Range(0.0, values.Length);
 
             initialize(idx, values, null);
         }

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,9 +22,9 @@
 
 namespace Accord.Imaging
 {
+    using Accord.Compat;
+    using Accord.Imaging.Filters;
     using AForge;
-    using AForge.Imaging;
-    using AForge.Imaging.Filters;
     using System;
     using System.Collections.Generic;
     using System.Drawing;
@@ -126,7 +126,7 @@ namespace Accord.Imaging
     /// <seealso cref="LocalBinaryPattern"/>
     /// 
     [Serializable]
-    public class FastRetinaKeypointDetector : IFeatureDetector<FastRetinaKeypoint, byte[]>
+    public class FastRetinaKeypointDetector : BaseSparseFeatureExtractor<FastRetinaKeypoint>
     {
 
         private FastRetinaKeypointDescriptorType featureType = FastRetinaKeypointDescriptorType.Standard;
@@ -205,9 +205,6 @@ namespace Accord.Imaging
             }
         }
 
-
-
-
         /// <summary>
         ///   Initializes a new instance of the <see cref="FastRetinaKeypointDetector"/> class.
         /// </summary>
@@ -243,31 +240,23 @@ namespace Accord.Imaging
         private void init(ICornersDetector detector)
         {
             this.Detector = detector;
+
+            base.SupportedFormats.UnionWith(new[]
+            {
+                PixelFormat.Format8bppIndexed,
+                PixelFormat.Format24bppRgb,
+                PixelFormat.Format32bppRgb,
+                PixelFormat.Format32bppArgb,
+            });
         }
 
-
-
         /// <summary>
-        ///   Process image looking for interest points.
+        ///   This method should be implemented by inheriting classes to implement the 
+        ///   actual feature extraction, transforming the input image into a list of features.
         /// </summary>
         /// 
-        /// <param name="image">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found interest points.</returns>
-        /// 
-        public List<FastRetinaKeypoint> ProcessImage(UnmanagedImage image)
+        protected override IEnumerable<FastRetinaKeypoint> InnerTransform(UnmanagedImage image)
         {
-            // check image format
-            if (
-                (image.PixelFormat != PixelFormat.Format8bppIndexed) &&
-                (image.PixelFormat != PixelFormat.Format24bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppArgb)
-                )
-            {
-                throw new UnsupportedImageFormatException("Unsupported pixel format of the source image.");
-            }
-
             // make sure we have grayscale image
             if (image.PixelFormat == PixelFormat.Format8bppIndexed)
             {
@@ -279,18 +268,15 @@ namespace Accord.Imaging
                 grayImage = Grayscale.CommonAlgorithms.BT709.Apply(image);
             }
 
-
             // 1. Extract corners points from the image.
             List<IntPoint> corners = Detector.ProcessImage(grayImage);
 
-            List<FastRetinaKeypoint> features = new List<FastRetinaKeypoint>();
+            var features = new List<FastRetinaKeypoint>();
             for (int i = 0; i < corners.Count; i++)
                 features.Add(new FastRetinaKeypoint(corners[i].X, corners[i].Y));
 
-
             // 2. Compute the integral for the given image
             integral = IntegralImage.FromBitmap(grayImage);
-
 
             // 3. Compute feature descriptors if required
             descriptor = null;
@@ -323,66 +309,26 @@ namespace Accord.Imaging
         }
 
         /// <summary>
-        ///   Process image looking for interest points.
+        /// Creates a new object that is a copy of the current instance.
         /// </summary>
         /// 
-        /// <param name="image">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found interest points.</returns>
-        /// 
-        /// <exception cref="UnsupportedImageFormatException">
-        ///   The source image has incorrect pixel format.
-        /// </exception>
-        /// 
-        public List<FastRetinaKeypoint> ProcessImage(Bitmap image)
+        protected override object Clone(ISet<PixelFormat> supportedFormats)
         {
-            // check image format
-            if (
-                (image.PixelFormat != PixelFormat.Format8bppIndexed) &&
-                (image.PixelFormat != PixelFormat.Format24bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppArgb)
-                )
+            var clone = new FastRetinaKeypointDetector();
+            clone.featureType = featureType;
+            clone.octaves = octaves;
+            clone.scale = scale;
+            clone.SupportedFormats = supportedFormats;
+
+            if (descriptor != null)
             {
-                throw new UnsupportedImageFormatException("Unsupported pixel format of the source");
+                // clone.descriptor = (FastRetinaKeypointDescriptor)descriptor.Clone();
+                // clone.grayImage = grayImage.Clone();
+                // clone.integral = (IntegralImage)integral.Clone();
+                // clone.pattern = (FastRetinaKeypointPattern)pattern.Clone();
             }
 
-            // lock source image
-            BitmapData imageData = image.LockBits(
-                new Rectangle(0, 0, image.Width, image.Height),
-                ImageLockMode.ReadOnly, image.PixelFormat);
-
-            List<FastRetinaKeypoint> corners;
-
-            try
-            {
-                // process the image
-                corners = ProcessImage(new UnmanagedImage(imageData));
-            }
-            finally
-            {
-                // unlock image
-                image.UnlockBits(imageData);
-            }
-
-            return corners;
-        }
-
-        /// <summary>
-        ///   Process image looking for interest points.
-        /// </summary>
-        /// 
-        /// <param name="imageData">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found interest points.</returns>
-        /// 
-        /// <exception cref="UnsupportedImageFormatException">
-        ///   The source image has incorrect pixel format.
-        /// </exception>
-        /// 
-        public List<FastRetinaKeypoint> ProcessImage(BitmapData imageData)
-        {
-            return ProcessImage(new UnmanagedImage(imageData));
+            return clone;
         }
 
     }

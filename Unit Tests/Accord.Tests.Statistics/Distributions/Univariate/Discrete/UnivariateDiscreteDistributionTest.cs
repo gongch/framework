@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,35 +23,18 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Statistics.Distributions;
     using System;
     using Accord.Statistics.Distributions.Fitting;
     using System.Globalization;
+    using Accord.Statistics;
 
-    [TestClass()]
+    [TestFixture]
     public class UnivariateDiscreteDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             // Create an uniform (discrete) distribution in [2, 6] 
@@ -112,7 +95,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(6, range3.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void IntervalTest()
         {
             var target = new UniformDiscreteDistribution(-10, 10);
@@ -136,7 +119,7 @@ namespace Accord.Tests.Statistics
             return new BernoulliDistribution(mean);
         }
 
-        [TestMethod()]
+        [Test]
         public void VarianceTest()
         {
             UnivariateDiscreteDistribution target = CreateUnivariateDiscreteDistribution();
@@ -145,7 +128,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void StandardDeviationTest()
         {
             UnivariateDiscreteDistribution target = CreateUnivariateDiscreteDistribution();
@@ -154,7 +137,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void MeanTest()
         {
             UnivariateDiscreteDistribution target = CreateUnivariateDiscreteDistribution();
@@ -163,7 +146,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void EntropyTest()
         {
             UnivariateDiscreteDistribution target = CreateUnivariateDiscreteDistribution();
@@ -188,7 +171,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityMassFunctionTest()
         {
             UnivariateDiscreteDistribution target = CreateUnivariateDiscreteDistribution();
@@ -210,7 +193,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(p, target.ProbabilityMassFunction(1));
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityMassFunctionTest()
         {
             UnivariateDiscreteDistribution target = CreateUnivariateDiscreteDistribution();
@@ -225,7 +208,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(lnp, target.LogProbabilityMassFunction(1));
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest7()
         {
             UnivariateDiscreteDistribution target = CreateUnivariateDiscreteDistribution();
@@ -233,24 +216,24 @@ namespace Accord.Tests.Statistics
             double[] weights = { 0.125, 0.125, 0.25, 0.25, 0.25 };
             target.Fit(observations, weights);
 
-            double mean = Accord.Statistics.Tools.WeightedMean(observations, weights);
+            double mean = Measures.WeightedMean(observations, weights);
 
             Assert.AreEqual(mean, target.Mean);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest6()
         {
             UnivariateDiscreteDistribution target = CreateUnivariateDiscreteDistribution();
             double[] observations = { 0, 1, 1, 1, 1 };
             target.Fit(observations);
 
-            double mean = Accord.Statistics.Tools.Mean(observations);
+            double mean = Measures.Mean(observations);
 
             Assert.AreEqual(mean, target.Mean);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest5()
         {
             UnivariateDiscreteDistribution target = CreateUnivariateDiscreteDistribution();
@@ -260,12 +243,12 @@ namespace Accord.Tests.Statistics
 
             target.Fit(observations, weights, options);
 
-            double mean = Accord.Statistics.Tools.WeightedMean(observations, weights);
+            double mean = Measures.WeightedMean(observations, weights);
 
             Assert.AreEqual(mean, target.Mean);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest4()
         {
             UnivariateDiscreteDistribution target = CreateUnivariateDiscreteDistribution();
@@ -274,12 +257,12 @@ namespace Accord.Tests.Statistics
 
             target.Fit(observations, options);
 
-            double mean = Accord.Statistics.Tools.Mean(observations);
+            double mean = Measures.Mean(observations);
 
             Assert.AreEqual(mean, target.Mean);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest1()
         {
             UnivariateDiscreteDistribution target = CreateUnivariateDiscreteDistribution();
@@ -293,9 +276,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-
-        [TestMethod()]
-        [DeploymentItem("Accord.Statistics.dll")]
+        [Test]
         public void ProbabilityFunctionTest()
         {
             IDistribution target = CreateUnivariateDiscreteDistribution();
@@ -311,41 +292,38 @@ namespace Accord.Tests.Statistics
 
             target.Fit(observations);
 
-            p = Accord.Statistics.Tools.Mean(observations);
+            p = Measures.Mean(observations);
             q = 1 - p;
 
             Assert.AreEqual(q, target.ProbabilityFunction(0));
             Assert.AreEqual(p, target.ProbabilityFunction(1));
         }
 
-        [TestMethod()]
-        [DeploymentItem("Accord.Statistics.dll")]
+        [Test]
         public void FitTest3()
         {
             IDistribution target = CreateUnivariateDiscreteDistribution();
             double[] observations = { 0, 1, 1, 1, 1 };
             target.Fit(observations);
 
-            double mean = Accord.Statistics.Tools.Mean(observations);
+            double mean = Measures.Mean(observations);
 
             Assert.AreEqual(mean, (target as BernoulliDistribution).Mean);
         }
 
-        [TestMethod()]
-        [DeploymentItem("Accord.Statistics.dll")]
+        [Test]
         public void FitTest2()
         {
             IDistribution target = CreateUnivariateDiscreteDistribution();
             double[] observations = { 0, 1, 1, 1, 1 };
             target.Fit(observations);
 
-            double mean = Accord.Statistics.Tools.Mean(observations);
+            double mean = Measures.Mean(observations);
 
             Assert.AreEqual(mean, (target as BernoulliDistribution).Mean);
         }
 
-        [TestMethod()]
-        [DeploymentItem("Accord.Statistics.dll")]
+        [Test]
         public void FitTest1()
         {
             IDistribution target = CreateUnivariateDiscreteDistribution();
@@ -355,13 +333,12 @@ namespace Accord.Tests.Statistics
 
             target.Fit(observations, weights, options);
 
-            double mean = Accord.Statistics.Tools.WeightedMean(observations, weights);
+            double mean = Measures.WeightedMean(observations, weights);
 
             Assert.AreEqual(mean, (target as BernoulliDistribution).Mean);
         }
 
-        [TestMethod()]
-        [DeploymentItem("Accord.Statistics.dll")]
+        [Test]
         public void FitTest()
         {
             IDistribution target = CreateUnivariateDiscreteDistribution();
@@ -370,13 +347,12 @@ namespace Accord.Tests.Statistics
 
             target.Fit(observations, options);
 
-            double mean = Accord.Statistics.Tools.Mean(observations);
+            double mean = Measures.Mean(observations);
 
             Assert.AreEqual(mean, (target as BernoulliDistribution).Mean);
         }
 
-        [TestMethod()]
-        [DeploymentItem("Accord.Statistics.dll")]
+        [Test]
         public void DistributionFunctionTest()
         {
             IDistribution target = CreateUnivariateDiscreteDistribution();
@@ -390,7 +366,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1, target.DistributionFunction(+1.1));
         }
 
-        [TestMethod()]
+        [Test]
         public void GetRangeTest()
         {
             var u = new UniformDiscreteDistribution(-8, 7);

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,31 +23,16 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Math;
     using System.Globalization;
+    using System;
 
-    [TestClass()]
+    [TestFixture]
     public class DiscreteDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             // Create a Categorical distribution for 3 symbols, in which
@@ -110,7 +95,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2, range3.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void IntervalTest()
         {
             var target = GeneralDiscreteDistribution.Uniform(-10, 10);
@@ -128,7 +113,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest2()
         {
             double[] probabilities = { 0.25, 0.25, 0.50 };
@@ -144,7 +129,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.6875, var);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest()
         {
             GeneralDiscreteDistribution target = new GeneralDiscreteDistribution(4);
@@ -159,7 +144,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(Matrix.IsEqual(expected, actual));
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest2()
         {
             double[] expected = { 0.50, 0.00, 0.25, 0.25 };
@@ -184,7 +169,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(Matrix.IsEqual(expected, actual2));
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest3()
         {
             GeneralDiscreteDistribution target = new GeneralDiscreteDistribution(-1, 4);
@@ -199,7 +184,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(Matrix.IsEqual(expected, actual));
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest4()
         {
             double[] expected = { 0.50, 0.00, 0.25, 0.25 };
@@ -224,8 +209,70 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(Matrix.IsEqual(expected, actual2));
         }
 
+        [Test]
+        public void FitTest_vector_inputs()
+        {
+            double[] expected = { 0.50, 0.00, 0.25, 0.25 };
 
-        [TestMethod()]
+            GeneralDiscreteDistribution target;
+
+            double[] values = { 0.00, 2.00, 3.00 };
+            double[] weights = { 0.50, 0.25, 0.25 };
+            target = new GeneralDiscreteDistribution(4);
+            target.Fit(values, weights);
+            double[] actual = target.Frequencies;
+
+            Assert.IsTrue(Matrix.IsEqual(expected, actual));
+
+            // --
+
+            double[][] values2 =
+            {
+                new[] { 1.00, 0.00, 0.00, 0.00 },
+                new[] { 0.00, 0.00, 0.00, 0.00 },
+                new[] { 0.00, 0.00, 1.00, 0.00 },
+                new[] { 0.00, 0.00, 0.00, 1.00 },
+            };
+
+            double[] weights2 = { 0.50, 0.00, 0.25, 0.25 };
+
+            target = new GeneralDiscreteDistribution(4);
+            target.Fit(values2, weights2);
+            double[] actual2 = target.Frequencies;
+            Assert.IsTrue(Matrix.IsEqual(expected, actual2));
+
+
+            double[][] values3 =
+            {
+                new[] { 1.00, 0.00, 0.00, 0.00 },
+                new[] { 0.00, 1.00, 0.00, 0.00 },
+                new[] { 0.00, 0.00, 1.00, 0.00 },
+                new[] { 0.00, 0.00, 0.00, 1.00 },
+            };
+
+            double[] weights3 = { 0.50, 0.00, 0.25, 0.25 };
+
+            target = new GeneralDiscreteDistribution(4);
+            target.Fit(values3, weights3);
+            double[] actual3 = target.Frequencies;
+            Assert.IsTrue(Matrix.IsEqual(expected, actual3));
+
+
+            double[][] values4 =
+            {
+                new[] { 0.50, 0.00, 0.00, 0.00 },
+                new[] { 0.00, 0.00, 0.00, 0.00 },
+                new[] { 0.00, 0.00, 0.25, 0.00 },
+                new[] { 0.00, 0.00, 0.00, 0.25 },
+            };
+
+            target = new GeneralDiscreteDistribution(4);
+            target.Fit(values4);
+            double[] actual4 = target.Frequencies;
+            Assert.IsTrue(Matrix.IsEqual(expected, actual4));
+        }
+
+        [Test]
         public void DistributionFunctionTest()
         {
             var target = new GeneralDiscreteDistribution(0.1, 0.4, 0.5);
@@ -248,7 +295,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1.3999999, target.Mean, 1e-6);
         }
 
-        [TestMethod()]
+        [Test]
         public void MeanTest()
         {
             var target = new GeneralDiscreteDistribution(0.1, 0.4, 0.5);
@@ -258,7 +305,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void MeanTest2()
         {
             var target = new GeneralDiscreteDistribution(42, 0.1, 0.4, 0.5);
@@ -268,7 +315,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void MeanTest3()
         {
             var target = new GeneralDiscreteDistribution(2, 0.5, 0.5);
@@ -278,7 +325,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void VarianceTest()
         {
             var target = new GeneralDiscreteDistribution(42, 0.1, 0.4, 0.5);
@@ -290,7 +337,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, target.Variance);
         }
 
-        [TestMethod()]
+        [Test]
         public void EntropyTest()
         {
             var target = new GeneralDiscreteDistribution(42, 0.1, 0.4, 0.5);
@@ -301,14 +348,14 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, target.Entropy);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             var target = new GeneralDiscreteDistribution(0.1, 0.4, 0.5);
             Assert.AreEqual(target.Median, target.InverseDistributionFunction(0.5));
         }
 
-        [TestMethod()]
+        [Test]
         public void UniformTest()
         {
             int a = 2;
@@ -338,7 +385,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0, dist.ProbabilityMassFunction(7));
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityMassFunctionTest()
         {
             GeneralDiscreteDistribution dist = GeneralDiscreteDistribution.Uniform(2, 5);
@@ -353,7 +400,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0, dist.ProbabilityMassFunction(7));
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityMassFunctionTest()
         {
             GeneralDiscreteDistribution dist = GeneralDiscreteDistribution.Uniform(2, 5);
@@ -369,6 +416,58 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(p, dist.LogProbabilityMassFunction(5));
             Assert.AreEqual(l, dist.LogProbabilityMassFunction(6));
             Assert.AreEqual(l, dist.LogProbabilityMassFunction(7));
+        }
+
+
+        [Test]
+        public void GenerateTest()
+        {
+            double[] transProbRow = { 0.2, 0.5, 0.3 };
+            var gdd = new GeneralDiscreteDistribution(transProbRow);
+            int n = 100000;
+            {
+                int[] samples = gdd.Generate(n);
+                var target = new GeneralDiscreteDistribution(3);
+                target.Fit(samples);
+                Assert.AreEqual(0.2, target.Frequencies[0], 0.01);
+                Assert.AreEqual(0.5, target.Frequencies[1], 0.01);
+                Assert.AreEqual(0.3, target.Frequencies[2], 0.01);
+            }
+
+            {
+                int[] samples = new int[n].Apply((x) => gdd.Generate());
+                var target = new GeneralDiscreteDistribution(3);
+                target.Fit(samples);
+                Assert.AreEqual(0.2, target.Frequencies[0], 0.01);
+                Assert.AreEqual(0.5, target.Frequencies[1], 0.01);
+                Assert.AreEqual(0.3, target.Frequencies[2], 0.01);
+            }
+
+            {
+                double[] samples = gdd.Generate(n).ToDouble();
+                var target = new GeneralDiscreteDistribution(3);
+                target.Fit(samples);
+                Assert.AreEqual(0.2, target.Frequencies[0], 0.01);
+                Assert.AreEqual(0.5, target.Frequencies[1], 0.01);
+                Assert.AreEqual(0.3, target.Frequencies[2], 0.01);
+            }
+
+            {
+                double[] samples = new int[n].Apply((x) => (double)gdd.Generate());
+                var target = new GeneralDiscreteDistribution(3);
+                target.Fit(samples);
+                Assert.AreEqual(0.2, target.Frequencies[0], 0.01);
+                Assert.AreEqual(0.5, target.Frequencies[1], 0.01);
+                Assert.AreEqual(0.3, target.Frequencies[2], 0.01);
+            }
+        }
+
+
+        [Test]
+        public void RandomTest()
+        {
+            Assert.Throws<InvalidOperationException>(() => GeneralDiscreteDistribution.Random(new[] { 1e-14, 1e-15 }));
+            Assert.Throws<ArgumentException>(() => GeneralDiscreteDistribution.Random(new[] { 0.0, 0.0 }));
         }
     }
 }

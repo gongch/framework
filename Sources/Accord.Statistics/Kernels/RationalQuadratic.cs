@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 namespace Accord.Statistics.Kernels
 {
     using System;
+    using Accord.Compat;
 
     /// <summary>
     ///   Rational Quadratic Kernel.
@@ -90,7 +91,7 @@ namespace Accord.Statistics.Kernels
         /// 
         public double Function(double z)
         {
-            return 1.0 - (z / (z - constant));
+            return 1.0 - ((z * z) / ((z * z) - constant));
         }
 
         /// <summary>

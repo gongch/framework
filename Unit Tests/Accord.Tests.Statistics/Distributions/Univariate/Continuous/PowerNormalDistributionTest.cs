@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,33 +24,17 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
     using Accord.Statistics;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using Accord.Statistics.Distributions.Multivariate;
     using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class PowerNormalDistributionTest
     {
 
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest1()
         {
             var pnormal = new PowerNormalDistribution(power: 4.2);
@@ -76,25 +60,33 @@ namespace Accord.Tests.Statistics
 
             string str = pnormal.ToString(CultureInfo.InvariantCulture); // PND(x; p = 4.2)
 
-            Assert.AreEqual(10.568522382550167, chf);
-            Assert.AreEqual(0.99997428721920678, cdf);
-            Assert.AreEqual(0.00020022645890003279, pdf);
-            Assert.AreEqual(-0.20543269836728234, lpdf);
-            Assert.AreEqual(7.7870402470368854, hf);
-            Assert.AreEqual(0.000025712780793218926, ccdf);
-            Assert.AreEqual(1.3999999999998953, icdf);
+            Assert.AreEqual(10.568522382550167, chf, 1e-10);
+            Assert.AreEqual(0.99997428721920678, cdf, 1e-10);
+            Assert.AreEqual(0.00020022645890003279, pdf, 1e-10);
+            Assert.AreEqual(-0.20543269836728234, lpdf, 1e-10);
+            Assert.AreEqual(7.7870402470368854, hf, 1e-10);
+            Assert.AreEqual(0.000025712780793218926, ccdf, 1e-10);
+            Assert.AreEqual(1.3999999999998953, icdf, 1e-10);
             Assert.AreEqual("PND(x; p = 4.2)", str);
 
             var range1 = pnormal.GetRange(0.95);
             var range2 = pnormal.GetRange(0.99);
             var range3 = pnormal.GetRange(0.01);
 
-            Assert.AreEqual(-2.2527196079209415, range1.Min);
-            Assert.AreEqual(0.024970246427532511, range1.Max);
-            Assert.AreEqual(-2.8214873257900464, range2.Min);
-            Assert.AreEqual(0.42876122902825864, range2.Max);
-            Assert.AreEqual(-2.8214873257900464, range3.Min);
-            Assert.AreEqual(0.42876122902825864, range3.Max);
+            Assert.AreEqual(-2.2527196079209415, range1.Min, 1e-10);
+            Assert.AreEqual(0.024970246427532511, range1.Max, 1e-10);
+            Assert.AreEqual(-2.8214873257900464, range2.Min, 1e-10);
+            Assert.AreEqual(0.42876122902825864, range2.Max, 1e-10);
+            Assert.AreEqual(-2.8214873257900464, range3.Min, 1e-10);
+            Assert.AreEqual(0.42876122902825864, range3.Max, 1e-10);
+
+            Assert.AreEqual(double.NegativeInfinity, pnormal.Support.Min);
+            Assert.AreEqual(double.PositiveInfinity, pnormal.Support.Max);
+
+            double icdf0 = pnormal.InverseDistributionFunction(0);
+            double icdf1 = pnormal.InverseDistributionFunction(1);
+            Assert.AreEqual(icdf0, pnormal.Support.Min);
+            Assert.AreEqual(icdf1, pnormal.Support.Max);
         }
 
     }

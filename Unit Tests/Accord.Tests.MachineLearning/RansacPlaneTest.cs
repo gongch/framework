@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,33 +23,16 @@
 namespace Accord.Tests.MachineLearning
 {
     using Accord.MachineLearning.Geometry;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using Accord.Math.Geometry;
     using Accord.Math;
 
-    [TestClass()]
+    [TestFixture]
     public class RansacPlaneTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void RansacPlaneConstructorTest()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -131,9 +114,11 @@ namespace Accord.Tests.MachineLearning
             }
         }
 
-        [TestMethod()]
+        [Test, Category("Random")]
         public void RansacPlaneConstructorTest2()
         {
+            Accord.Math.Random.Generator.Seed = 0;
+
             Point3[] points = 
             {
                 new Point3(1,1,1),
@@ -148,10 +133,10 @@ namespace Accord.Tests.MachineLearning
             var normal = plane.Normal / plane.Normal.Max;
             double d = plane.DistanceToPoint(Point3.Origin);
 
-            Assert.AreEqual(normal.X, 1, 1e-4);
-            Assert.AreEqual(normal.Y, 1, 1e-4);
-            Assert.AreEqual(normal.Z, -1, 1e-4);
-            Assert.AreEqual(plane.Offset, -d, 1e-4);
+            Assert.AreEqual(normal.X, -1, 1e-4);
+            Assert.AreEqual(normal.Y, -1, 1e-4);
+            Assert.AreEqual(normal.Z, 1, 1e-4);
+            Assert.AreEqual(plane.Offset, d, 1e-4);
         }
     }
 }

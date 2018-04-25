@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,35 +22,16 @@
 
 namespace Accord.Tests.Statistics
 {
-    using Accord.Statistics.Distributions.Multivariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Accord.Math;
-    using Accord.Statistics.Distributions.Fitting;
-    using Accord.Statistics;
-    using System.Globalization;
+    using Accord.Statistics.Distributions;
+    using Accord.Statistics.Distributions.Multivariate;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class InverseWishartDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest4()
         {
             // Create a Inverse Wishart with the parameters
@@ -68,20 +49,20 @@ namespace Accord.Tests.Statistics
             );
 
             // Common measures
-            double[] var = invWishart.Variance;  // { -3.4, -10.6 }
+            double[] var = invWishart.Variance;      // { -3.4, -10.6 }
             double[,] cov = invWishart.Covariance;  // see below
-            double[,] mmean = invWishart.MeanMatrix; // see below
+            double[,] mmean = invWishart.Mean;      // see below
             
             //        cov                mean
             //   -5.78   -4.56        1.7  -0.2 
             //   -4.56  -56.18       -0.2   5.3 
 
             // (the above matrix representations have been transcribed to text using)
-            string scov = cov.ToString(DefaultMatrixFormatProvider.InvariantCulture);
-            string smean = mmean.ToString(DefaultMatrixFormatProvider.InvariantCulture);
+            // string scov = cov.ToString(DefaultMatrixFormatProvider.InvariantCulture);
+            // string smean = mmean.ToString(DefaultMatrixFormatProvider.InvariantCulture);
 
             // For compatibility reasons, .Mean stores a flattened mean matrix
-            double[] mean = invWishart.Mean; // { 1.7, -0.2, -0.2, 5.3 }
+            double[] mean = ((IMultivariateDistribution)invWishart).Mean; // { 1.7, -0.2, -0.2, 5.3 }
 
 
             // Probability density functions

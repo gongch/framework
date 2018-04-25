@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,136 +23,566 @@ namespace Accord.Math
 {
     using System;
     using System.Collections.Generic;
-    using AForge;
-    using AForge.Math.Random;
+    using Accord.Math.Random;
+    using Accord.Compat;
+    using System.Runtime.CompilerServices;
 
+    /// <summary>
+    ///   Matrix major order. The default is to use C-style Row-Major order.
+    /// </summary>
+    /// 
+    /// <remarks>
+    /// <para>
+    ///   In computing, row-major order and column-major order describe methods for arranging 
+    ///   multidimensional arrays in linear storage such as memory. In row-major order, consecutive 
+    ///   elements of the rows of the array are contiguous in memory; in column-major order, 
+    ///   consecutive elements of the columns are contiguous. Array layout is critical for correctly
+    ///   passing arrays between programs written in different languages. It is also important for 
+    ///   performance when traversing an array because accessing array elements that are contiguous 
+    ///   in memory is usually faster than accessing elements which are not, due to caching. In some
+    ///   media such as tape or NAND flash memory, accessing sequentially is orders of magnitude faster 
+    ///   than nonsequential access.</para>
+    /// 
+    ///   <para>
+    ///     References:
+    ///     <list type="bullet">
+    ///       <item><description>
+    ///         <a href="https://en.wikipedia.org/wiki/Row-major_order">
+    ///         Wikipedia contributors. "Row-major order." Wikipedia, The Free Encyclopedia. Wikipedia, 
+    ///         The Free Encyclopedia, 13 Feb. 2016. Web. 22 Mar. 2016.</a>
+    ///       </description></item>
+    ///     </list>
+    ///   </para>
+    /// </remarks>
+    /// 
+    public enum MatrixOrder
+    {
+        /// <summary>
+        ///   Row-major order (C, C++, C#, SAS, Pascal, NumPy default).
+        /// </summary>
+        CRowMajor = 1,
+
+        /// <summary>
+        ///   Column-major oder (Fotran, MATLAB, R).
+        /// </summary>
+        /// 
+        FortranColumnMajor = 0,
+
+        /// <summary>
+        ///   Default (Row-Major, C/C++/C# order).
+        /// </summary>
+        /// 
+        Default = CRowMajor
+    }
 
     public static partial class Matrix
     {
 
         #region Generic matrices
         /// <summary>
-        ///   Returns a matrix with all elements set to a given value.
+        ///   Creates a zero-valued matrix.
         /// </summary>
         /// 
-        public static T[,] Create<T>(int rows, int cols, T value)
+        /// <typeparam name="T">The type of the matrix to be created.</typeparam>
+        /// <param name="rows">The number of rows in the matrix.</param>
+        /// <param name="columns">The number of columns in the matrix.</param>
+        /// 
+        /// <returns>A matrix of the specified size.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Zeros<T>(int rows, int columns)
         {
-            if (rows < 0)
-            {
-                throw new ArgumentOutOfRangeException("rows", rows,
-                    "Number of rows must be a positive integer.");
-            }
+            return new T[rows, columns];
+        }
 
-            if (cols < 0)
-            {
-                throw new ArgumentOutOfRangeException("cols", cols,
-                    "Number of columns must be a positive integer.");
-            }
+        /// <summary>
+        ///   Creates a zero-valued rank-3 tensor.
+        /// </summary>
+        /// 
+        /// <typeparam name="T">The type of the matrix to be created.</typeparam>
+        /// <param name="rows">The number of rows in the tensor.</param>
+        /// <param name="columns">The number of columns in the tensor.</param>
+        /// <param name="depth">The number of channels in the tensor.</param>
+        /// 
+        /// <returns>A matrix of the specified size.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,,] Zeros<T>(int rows, int columns, int depth)
+        {
+            return new T[rows, columns, depth];
+        }
 
-            T[,] matrix = new T[rows, cols];
+        /// <summary>
+        ///   Creates a zero-valued matrix.
+        /// </summary>
+        /// 
+        /// <typeparam name="T">The type of the matrix to be created.</typeparam>
+        /// <param name="rows">The number of rows in the matrix.</param>
+        /// <param name="columns">The number of columns in the matrix.</param>
+        /// 
+        /// <returns>A matrix of the specified size.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Ones<T>(int rows, int columns)
+            where T : struct
+        {
+            var one = (T)System.Convert.ChangeType(1, typeof(T));
+            return Create(rows, columns, one);
+        }
 
+        /// <summary>
+        ///   Creates a zero-valued matrix.
+        /// </summary>
+        /// 
+        /// <param name="rows">The number of rows in the matrix.</param>
+        /// <param name="columns">The number of columns in the matrix.</param>
+        /// 
+        /// <returns>A vector of the specified size.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static double[,] Zeros(int rows, int columns)
+        {
+            return Zeros<double>(rows, columns);
+        }
+
+        /// <summary>
+        ///   Creates a zero-valued rank-3 tensor.
+        /// </summary>
+        /// 
+        /// <param name="rows">The number of rows in the tensor.</param>
+        /// <param name="columns">The number of columns in the tensor.</param>
+        /// <param name="depth">The number of channels in the tensor.</param>
+        /// 
+        /// <returns>A matrix of the specified size.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static double[,,] Zeros(int rows, int columns, int depth)
+        {
+            return Zeros<double>(rows, columns, depth);
+        }
+
+
+        /// <summary>
+        ///   Creates a zero-valued matrix.
+        /// </summary>
+        /// 
+        /// <param name="rows">The number of rows in the matrix.</param>
+        /// <param name="columns">The number of columns in the matrix.</param>
+        /// 
+        /// <returns>A vector of the specified size.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static double[,] Ones(int rows, int columns)
+        {
+            return Ones<double>(rows, columns);
+        }
+
+        /// <summary>
+        ///   Creates a matrix with all values set to a given value.
+        /// </summary>
+        /// 
+        /// <param name="rows">The number of rows in the matrix.</param>
+        /// <param name="columns">The number of columns in the matrix.</param>
+        /// <param name="value">The initial values for the vector.</param>
+        /// 
+        /// <returns>A matrix of the specified size.</returns>
+        /// 
+        /// <seealso cref="Jagged.Create{T}(int, int, T)"/>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Create<T>(int rows, int columns, T value)
+        {
+            var matrix = new T[rows, columns];
             for (int i = 0; i < rows; i++)
-                for (int j = 0; j < cols; j++)
+                for (int j = 0; j < columns; j++)
                     matrix[i, j] = value;
-
             return matrix;
         }
 
         /// <summary>
-        ///   Returns a matrix with all elements set to a given value.
+        ///   Creates a matrix with all values set to a given value.
         /// </summary>
         /// 
-        public static T[,] Create<T>(int size, T value)
+        /// <param name="rows">The number of rows in the matrix.</param>
+        /// <param name="columns">The number of columns in the matrix.</param>
+        /// <param name="values">The initial values for the matrix.</param>
+        /// <param name="transpose">Whether to transpose the matrix when copying or not. Default is false.</param>
+        /// 
+        /// <returns>A matrix of the specified size.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Create<T>(int rows, int columns, T[,] values, bool transpose = false)
         {
-            if (size < 0)
-            {
-                throw new ArgumentOutOfRangeException("size", size,
-                "Square matrix's size must be a positive integer.");
-            }
+            var result = Zeros<T>(rows, columns);
+            Matrix.CopyTo(values, destination: result, transpose: transpose);
+            return result;
+        }
 
+        /// <summary>
+        ///   Creates a jagged matrix with all values set to a given value.
+        /// </summary>
+        /// 
+        /// <param name="elementType">The type of the elements to be contained in the matrix.</param>
+        /// <param name="shape">The number of dimensions that the matrix should have.</param>
+        /// 
+        /// <returns>A matrix of the specified size.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static Array Create(Type elementType, params int[] shape)
+        {
+            return Array.CreateInstance(elementType, shape);
+        }
+
+        /// <summary>
+        ///   Creates a matrix with all values set to a given value.
+        /// </summary>
+        /// 
+        /// <param name="size">The number of rows and columns in the matrix.</param>
+        /// <param name="value">The initial values for the matrix.</param>
+        /// 
+        /// <returns>A matrix of the specified size.</returns>
+        /// 
+        /// <seealso cref="Jagged.Create{T}(int, int, T)"/>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Square<T>(int size, T value)
+        {
             return Create(size, size, value);
         }
 
         /// <summary>
-        ///   Returns a new multidimensional matrix.
+        ///   Creates a matrix with all values set to a given value.
         /// </summary>
         /// 
-        public static T[,] Create<T>(int rows, int cols)
+        /// <param name="rows">The number of rows in the matrix.</param>
+        /// <param name="columns">The number of columns in the matrix.</param>
+        /// <param name="values">The initial values for the matrix.</param>
+        /// 
+        /// <returns>A matrix of the specified size.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Create<T>(int rows, int columns, params T[] values)
         {
-            return Create(rows, cols, default(T));
+            if (values.Length == 0)
+                return Zeros<T>(rows, columns);
+            return values.Reshape(rows, columns);
         }
 
         /// <summary>
-        ///   Returns a new multidimensional matrix.
+        ///   Creates a matrix with the given rows.
         /// </summary>
         /// 
-        public static T[,] Create<T>(int size)
+        /// <param name="rows">The row vectors in the matrix.</param>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Create<T>(params T[][] rows)
         {
-            return Create(size, default(T));
+            return rows.ToMatrix();
         }
 
         /// <summary>
-        ///   Returns a matrix with all elements set to a given value.
+        ///   Creates a matrix with the given values.
         /// </summary>
         /// 
-        public static T[][] Jagged<T>(int rows, int cols, T value)
+        /// <param name="values">The values in the matrix.</param>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Create<T>(T[,] values)
         {
-            if (rows < 0)
-            {
-                throw new ArgumentOutOfRangeException("rows", rows,
-                    "Number of rows must be a positive integer.");
-            }
+            return (T[,])values.Clone();
+        }
 
-            if (cols < 0)
-            {
-                throw new ArgumentOutOfRangeException("cols", cols,
-                    "Number of columns must be a positive integer.");
-            }
 
-            T[][] matrix = new T[rows][];
-
-            for (int i = 0; i < rows; i++)
-            {
-                var row = matrix[i] = new T[cols];
-                for (int j = 0; j < row.Length; j++)
-                    row[j] = value;
-            }
-
-            return matrix;
+        /// <summary>
+        ///   Creates a matrix of one-hot vectors, where all values at each row are 
+        ///   zero except for the indicated <paramref name="indices"/>, which is set to one.
+        /// </summary>
+        /// 
+        /// <typeparam name="T">The data type for the matrix.</typeparam>
+        /// 
+        /// <param name="indices">The rows's dimension which will be marked as one.</param>
+        /// 
+        /// <returns>A matrix containing one-hot vectors where only a single position
+        /// is one and the others are zero.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] OneHot<T>(int[] indices)
+        {
+            return OneHot<T>(indices, indices.Max() + 1);
         }
 
         /// <summary>
-        ///   Returns a matrix with all elements set to a given value.
+        ///   Creates a matrix of one-hot vectors, where all values at each row are 
+        ///   zero except for the indicated <paramref name="indices"/>, which is set to one.
         /// </summary>
         /// 
-        public static T[,] Jagged<T>(int size, T value)
+        /// <param name="indices">The rows's dimension which will be marked as one.</param>
+        /// 
+        /// <returns>A matrix containing one-hot vectors where only a single position
+        /// is one and the others are zero.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static double[,] OneHot(int[] indices)
         {
-            if (size < 0)
-            {
-                throw new ArgumentOutOfRangeException("size", size,
-                "Square matrix's size must be a positive integer.");
-            }
-
-            return Create(size, size, value);
+            return OneHot(indices, indices.Max() + 1);
         }
 
         /// <summary>
-        ///   Returns a new jagged matrix.
+        ///   Creates a matrix of one-hot vectors, where all values at each row are 
+        ///   zero except for the indicated <paramref name="indices"/>, which is set to one.
         /// </summary>
         /// 
-        public static T[][] Jagged<T>(int rows, int cols)
+        /// <typeparam name="T">The data type for the matrix.</typeparam>
+        /// 
+        /// <param name="indices">The rows's dimension which will be marked as one.</param>
+        /// <param name="columns">The size (length) of the vectors (columns of the matrix).</param>
+        /// 
+        /// <returns>A matrix containing one-hot vectors where only a single position
+        /// is one and the others are zero.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] OneHot<T>(int[] indices, int columns)
         {
-            return Jagged(rows, cols, default(T));
+            return OneHot(indices, new T[indices.Length, columns]);
         }
 
         /// <summary>
-        ///   Returns a new jagged matrix.
+        ///   Creates a matrix of one-hot vectors, where all values at each row are 
+        ///   zero except for the indicated <paramref name="indices"/>, which is set to one.
         /// </summary>
         /// 
-        public static T[,] Jagged<T>(int size)
+        /// <param name="indices">The rows's dimension which will be marked as one.</param>
+        /// <param name="columns">The size (length) of the vectors (columns of the matrix).</param>
+        /// 
+        /// <returns>A matrix containing one-hot vectors where only a single position
+        /// is one and the others are zero.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static double[,] OneHot(int[] indices, int columns)
         {
-            return Create(size, default(T));
+            return OneHot(indices, new double[indices.Length, columns]);
         }
+
+        /// <summary>
+        ///   Creates a matrix of one-hot vectors, where all values at each row are 
+        ///   zero except for the indicated <paramref name="indices"/>, which is set to one.
+        /// </summary>
+        /// 
+        /// <typeparam name="T">The data type for the matrix.</typeparam>
+        /// 
+        /// <param name="indices">The rows's dimension which will be marked as one.</param>
+        /// <param name="result">The matrix where the one-hot should be marked.</param>
+        /// 
+        /// <returns>A matrix containing one-hot vectors where only a single position
+        /// is one and the others are zero.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] OneHot<T>(int[] indices, T[,] result)
+        {
+            var one = (T)System.Convert.ChangeType(1, typeof(T));
+            for (int i = 0; i < indices.Length; i++)
+                result[i, indices[i]] = one;
+            return result;
+        }
+
+        /// <summary>
+        ///   Creates a matrix of one-hot vectors, where all values at each row are 
+        ///   zero except for the indicated <paramref name="indices"/>, which is set to one.
+        /// </summary>
+        /// 
+        /// <param name="indices">The rows's dimension which will be marked as one.</param>
+        /// <param name="result">The matrix where the one-hot should be marked.</param>
+        /// 
+        /// <returns>A matrix containing one-hot vectors where only a single position
+        /// is one and the others are zero.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static double[,] OneHot(int[] indices, double[,] result)
+        {
+            for (int i = 0; i < indices.Length; i++)
+                result[i, indices[i]] = 1;
+            return result;
+        }
+
+
+
+        /// <summary>
+        ///   Creates a matrix of k-hot vectors, where all values at each row are 
+        ///   zero except for the indicated <paramref name="indices"/>, which are set to one.
+        /// </summary>
+        /// 
+        /// <typeparam name="T">The data type for the matrix.</typeparam>
+        /// 
+        /// <param name="indices">The rows's dimension which will be marked as one.</param>
+        /// <param name="columns">The size (length) of the vectors (columns of the matrix).</param>
+        /// 
+        /// <returns>A matrix containing k-hot vectors where only elements at the indicated 
+        ///   <paramref name="indices"/> are set to one and the others are zero.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] KHot<T>(int[][] indices, int columns)
+        {
+            return KHot(indices, new T[indices.Length, columns]);
+        }
+
+        /// <summary>
+        ///   Creates a matrix of k-hot vectors, where all values at each row are 
+        ///   zero except for the indicated <paramref name="indices"/>, which are set to one.
+        /// </summary>
+        /// 
+        /// <param name="indices">The rows's dimension which will be marked as one.</param>
+        /// <param name="columns">The size (length) of the vectors (columns of the matrix).</param>
+        /// 
+        /// <returns>A matrix containing k-hot vectors where only elements at the indicated 
+        ///   <paramref name="indices"/> are set to one and the others are zero.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static double[,] KHot(int[][] indices, int columns)
+        {
+            return KHot(indices, new double[indices.Length, columns]);
+        }
+
+        /// <summary>
+        ///   Creates a matrix of k-hot vectors, where all values at each row are 
+        ///   zero except for the indicated <paramref name="indices"/>, which are set to one.
+        /// </summary>
+        /// 
+        /// <typeparam name="T">The data type for the matrix.</typeparam>
+        /// 
+        /// <param name="indices">The rows's dimension which will be marked as one.</param>
+        /// <param name="result">The matrix where the one-hot should be marked.</param>
+        /// 
+        /// <returns>A matrix containing k-hot vectors where only elements at the indicated 
+        ///   <paramref name="indices"/> are set to one and the others are zero.</returns>
+        ///    
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] KHot<T>(int[][] indices, T[,] result)
+        {
+            var one = (T)System.Convert.ChangeType(1, typeof(T));
+            for (int i = 0; i < indices.Length; i++)
+                for (int j = 0; j < indices[i].Length; j++)
+                    result[i, indices[i][j]] = one;
+            return result;
+        }
+
+        /// <summary>
+        ///   Creates a matrix of k-hot vectors, where all values at each row are 
+        ///   zero except for the indicated <paramref name="indices"/>, which are set to one.
+        /// </summary>
+        /// 
+        /// <param name="indices">The rows's dimension which will be marked as one.</param>
+        /// <param name="result">The matrix where the one-hot should be marked.</param>
+        /// 
+        /// <returns>A matrix containing k-hot vectors where only elements at the indicated 
+        ///   <paramref name="indices"/> are set to one and the others are zero.</returns>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static double[,] KHot(int[][] indices, double[,] result)
+        {
+            for (int i = 0; i < indices.Length; i++)
+                for (int j = 0; j < indices[i].Length; j++)
+                    result[i, indices[i][j]] = 1;
+            return result;
+        }
+
+
+
+
+        /// <summary>
+        ///   Creates a new multidimensional matrix with the same shape as another matrix.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] CreateAs<T>(T[,] matrix)
+        {
+            return new T[matrix.GetLength(0), matrix.GetLength(1)];
+        }
+
+        /// <summary>
+        ///   Creates a new multidimensional matrix with the same shape as another matrix.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] CreateAs<T>(T[][] matrix)
+        {
+            return new T[matrix.Length, matrix[0].Length];
+        }
+
+        /// <summary>
+        ///   Creates a new multidimensional matrix with the same shape as another matrix.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static TOutput[,] CreateAs<TInput, TOutput>(TInput[,] matrix)
+        {
+            return new TOutput[matrix.GetLength(0), matrix.GetLength(1)];
+        }
+
+        /// <summary>
+        ///   Creates a new multidimensional matrix with the same shape as another matrix.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static TOutput[,] CreateAs<TInput, TOutput>(TInput[][] matrix)
+        {
+            return new TOutput[matrix.Length, matrix[0].Length];
+        }
+
+
         #endregion
 
 
@@ -161,72 +591,137 @@ namespace Accord.Math
         ///   Returns a square diagonal matrix of the given size.
         /// </summary>
         /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static T[,] Diagonal<T>(int size, T value)
         {
-            if (size < 0)
-            {
-                throw new ArgumentOutOfRangeException("size", size,
-                "Square matrix's size must be a positive integer.");
-            }
+            return Diagonal(size, value, new T[size, size]);
+        }
 
-            T[,] matrix = new T[size, size];
-
+        /// <summary>
+        ///   Returns a square diagonal matrix of the given size.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Diagonal<T>(int size, T value, T[,] result)
+        {
             for (int i = 0; i < size; i++)
-                matrix[i, i] = value;
-
-            return matrix;
+                result[i, i] = value;
+            return result;
         }
 
         /// <summary>
         ///   Returns a matrix of the given size with value on its diagonal.
         /// </summary>
         /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static T[,] Diagonal<T>(int rows, int cols, T value)
         {
-            if (rows < 0)
-            {
-                throw new ArgumentOutOfRangeException("rows", rows,
-                    "Number of rows must be a positive integer.");
-            }
+            return Diagonal(rows, cols, value, new T[rows, cols]);
+        }
 
-            if (cols < 0)
-            {
-                throw new ArgumentOutOfRangeException("cols", cols,
-                    "Number of columns must be a positive integer.");
-            }
-
-            T[,] matrix = new T[rows, cols];
-
+        /// <summary>
+        ///   Returns a matrix of the given size with value on its diagonal.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Diagonal<T>(int rows, int cols, T value, T[,] result)
+        {
             int min = Math.Min(rows, cols);
-
             for (int i = 0; i < min; i++)
-                matrix[i, i] = value;
-
-            return matrix;
+                result[i, i] = value;
+            return result;
         }
 
         /// <summary>
         ///   Return a square matrix with a vector of values on its diagonal.
         /// </summary>
         /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
         public static T[,] Diagonal<T>(T[] values)
         {
-            if (values == null)
-                throw new ArgumentNullException("values");
+            return Diagonal(values, new T[values.Length, values.Length]);
+        }
 
-            T[,] matrix = new T[values.Length, values.Length];
-
+        /// <summary>
+        ///   Return a square matrix with a vector of values on its diagonal.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Diagonal<T>(T[] values, T[,] result)
+        {
             for (int i = 0; i < values.Length; i++)
-                matrix[i, i] = values[i];
+                result[i, i] = values[i];
+            return result;
+        }
 
-            return matrix;
+        /// <summary>
+        ///   Return a square matrix with a vector of values on its diagonal.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Diagonal<T>(int size, T[] values)
+        {
+            return Diagonal(size, size, values);
+        }
+
+        /// <summary>
+        ///   Return a square matrix with a vector of values on its diagonal.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Diagonal<T>(int size, T[] values, T[,] result)
+        {
+            return Diagonal(size, size, values, result);
+        }
+
+        /// <summary>
+        ///   Returns a matrix with a vector of values on its diagonal.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Diagonal<T>(int rows, int cols, T[] values)
+        {
+            return Diagonal(rows, cols, values, new T[rows, cols]);
+        }
+
+        /// <summary>
+        ///   Returns a matrix with a vector of values on its diagonal.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Diagonal<T>(int rows, int cols, T[] values, T[,] result)
+        {
+            int size = Math.Min(rows, Math.Min(cols, values.Length));
+            for (int i = 0; i < size; i++)
+                result[i, i] = values[i];
+            return result;
         }
 
         /// <summary>
         ///   Return a jagged matrix with a vector of values on its diagonal.
         /// </summary>
         /// 
-        // TODO: Mark as obsolete
+        [Obsolete("Please use Jagged.Diagonal instead.")]
         public static T[][] JaggedDiagonal<T>(T[] values)
         {
             return Accord.Math.Jagged.Diagonal(values);
@@ -236,54 +731,52 @@ namespace Accord.Math
         ///   Returns a square diagonal matrix of the given size.
         /// </summary>
         /// 
-        // TODO: Mark as obsolete
+        [Obsolete("Please use Jagged.Diagonal instead.")]
         public static T[][] JaggedDiagonal<T>(int size, T value)
         {
-            return Accord.Math.Jagged.Diagonal(size, value);
+            return Accord.Math.Jagged.Diagonal<T>(size, value);
         }
 
         /// <summary>
-        ///   Return a square matrix with a vector of values on its diagonal.
+        ///   Returns a block-diagonal matrix with the given matrices on its diagonal.
         /// </summary>
         /// 
-        public static T[,] Diagonal<T>(int size, T[] values)
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+        public static T[,] Diagonal<T>(T[][,] blocks)
         {
-            return Diagonal(size, size, values);
-        }
-
-        /// <summary>
-        ///   Returns a matrix with a vector of values on its diagonal.
-        /// </summary>
-        /// 
-        public static T[,] Diagonal<T>(int rows, int cols, T[] values)
-        {
-            if (values == null)
-                throw new ArgumentNullException("values");
-
-            if (rows < 0)
+            int rows = 0;
+            int cols = 0;
+            for (int i = 0; i < blocks.Length; i++)
             {
-                throw new ArgumentOutOfRangeException("rows", rows,
-                    "Number of rows must be a positive integer.");
+                rows += blocks[i].Rows();
+                cols += blocks[i].Columns();
             }
 
-            if (cols < 0)
+            var result = new T[rows, cols];
+            int currentRow = 0;
+            int currentCol = 0;
+            for (int i = 0; i < blocks.Length; i++)
             {
-                throw new ArgumentOutOfRangeException("cols", cols,
-                    "Number of columns must be a positive integer.");
+                for (int r = 0; r < blocks[i].GetLength(0); r++)
+                {
+                    for (int c = 0; c < blocks[i].GetLength(1); c++)
+                        result[currentRow + r, currentCol + c] = blocks[i][r, c];
+                }
+
+                currentRow = blocks[i].GetLength(0);
+                currentCol = blocks[i].GetLength(1);
             }
 
-            T[,] matrix = new T[rows, cols];
-
-            for (int i = 0; i < values.Length; i++)
-                matrix[i, i] = values[i];
-
-            return matrix;
+            return result;
         }
+
         #endregion
 
         #region Special matrices
         /// <summary>
-        ///   Returns the Identity matrix of the given size.
+        ///   Creates a square matrix with ones across its diagonal.
         /// </summary>
         /// 
         public static double[,] Identity(int size)
@@ -292,21 +785,32 @@ namespace Accord.Math
         }
 
         /// <summary>
+        ///   Creates a square matrix with ones across its diagonal.
+        /// </summary>
+        /// 
+        public static T[,] Identity<T>(int size)
+        {
+            return Diagonal(size, (T)System.Convert.ChangeType(1, typeof(T)));
+        }
+
+        /// <summary>
         ///   Returns the Identity matrix of the given size.
         /// </summary>
         /// 
+        [Obsolete("Please use Jagged.Identity instead.")]
         public static double[][] JaggedIdentity(int size)
         {
-            return JaggedDiagonal(size, 1.0);
+            return Jagged.Identity(size);
         }
 
         /// <summary>
         ///   Creates a jagged magic square matrix.
         /// </summary>
         /// 
+        [Obsolete("Please use Jagged.Magic instead.")]
         public static double[][] JaggedMagic(int size)
         {
-            return Magic(size).ToArray();
+            return Jagged.Magic(size);
         }
 
         /// <summary>
@@ -391,7 +895,7 @@ namespace Accord.Math
                 matrix[p + n, p] = t;
             }
 
-            return matrix; // return the magic square.
+            return matrix;
         }
 
         /// <summary>
@@ -405,10 +909,10 @@ namespace Accord.Math
             if (size < 0)
             {
                 throw new ArgumentOutOfRangeException("size", size,
-                "The size of the centering matrix must be a positive integer.");
+                    "The size of the centering matrix must be a positive integer.");
             }
 
-            double[,] C = Matrix.Create(size, -1.0 / size);
+            double[,] C = Matrix.Square(size, -1.0 / size);
 
             for (int i = 0; i < size; i++)
                 C[i, i] = 1.0 - 1.0 / size;
@@ -419,99 +923,62 @@ namespace Accord.Math
 
         #region Random matrices
         /// <summary>
-        ///   Creates a rows-by-cols matrix with uniformly distributed random data.
-        /// </summary>
-        public static double[,] Random(int rows, int cols)
-        {
-            if (rows < 0)
-                throw new ArgumentOutOfRangeException("rows", rows, "Number of rows must be a positive integer.");
-
-            if (cols < 0)
-                throw new ArgumentOutOfRangeException("cols", cols, "Number of columns must be a positive integer.");
-
-            return Random(rows, cols, 0, 1);
-        }
-
-        /// <summary>
-        ///   Creates a rows-by-cols matrix with uniformly distributed random data.
+        ///   Creates a square matrix matrix with random data.
         /// </summary>
         /// 
-        public static double[,] Random(int size, bool symmetric, double minValue, double maxValue)
+        public static T[,] Random<T>(int size, IRandomNumberGenerator<T> generator, bool symmetric = false, T[,] result = null)
         {
-            if (size < 0)
-                throw new ArgumentOutOfRangeException("size", size, "Size must be a positive integer.");
-
-            double[,] matrix = new double[size, size];
+            if (result == null)
+                result = new T[size, size];
 
             if (!symmetric)
             {
                 for (int i = 0; i < size; i++)
                     for (int j = 0; j < size; j++)
-                        matrix[i, j] = Accord.Math.Tools.Random.NextDouble() * (maxValue - minValue) + minValue;
+                        result[i, j] = generator.Generate();
             }
             else
             {
                 for (int i = 0; i < size; i++)
-                {
                     for (int j = i; j < size; j++)
-                    {
-                        matrix[i, j] = Accord.Math.Tools.Random.NextDouble() * (maxValue - minValue) + minValue;
-                        matrix[j, i] = matrix[i, j];
-                    }
-                }
+                        result[j, i] = result[i, j] = generator.Generate();
             }
 
-            return matrix;
+            return result;
         }
 
         /// <summary>
-        ///   Creates a rows-by-cols matrix with uniformly distributed random data.
+        ///   Creates a rows-by-cols matrix with random data.
         /// </summary>
         /// 
-        public static double[,] Random(int rows, int cols, double minValue, double maxValue)
+        public static T[,] Random<T>(int rows, int cols, IRandomNumberGenerator<T> generator, T[,] result = null)
         {
-            if (rows < 0)
-                throw new ArgumentOutOfRangeException("rows", rows, "Number of rows must be a positive integer.");
+            if (result == null)
+                result = new T[rows, cols];
 
-            if (cols < 0)
-                throw new ArgumentOutOfRangeException("cols", cols, "Number of columns must be a positive integer.");
-
-            double[,] matrix = new double[rows, cols];
             for (int i = 0; i < rows; i++)
                 for (int j = 0; j < cols; j++)
-                    matrix[i, j] = Accord.Math.Tools.Random.NextDouble() * (maxValue - minValue) + minValue;
-
-            return matrix;
+                    result[i, j] = generator.Generate();
+            return result;
         }
 
         /// <summary>
         ///   Creates a rows-by-cols matrix random data drawn from a given distribution.
         /// </summary>
         /// 
+        [Obsolete("Please use INumberGenerator<T> instead.")]
+#pragma warning disable 0618
         public static double[,] Random(int rows, int cols, IRandomNumberGenerator generator)
         {
-            if (generator == null)
-                throw new ArgumentNullException("generator");
-
-            if (rows < 0)
-                throw new ArgumentOutOfRangeException("rows", rows, "Number of rows must be a positive integer.");
-
-            if (cols < 0)
-                throw new ArgumentOutOfRangeException("cols", cols, "Number of columns must be a positive integer.");
-
-            double[,] matrix = new double[rows, cols];
-            for (int i = 0; i < rows; i++)
-                for (int j = 0; j < cols; j++)
-                    matrix[i, j] = generator.Next();
-
-            return matrix;
+            return Random<double>(rows, cols, new RandomNumberGeneratorAdapter(generator));
         }
+#pragma warning restore 0618
 
         /// <summary>
         ///   Creates a vector with uniformly distributed random data.
         /// </summary>
         /// 
-        // TODO: Mark as obsolete
+        [Obsolete("Please use Vector.Random instead.")]
         public static float[] Random(int size, float minValue, float maxValue)
         {
             return Accord.Math.Vector.Random(size, minValue, maxValue);
@@ -521,7 +988,7 @@ namespace Accord.Math
         ///   Creates a vector with uniformly distributed random data.
         /// </summary>
         /// 
-        // TODO: Mark as obsolete
+        [Obsolete("Please use Vector.Random instead.")]
         public static double[] Random(int size, double minValue, double maxValue)
         {
             return Accord.Math.Vector.Random(size, minValue, maxValue);
@@ -531,7 +998,7 @@ namespace Accord.Math
         ///   Creates a vector with random data drawn from a given distribution.
         /// </summary>
         /// 
-        // TODO: Mark as obsolete
+        [Obsolete("Please use Vector.Random instead.")]
         public static double[] Random(int size, IRandomNumberGenerator generator)
         {
             if (generator == null)
@@ -551,7 +1018,7 @@ namespace Accord.Math
 
         #region Vector creation
         /// <summary>
-        ///   Creates a matrix with a single row vector.
+        ///   Creates a 1xN matrix with a single row vector of size N.
         /// </summary>
         /// 
         public static T[,] RowVector<T>(params T[] values)
@@ -567,18 +1034,14 @@ namespace Accord.Math
         }
 
         /// <summary>
-        ///   Creates a matrix with a single column vector.
+        ///   Creates a Nx1 matrix with a single column vector of size N.
         /// </summary>
         /// 
         public static T[,] ColumnVector<T>(params T[] values)
         {
-            if (values == null)
-                throw new ArgumentNullException("values");
-
             T[,] matrix = new T[values.Length, 1];
             for (int i = 0; i < values.Length; i++)
                 matrix[i, 0] = values[i];
-
             return matrix;
         }
 
@@ -586,17 +1049,17 @@ namespace Accord.Math
         ///   Creates a vector with the given dimension and starting values.
         /// </summary>
         /// 
-        // TODO: Mark as obsolete
+        [Obsolete("Please use Vector.Create instead.")]
         public static T[] Vector<T>(int n, T[] values)
         {
-            return Accord.Math.Vector.Create(n, values);
+            return Accord.Math.Vector.Create(values);
         }
 
         /// <summary>
         ///   Creates a vector with the given dimension and starting values.
         /// </summary>
         /// 
-        // TODO: Mark as obsolete
+        [Obsolete("Please use Vector.Create instead.")]
         public static T[] Vector<T>(int n, T value)
         {
             return Accord.Math.Vector.Create(n, value);
@@ -607,6 +1070,7 @@ namespace Accord.Math
         ///   Creates a vector with the given dimension and starting values.
         /// </summary>
         /// 
+        [Obsolete("Please use Vector.Interval instead.")]
         public static double[] Vector(double a, double b, double increment = 1)
         {
             return Accord.Math.Vector.Interval(a, b, (double)increment);
@@ -616,7 +1080,7 @@ namespace Accord.Math
         ///   Creates a vector with the given dimension and starting values.
         /// </summary>
         /// 
-        // TODO: Mark as obsolete
+        [Obsolete("Please use Vector.Interval instead.")]
         public static int[] Vector(int a, int b, int increment = 1)
         {
             return Accord.Math.Vector.Interval(a, b, (double)increment);
@@ -626,7 +1090,7 @@ namespace Accord.Math
         ///   Creates a vector with the given dimension and starting values.
         /// </summary>
         /// 
-        // TODO: Mark as obsolete
+        [Obsolete("Please use Vector.Interval instead.")]
         public static double[] Vector(double a, double b, int points)
         {
             return Accord.Math.Vector.Interval(a, b, points);
@@ -638,40 +1102,175 @@ namespace Accord.Math
         ///   Creates a index vector.
         /// </summary>
         /// 
-        // TODO: Mark as obsolete
+        [Obsolete("Please use Vector.Range instead.")]
         public static int[] Indices(int from, int to)
         {
-            return Accord.Math.Indices.Range(from, to);
+            if (from > to)
+                return Accord.Math.Vector.Range(from - 1, to - 1);
+            return Accord.Math.Vector.Range(from, to);
         }
 
         /// <summary>
         ///   Creates a index vector.
         /// </summary>
         /// 
-        // TODO: Mark as obsolete
+        [Obsolete("Please use Vector.Range instead.")]
         public static int[] Indices(int to)
         {
-            return Accord.Math.Indices.Until(to);
+            return Accord.Math.Vector.Range(0, to);
         }
 
         /// <summary>
-        ///   Gets the dimensions of an array.
+        ///   Gets the total length over all dimensions of an array.
         /// </summary>
         /// 
-        public static int[] GetDimensions(this Array array)
+        public static int GetTotalLength(this Array array, bool deep = true, bool rectangular = true)
         {
+            if (deep && IsJagged(array))
+            {
+                if (rectangular)
+                {
+                    int rest = GetTotalLength(array.GetValue(0) as Array, deep);
+                    return array.Length * rest;
+                }
+                else
+                {
+                    int sum = 0;
+                    for (int i = 0; i < array.Length; i++)
+                        sum += GetTotalLength(array.GetValue(i) as Array, deep);
+                    return sum;
+                }
+            }
+
+            return array.Length;
+        }
+
+        /// <summary>
+        ///   Gets the length of each dimension of an array.
+        /// </summary>
+        /// 
+        /// <param name="array">The array.</param>
+        /// <param name="deep">Pass true to retrieve all dimensions of the array,
+        ///   even if it contains nested arrays (as in jagged matrices)</param>
+        /// <param name="max">Gets the maximum length possible for each dimension (in case
+        ///   the jagged matrices has different lengths).</param>
+        /// 
+        public static int[] GetLength(this Array array, bool deep = true, bool max = false)
+        {
+            if (array.Rank == 0)
+                return new int[0];
+
+            if (deep && IsJagged(array))
+            {
+                if (array.Length == 0)
+                    return new int[0];
+
+                int[] rest;
+                if (!max)
+                {
+                    rest = GetLength(array.GetValue(0) as Array, deep);
+                }
+                else
+                {
+                    // find the max
+                    rest = GetLength(array.GetValue(0) as Array, deep);
+                    for (int i = 1; i < array.Length; i++)
+                    {
+                        int[] r = GetLength(array.GetValue(i) as Array, deep);
+
+                        for (int j = 0; j < r.Length; j++)
+                        {
+                            if (r[j] > rest[j])
+                                rest[j] = r[j];
+                        }
+                    }
+                }
+
+                return array.Length.Concatenate(rest);
+            }
+
             int[] vector = new int[array.Rank];
-
             for (int i = 0; i < vector.Length; i++)
-                vector[i] = array.GetUpperBound(i);
-
+                vector[i] = array.GetUpperBound(i) + 1;
             return vector;
+        }
+
+        /// <summary>
+        ///   Trims the specified array, removing zero and empty entries from arrays.
+        /// </summary>
+        /// 
+        /// <param name="array">The array to be trimmed.</param>
+        /// 
+        public static Array Trim(this Array array)
+        {
+            if (array.IsMatrix())
+                throw new Exception();
+
+            var list = new List<object>();
+            for (int i = 0; i < array.Length; i++)
+            {
+                var element = array.GetValue(i);
+                if (element != null)
+                {
+                    Array a = element as Array;
+                    if (a != null)
+                    {
+                        a = Trim(a);
+                        if (a != element)
+                        {
+                            array.SetValue(a, i);
+                            element = a;
+                        }
+                    }
+                    list.Add(element);
+                }
+            }
+
+            if (list.Count == array.Length)
+                return array;
+
+            Array newArray = Array.CreateInstance(array.GetType().GetElementType(), list.Count);
+            for (int i = 0; i < list.Count; i++)
+                newArray.SetValue(list[i], i);
+
+            return newArray;
+        }
+
+        /// <summary>
+        ///   Determines whether an array is a jagged array 
+        ///   (containing inner arrays as its elements).
+        /// </summary>
+        /// 
+        public static bool IsJagged(this Array array)
+        {
+            if (array.Length == 0)
+                return array.Rank == 1;
+            return array.Rank == 1 && array.GetValue(0) is Array;
+        }
+
+        /// <summary>
+        ///   Determines whether an array is an multidimensional array.
+        /// </summary>
+        /// 
+        public static bool IsMatrix(this Array array)
+        {
+            return array.Rank > 1;
+        }
+
+        /// <summary>
+        ///   Determines whether an array is a vector.
+        /// </summary>
+        /// 
+        public static bool IsVector(this Array array)
+        {
+            return array.Rank == 1 && !IsJagged(array);
         }
 
         /// <summary>
         ///   Creates an interval vector.
         /// </summary>
         /// 
+        [Obsolete("Please use Vector.Interval instead.")]
         public static int[] Interval(int from, int to)
         {
             return Accord.Math.Vector.Interval(from, to);
@@ -681,6 +1280,7 @@ namespace Accord.Math
         ///   Creates an interval vector.
         /// </summary>
         /// 
+        [Obsolete("Please use Vector.Interval instead.")]
         public static double[] Interval(DoubleRange range, double stepSize)
         {
             return Interval(range.Min, range.Max, stepSize);
@@ -690,6 +1290,7 @@ namespace Accord.Math
         ///   Creates an interval vector.
         /// </summary>
         /// 
+        [Obsolete("Please use Vector.Interval instead.")]
         public static double[] Interval(double from, double to, double stepSize)
         {
             return Accord.Math.Vector.Interval(from, to, stepSize);
@@ -699,6 +1300,7 @@ namespace Accord.Math
         ///   Creates an interval vector.
         /// </summary>
         /// 
+        [Obsolete("Please use Vector.Interval instead.")]
         public static float[] Interval(float from, float to, double stepSize)
         {
             return Accord.Math.Vector.Interval(from, to, (float)stepSize);
@@ -708,6 +1310,7 @@ namespace Accord.Math
         ///   Creates an interval vector.
         /// </summary>
         /// 
+        [Obsolete("Please use Vector.Interval instead.")]
         public static double[] Interval(DoubleRange range, int steps)
         {
             return Accord.Math.Vector.Interval(range, steps);
@@ -717,44 +1320,24 @@ namespace Accord.Math
         ///   Creates an interval vector.
         /// </summary>
         /// 
+        [Obsolete("Please use Vector.Interval instead.")]
         public static double[] Interval(double from, double to, int steps)
         {
             return Accord.Math.Vector.Interval(from, to, steps);
         }
 
         /// <summary>
-        ///   Creates a bi-dimensional mesh matrix.
+        ///   Obsolete. Please specify the number of steps instead of the step size for the rows and columns.
         /// </summary>
         /// 
-        /// <example>
-        /// <code>
-        /// // The Mesh method can be used to generate all
-        /// // possible (x,y) pairs between two ranges. 
-        /// 
-        /// // We can create a grid as
-        /// double[][] grid = Matrix.Mesh
-        /// (
-        ///     rowMin: 0, rowMax: 1, rowStepSize: 0.3,
-        ///     colMin: 0, colMax: 1, colStepSize: 0.1
-        /// );
-        /// 
-        /// // Now we can plot the points on-screen
-        /// ScatterplotBox.Show("Grid (step size)", grid).Hold();
-        /// </code>
-        /// 
-        /// <para>
-        ///   The resulting image is shown below. </para>
-        ///   <img src="..\images\grid-step-size.png" /> 
-        /// </example>
-        /// 
+        [Obsolete("Please specify the number of steps instead of the step size for the rows and columns.")]
         public static double[][] Mesh(
             double rowMin, double rowMax, double rowStepSize,
             double colMin, double colMax, double colStepSize)
         {
-            double[][] mesh = Matrix.CartesianProduct(
-                Matrix.Interval(rowMin, rowMax, rowStepSize),
-                Matrix.Interval(colMin, colMax, colStepSize));
-
+            double[] x = Accord.Math.Vector.Interval(rowMin, rowMax, rowStepSize);
+            double[] y = Accord.Math.Vector.Interval(colMin, colMax, colStepSize);
+            double[][] mesh = Matrix.Cartesian(x, y);
             return mesh;
         }
 
@@ -766,10 +1349,9 @@ namespace Accord.Math
             int rowMin, int rowMax,
             int colMin, int colMax)
         {
-            int[][] mesh = Matrix.CartesianProduct(
-                Matrix.Interval(rowMin, rowMax),
-                Matrix.Interval(colMin, colMax));
-
+            int[] x = Accord.Math.Vector.Interval(rowMin, rowMax);
+            int[] y = Accord.Math.Vector.Interval(colMin, colMax);
+            int[][] mesh = Matrix.Cartesian(x, y);
             return mesh;
         }
 
@@ -802,10 +1384,9 @@ namespace Accord.Math
             double rowMin, double rowMax, int rowSteps,
             double colMin, double colMax, int colSteps)
         {
-            double[][] mesh = Matrix.CartesianProduct(
-                Matrix.Interval(rowMin, rowMax, rowSteps),
-                Matrix.Interval(colMin, colMax, colSteps));
-
+            double[] x = Accord.Math.Vector.Interval(rowMin, rowMax, rowSteps);
+            double[] y = Accord.Math.Vector.Interval(colMin, colMax, colSteps);
+            double[][] mesh = Matrix.Cartesian(x, y);
             return mesh;
         }
 
@@ -821,27 +1402,41 @@ namespace Accord.Math
         /// // We can create a grid as
         /// double[][] grid = Matrix.Mesh
         /// (
-        ///     rowRange: new DoubleRange(0, 1), rowStepSize: 0.3,
-        ///     colRange: new DoubleRange(0, 1), colStepSize: 0.1
+        ///     rowMin: 0, rowMax: 1, rowSteps: 10,
+        ///     colMin: 0, colMax: 1, colSteps: 5
         /// );
-        /// 
+        ///
         /// // Now we can plot the points on-screen
-        /// ScatterplotBox.Show("Grid (step size)", grid).Hold();
+        /// ScatterplotBox.Show("Grid (fixed steps)", grid).Hold();
         /// </code>
         /// 
         /// <para>
         ///   The resulting image is shown below. </para>
-        ///   <img src="..\images\grid-step-size.png" /> 
+        ///   <img src="..\images\grid-fixed-steps.png" /> 
         /// </example>
         /// 
+        public static double[][] Mesh(
+            DoubleRange rowRange, int rowSteps,
+            DoubleRange colRange, int colSteps)
+        {
+            double[] x = Accord.Math.Vector.Interval(rowRange, rowSteps);
+            double[] y = Accord.Math.Vector.Interval(colRange, colSteps);
+            double[][] mesh = Matrix.Cartesian(x, y);
+            return mesh;
+        }
+
+        /// <summary>
+        ///   Obsolete. Please specify the number of steps instead of the step size for the rows and columns.
+        /// </summary>
+        /// 
+        [Obsolete("Please specify the number of steps instead of the step size for the rows and columns.")]
         public static double[][] Mesh(
             DoubleRange rowRange, DoubleRange colRange,
             double rowStepSize, double colStepSize)
         {
-            double[][] mesh = Matrix.CartesianProduct(
-                Matrix.Interval(rowRange, rowStepSize),
-                Matrix.Interval(colRange, colStepSize));
-
+            double[] x = Accord.Math.Vector.Interval(rowRange, rowStepSize);
+            double[] y = Accord.Math.Vector.Interval(colRange, colStepSize);
+            double[][] mesh = Matrix.Cartesian(x, y);
             return mesh;
         }
 
@@ -877,7 +1472,7 @@ namespace Accord.Math
         /// 
         public static T[][] Mesh<T>(this T[] x, T[] y)
         {
-            return Matrix.CartesianProduct(x, y);
+            return Matrix.Cartesian(x, y);
         }
 
         /// <summary>
@@ -945,7 +1540,7 @@ namespace Accord.Math
         ///   Combines two vectors horizontally.
         /// </summary>
         /// 
-        public static T[] Concatenate<T>(this T[] a, T[] b)
+        public static T[] Concatenate<T>(this T[] a, params T[] b)
         {
             T[] r = new T[a.Length + b.Length];
             for (int i = 0; i < a.Length; i++)
@@ -1286,7 +1881,7 @@ namespace Accord.Math
         #region Split
         /// <summary>
         ///   Splits a given vector into a smaller vectors of the given size.
-        ///   This operation can be reverted using <see cref="Merge"/>.
+        ///   This operation can be reverted using <see cref="Merge{T}(T[][], int)"/>.
         /// </summary>
         /// 
         /// <param name="vector">The vector to be splitted.</param>
@@ -1309,7 +1904,7 @@ namespace Accord.Math
 
         /// <summary>
         ///   Merges a series of vectors into a single vector. This
-        ///   operation can be reverted using <see cref="Split"/>.
+        ///   operation can be reverted using <see cref="Split{T}(T[], int)"/>.
         /// </summary>
         /// 
         /// <param name="vectors">The vectors to be merged.</param>
@@ -1321,6 +1916,30 @@ namespace Accord.Math
         {
             int n = vectors.Length * size;
             T[] r = new T[n * size];
+
+            int c = 0;
+            for (int i = 0; i < vectors.Length; i++)
+                for (int j = 0; j < vectors[i].Length; j++, c++)
+                    r[c] = vectors[i][j];
+
+            return r;
+        }
+
+        /// <summary>
+        ///   Merges a series of vectors into a single vector. This
+        ///   operation can be reverted using <see cref="Split{T}(T[], int)"/>.
+        /// </summary>
+        /// 
+        /// <param name="vectors">The vectors to be merged.</param>
+        /// 
+        /// <returns>A single array containing the given vectors.</returns>
+        /// 
+        public static T[] Merge<T>(this T[][] vectors)
+        {
+            int size = 0;
+            for (int i = 0; i < vectors.Length; i++)
+                size += vectors[i].Length;
+            T[] r = new T[size];
 
             int c = 0;
             for (int i = 0; i < vectors.Length; i++)
@@ -1393,7 +2012,7 @@ namespace Accord.Math
             int rows = matrix.GetLength(0);
             int cols = matrix.GetLength(1);
 
-            T[,] r = (T[,])Array.CreateInstance(typeof(T), rows + top + bottom, cols + left + right);
+            var r = new T[rows + top + bottom, cols + left + right];
 
             for (int i = 0; i < rows; i++)
                 for (int j = 0; j < cols; j++)
@@ -1402,5 +2021,37 @@ namespace Accord.Math
             return r;
         }
 
+        /// <summary>
+        ///   Transforms a vector into a matrix of given dimensions.
+        /// </summary>
+        /// 
+        public static T[,] Reshape<T>(this T[] array, int rows, int cols, MatrixOrder order = MatrixOrder.Default)
+        {
+            return Reshape(array, rows, cols, new T[rows, cols], order);
+        }
+
+        /// <summary>
+        ///   Transforms a vector into a matrix of given dimensions.
+        /// </summary>
+        /// 
+        public static T[,] Reshape<T>(this T[] array, int rows, int cols, T[,] result, MatrixOrder order = MatrixOrder.Default)
+        {
+            if (order == MatrixOrder.CRowMajor)
+            {
+                int k = 0;
+                for (int i = 0; i < rows; i++)
+                    for (int j = 0; j < cols; j++)
+                        result[i, j] = array[k++];
+            }
+            else
+            {
+                int k = 0;
+                for (int j = 0; j < cols; j++)
+                    for (int i = 0; i < rows; i++)
+                        result[i, j] = array[k++];
+            }
+
+            return result;
+        }
     }
 }

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@ namespace Accord.Neuro.Networks
     using System.Runtime.Serialization.Formatters.Binary;
     using Accord.Neuro.ActivationFunctions;
     using Accord.Neuro.Layers;
-    using AForge.Neuro;
     using Accord.Neuro.Neurons;
+    using Accord.Compat;
 
     /// <summary>
     ///   Deep Belief Network.
@@ -427,6 +427,7 @@ namespace Accord.Neuro.Networks
             return network;
         }
 
+#if !NO_BINARY_SERIALIZATION
         /// <summary>
         ///   Saves the network to a stream.
         /// </summary>
@@ -482,6 +483,6 @@ namespace Accord.Neuro.Networks
                 return Load(fs);
             }
         }
-
+#endif
     }
 }

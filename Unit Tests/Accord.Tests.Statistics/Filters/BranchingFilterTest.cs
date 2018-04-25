@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -26,30 +26,13 @@ namespace Accord.Tests.Statistics
     using Accord.Math;
     using Accord.Statistics.Filters;
     using AForge;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
-    
-    [TestClass()]
+    using NUnit.Framework;
+
+    [TestFixture]
     public class BranchingFilterTest
     {
-
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+#if !NO_DATA_TABLE
+        [Test]
         public void ApplyTest()
         {
             object[,] data = 
@@ -99,7 +82,7 @@ namespace Accord.Tests.Statistics
                 double age = (double)row[2];
                 Assert.AreEqual(expected[id], age);
             }
-
         }
+#endif
     }
 }

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,13 +25,13 @@ namespace Accord.Tests.Math
     using System;
     using System.Collections.Generic;
     using Accord.Collections;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class RedBlackDictionaryTest
     {
 
-        [TestMethod()]
+        [Test]
         public void DuplicateTest()
         {
             var map = new RedBlackTreeDictionary<int, string>();
@@ -51,7 +51,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(2, map.Count);
         }
 
-        [TestMethod()]
+        [Test]
         public void EmptyTest()
         {
             var map = new RedBlackTreeDictionary<int, string>();
@@ -85,7 +85,7 @@ namespace Accord.Tests.Math
 
         }
 
-        [TestMethod()]
+        [Test]
         public void NextPrevTest()
         {
             bool thrown = false; 

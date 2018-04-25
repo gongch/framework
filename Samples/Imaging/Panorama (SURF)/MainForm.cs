@@ -1,7 +1,7 @@
 ﻿// Accord.NET Sample Applications
 // http://accord-framework.net
 //
-// Copyright © 2009-2014, César Souza
+// Copyright © 2009-2017, César Souza
 // All rights reserved. 3-BSD License:
 //
 //   Redistribution and use in source and binary forms, with or without
@@ -37,14 +37,14 @@ using Accord.Imaging;
 using Accord.Imaging.Filters;
 using Accord.Math;
 using AForge;
-using Panorama.SURF.Properties;
+using Accord;
 
-namespace Panorama
+namespace SampleApp
 {
     public partial class MainForm : Form
     {
-        private Bitmap img1 = Resources.UFSCar_Lake1;
-        private Bitmap img2 = Resources.UFSCar_Lake2;
+        private Bitmap img1 = Properties.Resources.UFSCar_Lake1;
+        private Bitmap img2 = Properties.Resources.UFSCar_Lake2;
 
         private SpeededUpRobustFeaturePoint[] surfPoints1;
         private SpeededUpRobustFeaturePoint[] surfPoints2;
@@ -129,8 +129,8 @@ namespace Panorama
             homography = ransac.Estimate(correlationPoints1, correlationPoints2);
 
             // Plot RANSAC results against correlation results
-            IntPoint[] inliers1 = correlationPoints1.Submatrix(ransac.Inliers);
-            IntPoint[] inliers2 = correlationPoints2.Submatrix(ransac.Inliers);
+            IntPoint[] inliers1 = correlationPoints1.Get(ransac.Inliers);
+            IntPoint[] inliers2 = correlationPoints2.Get(ransac.Inliers);
 
             // Concatenate the two images in a single image (just to show on screen)
             Concatenate concat = new Concatenate(img1);

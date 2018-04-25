@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,15 +23,15 @@
 namespace Accord.Tests.MachineLearning
 {
     using Accord.MachineLearning.Geometry;
-    using AForge.Math.Geometry;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Point = AForge.Point;
+    using Accord.Math.Geometry;
+    using NUnit.Framework;
+    using Point = Accord.Point;
 
-    [TestClass()]
+    [TestFixture]
     public class RansacLineTest
     {
 
-        [TestMethod()]
+        [Test]
         public void RansacLineConstructorTest()
         {
             Point[] points = new Point[500];

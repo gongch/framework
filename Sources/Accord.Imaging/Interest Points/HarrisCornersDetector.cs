@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -28,8 +28,9 @@ namespace Accord.Imaging
     using System.Drawing.Imaging;
     using Accord.Math;
     using AForge;
-    using AForge.Imaging;
-    using AForge.Imaging.Filters;
+    using Accord.Imaging;
+    using Accord.Imaging.Filters;
+    using Accord.Compat;
 
     /// <summary>
     ///   Corners measures to be used in <see cref="HarrisCornersDetector"/>.
@@ -94,7 +95,7 @@ namespace Accord.Imaging
     /// <seealso cref="MoravecCornersDetector"/>
     /// <seealso cref="SusanCornersDetector"/>
     ///
-    public class HarrisCornersDetector : ICornersDetector
+    public class HarrisCornersDetector : BaseCornersDetector
     {
         // Harris parameters
         private HarrisCornerMeasure measure = HarrisCornerMeasure.Harris;
@@ -253,42 +254,30 @@ namespace Accord.Imaging
             this.size = size;
 
             createGaussian();
+
+            base.SupportedFormats.UnionWith(new[]
+            {
+                PixelFormat.Format8bppIndexed,
+                PixelFormat.Format24bppRgb,
+                PixelFormat.Format32bppRgb,
+                PixelFormat.Format32bppArgb
+            });
         }
 
         private void createGaussian()
         {
-            double[] aforgeKernel = new AForge.Math.Gaussian(sigma).Kernel(size);
+            double[] aforgeKernel = Normal.Kernel(sigma * sigma, size);
             this.kernel = Array.ConvertAll<double, float>(aforgeKernel, Convert.ToSingle);
         }
         #endregion
 
-
         /// <summary>
-        ///   Process image looking for corners.
+        /// This method should be implemented by inheriting classes to implement the
+        /// actual corners detection, transforming the input image into a list of points.
         /// </summary>
         /// 
-        /// <param name="image">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found corners (X-Y coordinates).</returns>
-        /// 
-        /// <exception cref="UnsupportedImageFormatException">
-        ///   The source image has incorrect pixel format.
-        /// </exception>
-        /// 
-        public unsafe List<IntPoint> ProcessImage(UnmanagedImage image)
+        protected override List<IntPoint> InnerProcess(UnmanagedImage image)
         {
-
-            // check image format
-            if (
-                (image.PixelFormat != PixelFormat.Format8bppIndexed) &&
-                (image.PixelFormat != PixelFormat.Format24bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppArgb)
-                )
-            {
-                throw new UnsupportedImageFormatException("Unsupported pixel format of the source image.");
-            }
-
             // make sure we have grayscale image
             UnmanagedImage grayImage = null;
 
@@ -315,49 +304,51 @@ namespace Accord.Imaging
             float[,] diffy = new float[height, width];
             float[,] diffxy = new float[height, width];
 
-
-            fixed (float* pdx = diffx, pdy = diffy, pdxy = diffxy)
+            unsafe
             {
-                // Begin skipping first line
-                byte* src = (byte*)grayImage.ImageData.ToPointer() + stride;
-                float* dx = pdx + width;
-                float* dy = pdy + width;
-                float* dxy = pdxy + width;
-
-                // for each line
-                for (int y = 1; y < height - 1; y++)
+                fixed (float* pdx = diffx, pdy = diffy, pdxy = diffxy)
                 {
-                    // skip first column
-                    dx++; dy++; dxy++; src++;
+                    // Begin skipping first line
+                    byte* src = (byte*)grayImage.ImageData.ToPointer() + stride;
+                    float* dx = pdx + width;
+                    float* dy = pdy + width;
+                    float* dxy = pdxy + width;
 
-                    // for each inner pixel in line (skipping first and last)
-                    for (int x = 1; x < width - 1; x++, src++, dx++, dy++, dxy++)
+                    // for each line
+                    for (int y = 1; y < height - 1; y++)
                     {
-                        // Retrieve the pixel neighborhood
-                        byte a11 = src[+stride + 1], a12 = src[+1], a13 = src[-stride + 1];
-                        byte a21 = src[+stride + 0], /*  a22    */  a23 = src[-stride + 0];
-                        byte a31 = src[+stride - 1], a32 = src[-1], a33 = src[-stride - 1];
+                        // skip first column
+                        dx++; dy++; dxy++; src++;
 
-                        // Convolution with horizontal differentiation kernel mask
-                        float h = ((a11 + a12 + a13) - (a31 + a32 + a33)) * 0.166666667f;
+                        // for each inner pixel in line (skipping first and last)
+                        for (int x = 1; x < width - 1; x++, src++, dx++, dy++, dxy++)
+                        {
+                            // Retrieve the pixel neighborhood
+                            byte a11 = src[+stride + 1], a12 = src[+1], a13 = src[-stride + 1];
+                            byte a21 = src[+stride + 0], /*  a22    */  a23 = src[-stride + 0];
+                            byte a31 = src[+stride - 1], a32 = src[-1], a33 = src[-stride - 1];
 
-                        // Convolution with vertical differentiation kernel mask
-                        float v = ((a11 + a21 + a31) - (a13 + a23 + a33)) * 0.166666667f;
+                            // Convolution with horizontal differentiation kernel mask
+                            float h = ((a11 + a12 + a13) - (a31 + a32 + a33)) * 0.166666667f;
 
-                        // Store squared differences directly
-                        *dx = h * h;
-                        *dy = v * v;
-                        *dxy = h * v;
+                            // Convolution with vertical differentiation kernel mask
+                            float v = ((a11 + a21 + a31) - (a13 + a23 + a33)) * 0.166666667f;
+
+                            // Store squared differences directly
+                            *dx = h * h;
+                            *dy = v * v;
+                            *dxy = h * v;
+                        }
+
+                        // Skip last column
+                        dx++; dy++; dxy++;
+                        src += offset + 1;
                     }
 
-                    // Skip last column
-                    dx++; dy++; dxy++; 
-                    src += offset + 1;
+                    // Free some resources which wont be needed anymore
+                    if (image.PixelFormat != PixelFormat.Format8bppIndexed)
+                        grayImage.Dispose();
                 }
-
-                // Free some resources which wont be needed anymore
-                if (image.PixelFormat != PixelFormat.Format8bppIndexed)
-                    grayImage.Dispose();
             }
 
 
@@ -376,36 +367,39 @@ namespace Accord.Imaging
             // 3. Compute Harris Corner Response Map
             float[,] map = new float[height, width];
 
-            fixed (float* pdx = diffx, pdy = diffy, pdxy = diffxy, pmap = map)
+            unsafe
             {
-                float* dx = pdx;
-                float* dy = pdy;
-                float* dxy = pdxy;
-                float* H = pmap;
-                float M, A, B, C;
-
-                for (int y = 0; y < height; y++)
+                fixed (float* pdx = diffx, pdy = diffy, pdxy = diffxy, pmap = map)
                 {
-                    for (int x = 0; x < width; x++, dx++, dy++, dxy++, H++)
+                    float* dx = pdx;
+                    float* dy = pdy;
+                    float* dxy = pdxy;
+                    float* H = pmap;
+                    float M, A, B, C;
+
+                    for (int y = 0; y < height; y++)
                     {
-                        A = *dx;
-                        B = *dy;
-                        C = *dxy;
+                        for (int x = 0; x < width; x++, dx++, dy++, dxy++, H++)
+                        {
+                            A = *dx;
+                            B = *dy;
+                            C = *dxy;
 
-                        if (measure == HarrisCornerMeasure.Harris)
-                        {
-                            // Original Harris corner measure
-                            M = (A * B - C * C) - (k * ((A + B) * (A + B)));
-                        }
-                        else
-                        {
-                            // Harris-Noble corner measure
-                            M = (A * B - C * C) / (A + B + Constants.SingleEpsilon);
-                        }
+                            if (measure == HarrisCornerMeasure.Harris)
+                            {
+                                // Original Harris corner measure
+                                M = (A * B - C * C) - (k * ((A + B) * (A + B)));
+                            }
+                            else
+                            {
+                                // Harris-Noble corner measure
+                                M = (A * B - C * C) / (A + B + Constants.SingleEpsilon);
+                            }
 
-                        if (M > threshold)
-                        {
-                            *H = M; // insert value in the map
+                            if (M > threshold)
+                            {
+                                *H = M; // insert value in the map
+                            }
                         }
                     }
                 }
@@ -497,69 +491,16 @@ namespace Accord.Imaging
             }
         }
 
-
         /// <summary>
-        ///   Process image looking for corners.
+        /// Creates a new object that is a copy of the current instance.
         /// </summary>
         /// 
-        /// <param name="imageData">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found corners (X-Y coordinates).</returns>
-        /// 
-        /// <exception cref="UnsupportedImageFormatException">
-        ///   The source image has incorrect pixel format.
-        /// </exception>
-        /// 
-        public List<IntPoint> ProcessImage(BitmapData imageData)
+        protected override object Clone(ISet<PixelFormat> supportedFormats)
         {
-            return ProcessImage(new UnmanagedImage(imageData));
+            var clone = new HarrisCornersDetector();
+            clone.SupportedFormats = supportedFormats;
+            clone.initialize(measure, k, threshold, sigma, r, size);
+            return clone;
         }
-
-        /// <summary>
-        ///   Process image looking for corners.
-        /// </summary>
-        /// 
-        /// <param name="image">Source image data to process.</param>
-        /// 
-        /// <returns>Returns list of found corners (X-Y coordinates).</returns>
-        /// 
-        /// <exception cref="UnsupportedImageFormatException">
-        ///   The source image has incorrect pixel format.
-        /// </exception>
-        /// 
-        public List<IntPoint> ProcessImage(Bitmap image)
-        {
-            // check image format
-            if (
-                (image.PixelFormat != PixelFormat.Format8bppIndexed) &&
-                (image.PixelFormat != PixelFormat.Format24bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppRgb) &&
-                (image.PixelFormat != PixelFormat.Format32bppArgb)
-                )
-            {
-                throw new UnsupportedImageFormatException("Unsupported pixel format of the source");
-            }
-
-            // lock source image
-            BitmapData imageData = image.LockBits(
-                new Rectangle(0, 0, image.Width, image.Height),
-                ImageLockMode.ReadOnly, image.PixelFormat);
-
-            List<IntPoint> corners;
-
-            try
-            {
-                // process the image
-                corners = ProcessImage(new UnmanagedImage(imageData));
-            }
-            finally
-            {
-                // unlock image
-                image.UnlockBits(imageData);
-            }
-
-            return corners;
-        }
-
     }
 }

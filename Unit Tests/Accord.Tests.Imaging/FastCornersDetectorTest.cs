@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,21 +22,49 @@
 
 namespace Accord.Tests.Imaging
 {
+    using Accord.DataSets;
     using Accord.Imaging;
+    using Accord.Tests.Imaging.Properties;
     using AForge;
-    using AForge.Imaging;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Collections.Generic;
+    using System.Drawing;
+#if NO_BITMAP
+    using Resources = Accord.Tests.Imaging.Properties.Resources_Standard;
+#endif
 
-    [TestClass()]
+    [TestFixture]
     public class FastCornersDetectorTest
     {
 
+        [Test]
+        public void doc_test()
+        {
+            string localPath = TestContext.CurrentContext.TestDirectory;
 
-        [TestMethod()]
+            #region doc_apply
+            // Let's load an example image, such as Lena,
+            // from a standard dataset of example images:
+            var images = new TestImages(path: localPath);
+            Bitmap lena = images["lena.bmp"];
+
+            // Create FAST with the default parameter values:
+            var fast = new FastCornersDetector(threshold: 20);
+
+            // Use it to extract interest points from the Lena image:
+            List<IntPoint> descriptors = fast.ProcessImage(lena);
+
+            // Now those descriptors can be used to represent the image itself, such
+            // as for example, in the Bag-of-Visual-Words approach for classification.
+            #endregion
+
+            Assert.AreEqual(1144, descriptors.Count);
+        }
+
+        [Test]
         public void ProcessImageTest()
         {
-            UnmanagedImage image = UnmanagedImage.FromManagedImage(Properties.Resources.sample_black);
+            UnmanagedImage image = UnmanagedImage.FromManagedImage(Accord.Imaging.Image.Clone(Resources.sample_black));
 
             FastCornersDetector target = new FastCornersDetector();
             target.Suppress = false;
@@ -57,10 +85,10 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(137, actual[73].Y);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProcessImageTest2()
         {
-            UnmanagedImage image = UnmanagedImage.FromManagedImage(Properties.Resources.lena512);
+            UnmanagedImage image = UnmanagedImage.FromManagedImage(Accord.Imaging.Image.Clone(Resources.lena512));
 
             FastCornersDetector target = new FastCornersDetector();
             target.Suppress = true;
@@ -79,6 +107,28 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(246, actual[65].Y);
             Assert.AreEqual(133, actual[73].X);
             Assert.AreEqual(253, actual[73].Y);
+        }
+
+        [Test]
+        public void batch_test()
+        {
+            Bitmap[] images =
+            {
+                Accord.Imaging.Image.Clone(Resources.flower01),
+                Accord.Imaging.Image.Clone(Resources.flower02),
+                Accord.Imaging.Image.Clone(Resources.flower03),
+                Accord.Imaging.Image.Clone(Resources.flower04),
+                Accord.Imaging.Image.Clone(Resources.flower05),
+                Accord.Imaging.Image.Clone(Resources.flower06),
+            };
+
+            FastCornersDetector target = new FastCornersDetector();
+
+            for (int i = 0; i < images.Length; i++)
+            {
+                List<IntPoint> actual = target.ProcessImage(images[i]);
+                Assert.IsNotNull(actual);
+            }
         }
 
     }

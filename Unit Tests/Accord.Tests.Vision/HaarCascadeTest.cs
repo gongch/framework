@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,32 +23,15 @@
 namespace Accord.Tests.Vision
 {
     using Accord.Vision.Detection;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Threading;
     using Accord.Vision.Detection.Cascades;
 
-    [TestClass()]
+    [TestFixture]
     public class HaarCascadeTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void CloneTest()
         {
             HaarCascade expected = new FaceHaarCascade();

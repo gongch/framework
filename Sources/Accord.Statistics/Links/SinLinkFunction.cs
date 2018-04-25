@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 namespace Accord.Statistics.Links
 {
     using System;
+    using Accord.Compat;
 
     /// <summary>
     ///   Sin link function.
@@ -61,7 +62,8 @@ namespace Accord.Statistics.Links
         ///   Creates a new Sin link function.
         /// </summary>
         /// 
-        public SinLinkFunction() : this(2, -1) { }
+        public SinLinkFunction() 
+            : this(2, -1) { }
 
 
         /// <summary>
@@ -89,6 +91,19 @@ namespace Accord.Statistics.Links
         {
             return Math.Asin(B * x + A);
         }
+
+        /// <summary>
+        /// The logarithm of the inverse of the link function.
+        /// </summary>
+        /// <param name="x">A transformed value.</param>
+        /// <returns>
+        /// The log of the reverse transformed value.
+        /// </returns>
+        public double Log(double x)
+        {
+            return Math.Log(Math.Asin(B * x + A));
+        }
+
 
         /// <summary>
         ///   First derivative of the <see cref="Inverse"/> function.

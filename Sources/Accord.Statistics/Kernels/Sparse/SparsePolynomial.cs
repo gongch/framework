@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,12 +23,14 @@
 namespace Accord.Statistics.Kernels.Sparse
 {
     using System;
+    using Accord.Compat;
 
     /// <summary>
     ///   Sparse Polynomial Kernel.
     /// </summary>
     /// 
     [Serializable]
+    [Obsolete("Please use Polynomial<Sparse<double>> instead.")]
     public sealed class SparsePolynomial : KernelBase, IKernel
     {
         private int degree;
@@ -88,6 +90,8 @@ namespace Accord.Statistics.Kernels.Sparse
         /// 
         public override double Function(double[] x, double[] y)
         {
+#pragma warning disable 0618
+
             double sum = SparseLinear.Product(x,y) + constant;
 
             return Math.Pow(sum, Degree);

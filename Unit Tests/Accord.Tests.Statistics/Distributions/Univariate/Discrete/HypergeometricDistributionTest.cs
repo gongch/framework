@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,30 +25,16 @@ namespace Accord.Tests.Statistics
     using System;
     using Accord.Statistics.Distributions.Fitting;
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Globalization;
+    using Accord.Statistics.Distributions.Reflection;
+    using Accord.Math;
 
-    [TestClass()]
+    [TestFixture]
     public class HypergeometricDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
 
@@ -112,7 +98,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(6, range3.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void HypergeometricDistributionConstructorTest()
         {
             bool thrown;
@@ -159,7 +145,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(dn * dm * (dN - dm) * (dN - dn) / (dN * dN * (dN - 1.0)), target.Variance);
         }
 
-        [TestMethod()]
+        [Test]
         public void CloneTest()
         {
             int populationSize = 12;
@@ -177,7 +163,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.PopulationSuccess, actual.PopulationSuccess);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest()
         {
             int populationSize = 15;
@@ -191,7 +177,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             int populationSize = 15;
@@ -202,7 +188,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.Median, target.InverseDistributionFunction(0.5));
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityMassFunctionTest()
         {
             int populationSize = 15;
@@ -217,7 +203,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(Double.IsNaN(actual));
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityMassFunctionTest()
         {
             int N = 50;
@@ -231,7 +217,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityMassFunctionTest2()
         {
             int populationSize = 15;
@@ -246,7 +232,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(Double.IsNaN(actual));
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest2()
         {
             // Verified against http://stattrek.com/online-calculator/hypergeometric.aspx
@@ -298,8 +284,59 @@ namespace Accord.Tests.Statistics
 
         }
 
+        [Test]
+        public void DynamicConstructorTest()
+        {
+            var dist = UnivariateDistributionInfo.CreateInstance<HypergeometricDistribution>();
 
-        [TestMethod()]
+            Assert.AreEqual(1, dist.PopulationSize);
+            Assert.AreEqual(0, dist.PopulationSuccess);
+            Assert.AreEqual(1, dist.SampleSize);
+            Assert.AreEqual(0, dist.Support.Min);
+            Assert.AreEqual(0, dist.Support.Max);
+        }
+
+
+        [Test]
+        public void icdf()
+        {
+            var dist =  HypergeometricDistribution.FromSuccessCounts(successes: 10, failures: 5, samples: 8);
+
+            {
+                double pdf = dist.ProbabilityMassFunction(3);
+                Assert.AreEqual(0.018648018648018648, pdf); // matches R
+
+                double cdf = dist.DistributionFunction(3);
+                Assert.AreEqual(0.018648018648018648, cdf); // matches R
+            }
+
+            {
+                double x = 0.3;
+                int icdf = dist.InverseDistributionFunction(x);
+                Assert.AreEqual(5, icdf);
+
+                double cdf = dist.DistributionFunction(icdf);
+                Assert.AreEqual(0.57342657342657344, cdf); // matches R
+            }
+
+            double[] percentiles = Vector.Range(0.0, 1.0, stepSize: 0.1);
+            for (int i = 0; i < percentiles.Length; i++)
+            {
+                double x = percentiles[i];
+                int icdf = dist.InverseDistributionFunction(x);
+                double cdf = dist.DistributionFunction(icdf);
+                int iicdf = dist.InverseDistributionFunction(cdf);
+                double iiicdf = dist.DistributionFunction(iicdf);
+
+                Assert.AreEqual(iicdf, icdf, 1e-5);
+                double rx = Math.Floor(x);
+                double rc = Math.Floor(cdf);
+                Assert.AreEqual(rx, rc);
+                Assert.AreEqual(iiicdf, cdf, 1e-5);
+            }
+        }
+
+        [Test]
         public void ConstructorTest3()
         {
             var h = new HypergeometricDistribution(9, 6, 1);

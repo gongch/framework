@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,22 +22,72 @@
 
 namespace Accord.Tests.Imaging
 {
+    using Accord.DataSets;
     using Accord.Imaging;
     using Accord.Imaging.Filters;
+    using Accord.Math;
     using Accord.Tests.Imaging.Properties;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Collections.Generic;
     using System.Drawing;
+    using System.Linq;
+#if NO_BITMAP
+    using Resources = Accord.Tests.Imaging.Properties.Resources_Standard;
+#endif
 
-    [TestClass()]
+    [TestFixture]
     public class SpeededUpRobustFeaturesDetectorTest
     {
+        // Load some test images
+        public static Bitmap[] GetImages()
+        {
+            Bitmap[] images =
+            {
+                Accord.Imaging.Image.Clone(Resources.flower01),
+                Accord.Imaging.Image.Clone(Resources.flower02),
+                Accord.Imaging.Image.Clone(Resources.flower03),
+                Accord.Imaging.Image.Clone(Resources.flower04),
+                Accord.Imaging.Image.Clone(Resources.flower05),
+                Accord.Imaging.Image.Clone(Resources.flower06),
+            };
 
-        [TestMethod()]
+            return images;
+        }
+
+        [Test]
+        public void doc_test()
+        {
+            string localPath = TestContext.CurrentContext.TestDirectory;
+
+            #region doc_apply
+            // Let's load an example image, such as Lena,
+            // from a standard dataset of example images:
+            var images = new TestImages(path: localPath);
+            Bitmap lena = images["lena.bmp"];
+
+            // Create a new SURF with the default parameter values:
+            var surf = new SpeededUpRobustFeaturesDetector(threshold: 0.0002f, octaves: 5, initial: 2);
+
+            // Use it to extract the SURF point descriptors from the Lena image:
+            List<SpeededUpRobustFeaturePoint> descriptors = surf.ProcessImage(lena);
+
+            // We can obtain the actual double[] descriptors using
+            double[][] features = descriptors.Apply(d => d.Descriptor);
+
+            // Now those descriptors can be used to represent the image itself, such
+            // as for example, in the Bag-of-Visual-Words approach for classification.
+            #endregion
+
+            Assert.AreEqual(523, descriptors.Count);
+            double sum = features.Sum(x => x.Sum());
+            Assert.AreEqual(2340.9402310500964, sum, 1e-10);
+        }
+
+        [Test]
         public void ProcessImageTest()
         {
             // Load an Image
-            Bitmap img = Properties.Resources.sample_trans;
+            Bitmap img = Accord.Imaging.Image.Clone(Resources.sample_trans);
 
             // Extract the interest points
             var surf = new SpeededUpRobustFeaturesDetector(0.0002f, 5, 2);
@@ -100,11 +150,11 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(4.72728586, p.Orientation, 1e-3);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProcessImageTest2()
         {
             // Load an Image
-            Bitmap img = Properties.Resources.sample_trans;
+            Bitmap img = Accord.Imaging.Image.Clone(Resources.sample_trans);
 
             // Extract the interest points
             var surf = new SpeededUpRobustFeaturesDetector(0.0002f, 5, 2);
@@ -156,11 +206,11 @@ namespace Accord.Tests.Imaging
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ProcessImageTest3()
         {
             // Load an Image
-            Bitmap img = Properties.Resources.sample_trans;
+            Bitmap img = Accord.Imaging.Image.Clone(Resources.sample_trans);
 
             // Extract the interest points
             var surf = new SpeededUpRobustFeaturesDetector(0.0002f, 5, 2);
@@ -182,8 +232,8 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(0.0, p.Response, 1e-2);
             Assert.AreEqual(0.0, p.Orientation, 1e-2);
             Assert.AreEqual(128, p.Descriptor.Length);
-            Assert.AreEqual(0.026527178478172982, p.Descriptor[23], 1e-10);
-            Assert.AreEqual(0.28221266818142571, p.Descriptor[42], 1e-10);
+            Assert.AreEqual(0.026510688411631893, p.Descriptor[23], 1e-10);
+            Assert.AreEqual(0.28209917003131696, p.Descriptor[42], 1e-10);
 
             p = points[1];
             Assert.AreEqual(1, p.Laplacian, 1e-2);
@@ -193,8 +243,8 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(0.0, p.Response, 1e-2);
             Assert.AreEqual(0, p.Orientation, 1e-2);
             Assert.AreEqual(128, p.Descriptor.Length);
-            Assert.AreEqual(0.0017332996868934826, p.Descriptor[23], 1e-10);
-            Assert.AreEqual(0.01141609085546454, p.Descriptor[54], 1e-10);
+            Assert.AreEqual(0.0017327366915338997, p.Descriptor[23], 1e-10);
+            Assert.AreEqual(0.011412382779922381, p.Descriptor[54], 1e-10);
 
             p = points[2];
             Assert.AreEqual(0, p.Laplacian, 1e-2);
@@ -204,8 +254,8 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(0.0, p.Response, 1e-2);
             Assert.AreEqual(0.0, p.Orientation, 1e-2);
             Assert.AreEqual(128, p.Descriptor.Length);
-            Assert.AreEqual(0.013397918304161798, p.Descriptor[23], 1e-10);
-            Assert.AreEqual(0.0000054080612707747483, p.Descriptor[12], 1e-10);
+            Assert.AreEqual(0.013389417853018544, p.Descriptor[23], 1e-10);
+            Assert.AreEqual(0.0000054046300690336785, p.Descriptor[12], 1e-10);
 
             p = points[6];
             Assert.AreEqual(1, p.Laplacian, 1e-2);
@@ -215,15 +265,15 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(0.0, p.Response, 1e-2);
             Assert.AreEqual(0.0, p.Orientation, 1e-2);
             Assert.AreEqual(128, p.Descriptor.Length);
-            Assert.AreEqual(0.059789486280406236, p.Descriptor[23], 1e-10);
-            Assert.AreEqual(-0.0000056629312093282088, p.Descriptor[12], 1e-10);
+            Assert.AreEqual(0.059752032324088523, p.Descriptor[23], 1e-10);
+            Assert.AreEqual(-0.0000056593837766382935, p.Descriptor[12], 1e-10);
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ZeroWidthTest()
         {
-            Bitmap img = Properties.Resources.surf_bug_1;
+            Bitmap img = Accord.Imaging.Image.Clone(Resources.surf_bug_1);
 
             var iimg = OpenSURFcs.IntegralImage.FromImage(img);
             var expected = OpenSURFcs.FastHessian.getIpoints(0.0002f, 5, 2, iimg);
@@ -238,19 +288,10 @@ namespace Accord.Tests.Imaging
         }
 
 
-        [TestMethod, Ignore]
+        [Test, Ignore("Random")]
         public void ProcessImageTest4()
         {
-            Bitmap[] bitmaps = 
-            {
-                Resources.flower01,
-                Resources.flower03,
-                Resources.flower06,
-                Resources.flower07,
-                Resources.flower09,
-                Resources.flower10,
-            };
-
+            var bitmaps = GetImages();
             var surf = new SpeededUpRobustFeaturesDetector();
 
             int current = 0;
@@ -291,8 +332,8 @@ namespace Accord.Tests.Imaging
 
                 for (int i = 0; i < expected.Count; i++)
                 {
-                    var e = expected[i];
-                    var a = actual[i];
+                    SpeededUpRobustFeaturePoint e = expected[i];
+                    SpeededUpRobustFeaturePoint a = actual[i];
                     Assert.AreEqual(e, a);
                 }
             }

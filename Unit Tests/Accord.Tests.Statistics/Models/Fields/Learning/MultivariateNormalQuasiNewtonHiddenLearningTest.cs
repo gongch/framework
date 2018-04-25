@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -31,27 +31,11 @@ namespace Accord.Tests.Statistics
     using Accord.Statistics.Models.Markov;
     using Accord.Statistics.Models.Markov.Topology;
     using Accord.Tests.Statistics.Models.Fields;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class MultivariateNormalQuasiNewtonHiddenLearningTest
     {
-
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
 
 
         public static double[][][] inputs1 = new double[][][]
@@ -79,7 +63,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void RunTest()
         {
             var hmm = MultivariateMarkovFunctionTest.CreateModel1();

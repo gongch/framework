@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -117,6 +117,23 @@ namespace Accord.Statistics.Distributions.Univariate
             this.pdf = density;
             this.cdf = distribution;
             this.support = support;
+        }
+
+        /// <summary>
+        ///   Creates a new <see cref="GeneralContinuousDistribution"/> with the given PDF and CDF functions.
+        /// </summary>
+        /// 
+        /// <param name="distribution">A distribution whose properties will be numerically estimated.</param>
+        /// 
+        public GeneralContinuousDistribution(UnivariateContinuousDistribution distribution)
+        {
+            if (distribution == null)
+                throw new ArgumentNullException("distribution");
+
+            this.method = new InfiniteAdaptiveGaussKronrod(100);
+            this.pdf = distribution.ProbabilityDensityFunction;
+            this.cdf = distribution.DistributionFunction;
+            this.support = distribution.Support;
         }
 
         /// <summary>
@@ -265,7 +282,7 @@ namespace Accord.Statistics.Distributions.Univariate
         /// </summary>
         /// 
         /// <value>
-        ///   A <see cref="AForge.DoubleRange"/> containing
+        ///   A <see cref="DoubleRange"/> containing
         ///   the support interval for this distribution.
         /// </value>
         /// 
@@ -378,7 +395,7 @@ namespace Accord.Statistics.Distributions.Univariate
         /// 
         /// <param name="x">A single point in the distribution range.</param>
         /// 
-        public override double DistributionFunction(double x)
+        protected internal override double InnerDistributionFunction(double x)
         {
             if (cdf != null)
                 return cdf(x);
@@ -401,7 +418,7 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   in the current distribution.
         /// </returns>
         /// 
-        public override double ProbabilityDensityFunction(double x)
+        protected internal override double InnerProbabilityDensityFunction(double x)
         {
             if (pdf != null)
                 return pdf(x);

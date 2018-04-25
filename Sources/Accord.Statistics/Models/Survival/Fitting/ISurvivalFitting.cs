@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,12 +22,17 @@
 
 namespace Accord.Statistics.Models.Regression.Fitting
 {
+    using Accord.Statistics.Distributions.Univariate;
+    using System;
 
     /// <summary>
     ///   Common interface for regression fitting methods.
     /// </summary>
     /// 
+#pragma warning disable 612, 618
+    [Obsolete("Please use ISupervisedLearning instead.")]
     interface ISurvivalFitting : IRegressionFitting
+#pragma warning restore 612, 618
     {
 
         /// <summary>
@@ -37,7 +42,20 @@ namespace Accord.Statistics.Models.Regression.Fitting
         /// <param name="inputs">The input training data.</param>
         /// <param name="time">The time until the output happened.</param>
         /// <param name="censor">The indication variables used to signal
-        /// if the event ocurred or not.</param>
+        ///   if the event occurred or if it was censored.</param>
+        /// 
+        /// <returns>The error.</returns>
+        /// 
+        double Run(double[][] inputs, double[] time, SurvivalOutcome[] censor);
+
+        /// <summary>
+        ///   Runs the fitting algorithm.
+        /// </summary>
+        /// 
+        /// <param name="inputs">The input training data.</param>
+        /// <param name="time">The time until the output happened.</param>
+        /// <param name="censor">The indication variables used to signal
+        ///   if the event occurred or if it was censored.</param>
         /// 
         /// <returns>The error.</returns>
         /// 

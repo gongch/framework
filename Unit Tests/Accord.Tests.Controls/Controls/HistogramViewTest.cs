@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,14 +24,15 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Controls;
     using Accord.Statistics.Visualizations;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class HistogramViewTest
     {
 
 
-        [TestMethod()]
+        [Test]
+        [Category("WinForms")]
         public void ComputeTest1()
         {
             HistogramView target = new HistogramView();
@@ -48,7 +49,8 @@ namespace Accord.Tests.Statistics
             target.DataSource = data;
         }
 
-        [TestMethod()]
+        [Test]
+        [Category("WinForms")]
         public void ComputeTest2()
         {
             HistogramView target = new HistogramView();

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -57,10 +57,32 @@ namespace Accord.Math.Optimization
     ///   Constraint with only linear terms.
     /// </summary>
     /// 
+    /// <example>
+    /// <para>
+    ///   Linear constraints are commonly used in optimisation routines.
+    ///   The framework provides support for linear constraints to be specified
+    ///   using a <see cref="string"/> representation, an <see cref="Expression"/> 
+    ///   or using a vector of constraint values.
+    /// </para>
+    /// 
+    /// <code source="Unit Tests\Accord.Tests.Math\Optimization\LinearConstraintTest.cs" region="doc_example" />
+    /// 
+    /// </example>
+    /// 
+    /// <seealso cref="LinearConstraintCollection"/>
+    ///
+
     public class LinearConstraint : IConstraint
     {
+        /// <summary>
+        ///   Gets the default constant violation tolerance (1e-12).
+        /// </summary>
+        /// 
+        public const double DefaultTolerance = 1e-12;
+
         private int[] indices;
-        private double[] scalars;
+        private double[] combinedAs;
+        private double[] grad;
 
         /// <summary>
         ///   Gets the number of variables in the constraint.
@@ -70,7 +92,7 @@ namespace Accord.Math.Optimization
 
         /// <summary>
         ///   Gets the index of the variables (in respective to the
-        ///   object function index) of the variables participating
+        ///   objective function) of the variables participating
         ///   in this constraint.
         /// </summary>
         /// 
@@ -86,6 +108,7 @@ namespace Accord.Math.Optimization
                     throw new DimensionMismatchException("value");
 
                 this.indices = value;
+                this.grad = null;
             }
         }
 
@@ -95,7 +118,7 @@ namespace Accord.Math.Optimization
         /// </summary>
         public double[] CombinedAs
         {
-            get { return scalars; }
+            get { return combinedAs; }
             set
             {
                 if (value == null)
@@ -104,7 +127,8 @@ namespace Accord.Math.Optimization
                 if (value.Length != NumberOfVariables)
                     throw new DimensionMismatchException("value");
 
-                this.scalars = value;
+                this.combinedAs = value;
+                this.grad = null;
             }
         }
 
@@ -128,6 +152,11 @@ namespace Accord.Math.Optimization
         /// 
         public double Tolerance { get; set; }
 
+        private LinearConstraint()
+        {
+            this.Tolerance = DefaultTolerance;
+        }
+
         /// <summary>
         ///   Constructs a new linear constraint.
         /// </summary>
@@ -135,14 +164,12 @@ namespace Accord.Math.Optimization
         /// <param name="numberOfVariables">The number of variables in the constraint.</param>
         /// 
         public LinearConstraint(int numberOfVariables)
+            : this()
         {
             this.NumberOfVariables = numberOfVariables;
-            this.indices = Matrix.Indices(0, numberOfVariables);
-            this.scalars = Matrix.Vector(numberOfVariables, 1.0);
+            this.indices = Vector.Range(numberOfVariables);
+            this.combinedAs = Vector.Ones(numberOfVariables);
             this.ShouldBe = ConstraintType.GreaterThanOrEqualTo;
-
-            this.Function = compute;
-            this.Gradient = gradient;
         }
 
         /// <summary>
@@ -153,14 +180,12 @@ namespace Accord.Math.Optimization
         /// how variables should be combined in the constraint.</param>
         /// 
         public LinearConstraint(params double[] coefficients)
+            : this()
         {
             this.NumberOfVariables = coefficients.Length;
-            this.indices = Matrix.Indices(0, coefficients.Length);
+            this.indices = Vector.Range(0, coefficients.Length);
             this.CombinedAs = coefficients;
             this.ShouldBe = ConstraintType.GreaterThanOrEqualTo;
-
-            this.Function = compute;
-            this.Gradient = gradient;
         }
 
         /// <summary>
@@ -176,11 +201,9 @@ namespace Accord.Math.Optimization
         ///   be parsed. Default is CultureInfo.InvariantCulture.</param>
         /// 
         public LinearConstraint(IObjectiveFunction function, string constraint, CultureInfo format)
+            : this()
         {
             parseString(function, constraint, format);
-
-            this.Function = compute;
-            this.Gradient = gradient;
         }
 
         /// <summary>
@@ -207,51 +230,9 @@ namespace Accord.Math.Optimization
         ///   this constraint in the form of a lambda expression.</param>
         /// 
         public LinearConstraint(IObjectiveFunction function, Expression<Func<bool>> constraint)
+            : this()
         {
             parseExpression(function, constraint);
-
-            this.Function = compute;
-            this.Gradient = gradient;
-        }
-
-        /// <summary>
-        ///   Gets how much the constraint is being violated.
-        /// </summary>
-        /// 
-        /// <param name="input">The function point.</param>
-        /// 
-        /// <returns>
-        ///   How much the constraint is being violated at the given point. Positive
-        ///   value means the constraint is not being violated with the returned slack, 
-        ///   while a negative value means the constraint is being violated by the returned
-        ///   amount.
-        /// </returns>
-        /// 
-        public double GetViolation(double[] input)
-        {
-            double fx = 0;
-
-            for (int i = 0; i < indices.Length; i++)
-            {
-                double x = input[indices[i]];
-                double a = CombinedAs[i];
-
-                fx += x * a;
-            }
-
-            switch (ShouldBe)
-            {
-                case ConstraintType.EqualTo:
-                    return Math.Abs(fx - Value);
-
-                case ConstraintType.GreaterThanOrEqualTo:
-                    return fx - Value;
-
-                case ConstraintType.LesserThanOrEqualTo:
-                    return Value - fx;
-            }
-
-            throw new NotSupportedException();
         }
 
         /// <summary>
@@ -305,26 +286,60 @@ namespace Accord.Math.Optimization
             return true;
         }
 
-        private double compute(double[] input)
+        /// <summary>
+        /// Calculates the left hand side of the constraint
+        /// equation given a vector x.
+        /// </summary>
+        /// <param name="x">The vector.</param>
+        /// <returns>
+        /// The left hand side of the constraint equation as evaluated at x.
+        /// </returns>
+        public double Function(double[] x)
         {
             double sum = 0;
 
             for (int i = 0; i < indices.Length; i++)
             {
-                double x = input[indices[i]];
+                int index = indices[i];
+                double val = x[index];
                 double a = CombinedAs[i];
 
-                sum += x * a;
+                sum += val * a;
             }
 
             return sum;
         }
 
-        private double[] gradient(double[] x)
+        /// <summary>
+        /// Calculates the gradient of the constraint.
+        /// </summary>
+        /// <param name="x">The vector.</param>
+        /// <returns>The gradient of the constraint.</returns>
+        public double[] Gradient(double[] x)
         {
-            return CombinedAs;
-        }
+            if (grad == null)
+            {
+                if (x.Length == indices.Length && indices.IsEqual(Vector.Range(x.Length)))
+                {
+                    grad = combinedAs;
+                }
+                else
+                {
+                    var tmp = new double[x.Length];
 
+                    for (int i = 0; i < indices.Length; i++)
+                    {
+                        int index = indices[i];
+                        tmp[index] = CombinedAs[i];
+                    }
+
+                    grad = tmp;
+                }
+                
+            }
+
+            return grad;
+        }
 
         private void parseString(IObjectiveFunction function, string constraint, CultureInfo culture)
         {
@@ -333,7 +348,7 @@ namespace Accord.Math.Optimization
 
             string f = constraint.Replace("*", String.Empty).Replace(" ", String.Empty);
 
-            if (f[0] != '-' || f[0] != '+')
+            if (f[0] != '-' && f[0] != '+')
                 f = f.Insert(0, "+");
 
             ConstraintType type;
@@ -620,19 +635,5 @@ namespace Accord.Math.Optimization
 
             return null;
         }
-
-
-        /// <summary>
-        ///   Gets the left hand side of the constraint equation.
-        /// </summary>
-        /// 
-        public Func<double[], double> Function { get; private set; }
-
-        /// <summary>
-        ///   Gets the gradient of the left hand side of the constraint equation.
-        /// </summary>
-        /// 
-        public Func<double[], double[]> Gradient { get; private set; }
-
     }
 }

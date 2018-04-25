@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -28,42 +28,28 @@ namespace Accord.Tests.Statistics.Models.Fields
     using Accord.Statistics.Models.Fields.Functions;
     using Accord.Statistics.Models.Fields.Learning;
     using Accord.Statistics.Models.Markov;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Statistics.Distributions.Multivariate;
     using Accord.Statistics.Distributions.Univariate;
     using Accord.Statistics.Models.Markov.Topology;
 
-    [TestClass()]
+    [TestFixture]
     public class ForwardBackwardLearningTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-
         #region Discrete
 
-        [TestMethod()]
+        [Test]
         public void GradientTest_DiscreteMarkov()
         {
             var function = new MarkovDiscreteFunction(2, 2, 2);
             var model = new HiddenConditionalRandomField<int>(function);
             var target = new ForwardBackwardGradient<int>(model);
 
-            FiniteDifferences diff = new FiniteDifferences(function.Weights.Length);
+            FiniteDifferences diff = new FiniteDifferences(function.Weights.Length)
+            {
+                StepSize = 1e-5
+            };
 
             var inputs = QuasiNewtonHiddenLearningTest.inputs;
             var outputs = QuasiNewtonHiddenLearningTest.outputs;
@@ -77,12 +63,10 @@ namespace Accord.Tests.Statistics.Models.Fields
             for (int i = 0; i < actual.Length; i++)
             {
                 Assert.AreEqual(expected[i], actual[i], 1e-4);
-                Assert.IsFalse(double.IsNaN(actual[i]));
-                Assert.IsFalse(double.IsNaN(expected[i]));
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void GradientTest_DiscreteMarkov2()
         {
             HiddenMarkovClassifier hmm = DiscreteHiddenMarkovClassifierPotentialFunctionTest.CreateModel1();
@@ -101,16 +85,11 @@ namespace Accord.Tests.Statistics.Models.Fields
             double[] expected = diff.Compute(function.Weights);
             double[] actual = target.Gradient(function.Weights, inputs, outputs);
 
-
             for (int i = 0; i < actual.Length; i++)
-            {
-                Assert.AreEqual(expected[i], actual[i], 1e-5);
-                Assert.IsFalse(double.IsNaN(actual[i]));
-                Assert.IsFalse(double.IsNaN(expected[i]));
-            }
+                Assert.AreEqual(expected[i], actual[i], 1e-4);
         }
 
-        [TestMethod()]
+        [Test]
         public void GradientTest_DiscreteMarkov3()
         {
             HiddenMarkovClassifier hmm = DiscreteHiddenMarkovClassifierPotentialFunctionTest.CreateModel1();
@@ -130,23 +109,17 @@ namespace Accord.Tests.Statistics.Models.Fields
             double[] expected = diff.Compute(function.Weights);
             double[] actual = target.Gradient(function.Weights, inputs, outputs);
 
-
             for (int i = 0; i < actual.Length; i++)
-            {
-                Assert.AreEqual(expected[i], actual[i], 1e-5);
-
-                Assert.IsFalse(double.IsNaN(actual[i]));
-                Assert.IsFalse(double.IsNaN(expected[i]));
-            }
+                Assert.AreEqual(expected[i], actual[i], 1e-4);
         }
 
-     
+
 
         #endregion
 
         #region Markov Independent
 
-        [TestMethod()]
+        [Test]
         public void GradientTest_MarkovIndependent()
         {
             double[][][] observations;
@@ -162,7 +135,7 @@ namespace Accord.Tests.Statistics.Models.Fields
 
             FiniteDifferences diff = new FiniteDifferences(function.Weights.Length);
 
-            diff.Function = parameters => func(model, parameters, 
+            diff.Function = parameters => func(model, parameters,
                 observations,
                 labels);
 
@@ -180,7 +153,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void GradientTest_MarkovIndependentNormal_Priors()
         {
             double[][][] observations;
@@ -214,7 +187,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void GradientTest_MarkovIndependentNormal_NoPriors()
         {
             double[][][] observations;
@@ -250,7 +223,7 @@ namespace Accord.Tests.Statistics.Models.Fields
 
         #endregion
 
-        [TestMethod()]
+        [Test]
         public void GradientTest_MarkovMultivariate()
         {
             // Creates a sequence classifier containing 2 hidden Markov Models
@@ -265,7 +238,7 @@ namespace Accord.Tests.Statistics.Models.Fields
                 new [] { new double[] { 9, 1, 0 }, new double[] { 0, 1, 5 }, new double[] { 0, 0, 0 } },
             };
 
-            int[] outputs = 
+            int[] outputs =
             {
                 0, 0, 1
             };
@@ -275,7 +248,10 @@ namespace Accord.Tests.Statistics.Models.Fields
             var model = new HiddenConditionalRandomField<double[]>(function);
             var target = new ForwardBackwardGradient<double[]>(model);
 
-            FiniteDifferences diff = new FiniteDifferences(function.Weights.Length);
+            FiniteDifferences diff = new FiniteDifferences(function.Weights.Length)
+            {
+                StepSize = 1e-5
+            };
 
             diff.Function = parameters => func(model, parameters, inputs, outputs);
 
@@ -291,7 +267,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void GradientTest_MarkovMultivariate2()
         {
             var hmm = MultivariateMarkovFunctionTest.CreateModel1();
@@ -319,7 +295,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void GradientTest_MarkovMultivariate3()
         {
             var hmm = MultivariateMarkovFunctionTest.CreateModel1();
@@ -351,11 +327,11 @@ namespace Accord.Tests.Statistics.Models.Fields
         }
 
 
-      
 
 
 
-        [TestMethod()]
+
+        [Test]
         public void GradientTest_MarkovNormal()
         {
             var hmm = MarkovContinuousFunctionTest.CreateModel1();
@@ -384,7 +360,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void GradientTest_MarkovNormal_Regularization()
         {
             var hmm = MarkovContinuousFunctionTest.CreateModel1();

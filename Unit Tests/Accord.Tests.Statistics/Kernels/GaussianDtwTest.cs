@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,30 +24,14 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Kernels;
     using Accord.Math;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Diagnostics;
 
-    [TestClass()]
+    [TestFixture]
     public class GaussianDtwTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-        [TestMethod]
+        [Test]
         public void GaussianFunctionTest()
         {
             var x = new double[] { 0, 4, 2, 1 };
@@ -58,7 +42,7 @@ namespace Accord.Tests.Statistics
 
             double actual = gaussian.Function(x, y);
 
-            Assert.AreEqual(0.3407192298459587, actual);
+            Assert.AreEqual(0.3407192298459587, actual, 1e-10);
 
 
             gaussian = new Gaussian<DynamicTimeWarping>(dtw, 11.5);
@@ -68,10 +52,10 @@ namespace Accord.Tests.Statistics
 
             actual = gaussian.Function(x, y);
 
-            Assert.AreEqual(0.99065918303292089, actual);
+            Assert.AreEqual(0.99065918303292089, actual, 1e-10);
         }
 
-        [TestMethod]
+        [Test]
         public void GammaSigmaTest()
         {
             var dtw = new DynamicTimeWarping(1);
@@ -99,7 +83,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-12);
         }
 
-        [TestMethod]
+        [Test]
         public void GammaSigmaSquaredTest()
         {
             var dtw = new DynamicTimeWarping(1);
@@ -125,7 +109,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1.0 / (2 * 49), gaussian.Gamma);
         }
 
-        [TestMethod]
+        [Test]
         public void GaussianEstimateTest()
         {
             // Suppose we have the following data 
@@ -148,7 +132,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(sigma * sigma, sigma2);
         }
 
-        [TestMethod()]
+        [Test]
         public void FunctionTest_EqualInputs()
         {
             var x = new double[] { 1, 2, 5, 1 };

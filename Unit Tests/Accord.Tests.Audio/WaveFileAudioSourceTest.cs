@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,35 +22,19 @@
 
 namespace Accord.Tests.Audio
 {
-    using Accord.DirectSound;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Accord.Audio;
+    using Accord.DirectSound;
+    using NUnit.Framework;
+    using System.IO;
 
-    [TestClass()]
+    [TestFixture]
     public class WaveFileAudioSourceTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void WaveFileAudioSourceConstructorTest()
         {
-            string fileName = @"..\..\..\..\Unit Tests\Accord.Tests.Audio\Resources\Grand Piano - Fazioli - major A middle.wav";
+            string fileName = Path.Combine(TestContext.CurrentContext.TestDirectory, "Resources","a.wav");
 
             WaveFileAudioSource target = new WaveFileAudioSource(fileName);
 

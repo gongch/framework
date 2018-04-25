@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,21 +25,21 @@ namespace Accord.Tests.Math
     using System;
     using Accord.Collections;
     using Accord.Math;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Linq;
     using System.Collections.Generic;
 
-    [TestClass()]
+    [TestFixture]
     public class RedBlackTreeTest
     {
 
-        [TestMethod()]
+        [Test]
         public void BaseTest()
         {
             run(10);
         }
 
-        [TestMethod()]
+        [Test]
         public void ExtensiveTest()
         {
             for (int i = 1; i < 10; i++)
@@ -52,7 +52,7 @@ namespace Accord.Tests.Math
         }
 
 
-        [TestMethod()]
+        [Test]
         public void DuplicateTest()
         {
             var t = new RedBlackTree<int, string>();
@@ -95,7 +95,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(0, values.Length);
         }
 
-        [TestMethod()]
+        [Test]
         public void ExtensiveDuplicateTest()
         {
             for (int i = 1; i < 10; i++)
@@ -150,8 +150,6 @@ namespace Accord.Tests.Math
             int arrayIndex = 0;
             foreach (var node in t)
                 Assert.AreEqual(sorted[arrayIndex++], node.Value);
-
-
 
             // Start from min and go navigating up to max
             var min = t.Min();

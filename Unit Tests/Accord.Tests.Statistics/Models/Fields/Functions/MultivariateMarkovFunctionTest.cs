@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -28,32 +28,15 @@ namespace Accord.Tests.Statistics.Models.Fields
     using Accord.Statistics.Models.Markov;
     using Accord.Statistics.Models.Markov.Learning;
     using Accord.Statistics.Models.Markov.Topology;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Statistics.Distributions.Fitting;
     using Accord.Statistics.Models.Fields;
     using Accord.Statistics.Models.Fields.Functions.Specialized;
     using Accord.Math;
 
-    [TestClass()]
+    [TestFixture]
     public class MultivariateMarkovFunctionTest
     {
-
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
 
         public static HiddenMarkovClassifier<MultivariateNormalDistribution> CreateModel1()
         {
@@ -201,7 +184,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             return classifier;
         }
 
-        [TestMethod()]
+        [Test]
         public void HiddenMarkovHiddenPotentialFunctionConstructorTest()
         {
             var model = CreateModel1();
@@ -242,7 +225,7 @@ namespace Accord.Tests.Statistics.Models.Fields
 
         }
 
-        [TestMethod()]
+        [Test]
         public void HiddenMarkovHiddenPotentialFunctionConstructorTest2()
         {
             var model = CreateModel2();
@@ -284,7 +267,7 @@ namespace Accord.Tests.Statistics.Models.Fields
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest()
         {
             var model = CreateModel1();
@@ -331,7 +314,7 @@ namespace Accord.Tests.Statistics.Models.Fields
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest2()
         {
             var model = CreateModel2();
@@ -376,7 +359,7 @@ namespace Accord.Tests.Statistics.Models.Fields
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest3()
         {
             var model = CreateModel3(priors: false);
@@ -427,7 +410,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest4()
         {
             var model = CreateModel3();
@@ -479,7 +462,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest5()
         {
             HiddenMarkovClassifier<MultivariateNormalDistribution> model =

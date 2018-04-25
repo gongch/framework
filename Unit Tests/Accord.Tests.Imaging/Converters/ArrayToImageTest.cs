@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,30 +24,18 @@ namespace Accord.Tests.Imaging
 {
     using System.Drawing;
     using Accord.Imaging.Converters;
-    using AForge.Imaging.Filters;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Accord.Imaging.Filters;
+    using NUnit.Framework;
+    using Accord.Tests.Imaging.Properties;
+#if NO_BITMAP
+    using Resources = Accord.Tests.Imaging.Properties.Resources_Standard;
+#endif
 
-    [TestClass()]
+    [TestFixture]
     public class ArrayToImageTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ArrayToImageConstructorTest()
         {
             int height = 16;
@@ -60,7 +48,7 @@ namespace Accord.Tests.Imaging
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest1()
         {
 
@@ -96,7 +84,7 @@ namespace Accord.Tests.Imaging
 
             double[] expected;
 
-            Bitmap imageExpected = Properties.Resources.image1;
+            Bitmap imageExpected = Accord.Imaging.Image.Clone(Resources.image1);
             new Invert().ApplyInPlace(imageExpected);
             new Threshold().ApplyInPlace(imageExpected);
 
@@ -107,7 +95,7 @@ namespace Accord.Tests.Imaging
                 Assert.AreEqual(actual[i], expected[i]);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest2()
         {
             // Create an array representation 
@@ -138,7 +126,7 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(320, image.Width);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest3()
         {
             // Create an array representation 
@@ -169,7 +157,7 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(320, image.Width);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest4()
         {
             // Create an array representation 

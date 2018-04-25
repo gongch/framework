@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -27,30 +27,13 @@ namespace Accord.Tests.Statistics
     using Accord.Statistics;
     using Accord.Statistics.Analysis;
     using AForge;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class CircularDescriptiveAnalysisTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void DescriptiveAnalysisConstructorTest1()
         {
             double[,] data =
@@ -77,7 +60,7 @@ namespace Accord.Tests.Statistics
             test(analysis);
         }
 
-        [TestMethod()]
+        [Test]
         public void DescriptiveAnalysisConstructor_NoCompute()
         {
             double[,] data =
@@ -109,11 +92,12 @@ namespace Accord.Tests.Statistics
             double[] expectedVar;
             double[] expectedMed;
             double[] expectedError;
+            DoubleRange[] expectedQuartiles;
 
             expectedValues(analysis,
                 out expectedMean, out expectedStdDev,
                 out expectedVar, out expectedMed,
-                out expectedError);
+                out expectedError, out expectedQuartiles);
 
             var angles = analysis.Angles;
             var cos = analysis.CosineSum;
@@ -176,32 +160,32 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(variances.IsEqual(expectedVar, 1e-14));
 
             Assert.AreEqual(3, quartiles.Length);
-            Assert.AreEqual(23, quartiles[0].Min);
-            Assert.AreEqual(7.5, quartiles[0].Max);
-            Assert.AreEqual(8, quartiles[1].Min);
-            Assert.AreEqual(19, quartiles[1].Max);
-            Assert.AreEqual(5, quartiles[2].Min);
-            Assert.AreEqual(6.5, quartiles[2].Max);
+            Assert.AreEqual(0, quartiles[0].Min);
+            Assert.AreEqual(7.75, quartiles[0].Max, 1e-8);
+            Assert.AreEqual(9, quartiles[1].Min, 1e-8);
+            Assert.AreEqual(20.5, quartiles[1].Max, 1e-8);
+            Assert.AreEqual(5, quartiles[2].Min, 1e-8);
+            Assert.AreEqual(6.75, quartiles[2].Max, 1e-8);
 
-            Assert.AreEqual(22.25, inner[0].Min);
-            Assert.AreEqual(8.25, inner[0].Max);
+            Assert.AreEqual(12.375, inner[0].Min, 1e-8);
+            Assert.AreEqual(19.375, inner[0].Max, 1e-8);
 
-            Assert.AreEqual(51.5, inner[1].Min);
-            Assert.AreEqual(35.5, inner[1].Max);
+            Assert.AreEqual(51.75, inner[1].Min, 1e-8);
+            Assert.AreEqual(37.75, inner[1].Max, 1e-8);
 
-            Assert.AreEqual(21.5, outer[0].Min);
-            Assert.AreEqual(9, outer[0].Max);
+            Assert.AreEqual(0.75, outer[0].Min, 1e-8);
+            Assert.AreEqual(7, outer[0].Max, 1e-8);
 
-            Assert.AreEqual(35, outer[1].Min);
-            Assert.AreEqual(52, outer[1].Max);
+            Assert.AreEqual(34.5, outer[1].Min, 1e-8);
+            Assert.AreEqual(55, outer[1].Max, 1e-8);
 
-            Assert.AreEqual(5.0, quartiles[2].Min);
-            Assert.AreEqual(6.5, quartiles[2].Max);
+            Assert.AreEqual(5.0, quartiles[2].Min, 1e-8);
+            Assert.AreEqual(6.75, quartiles[2].Max, 1e-8);
         }
 
 
 
-        [TestMethod()]
+        [Test]
         public void DescriptiveAnalysis_InPlaceRow()
         {
             double[,] data =
@@ -241,17 +225,18 @@ namespace Accord.Tests.Statistics
             double[] expectedVar;
             double[] expectedMed;
             double[] expectedError;
+            DoubleRange[] expectedQuartiles;
 
             expectedValues(original, originalLength,
                 out expectedMean, out expectedStdDev,
                 out expectedVar, out expectedMed,
-                out expectedError);
+                out expectedError, out expectedQuartiles);
 
-            expectedMean = expectedMean.Submatrix(1);
-            expectedStdDev = expectedStdDev.Submatrix(1);
-            expectedVar = expectedVar.Submatrix(1);
-            expectedMed = expectedMed.Submatrix(1);
-            expectedError = expectedError.Submatrix(1);
+            expectedMean = expectedMean.First(1);
+            expectedStdDev = expectedStdDev.First(1);
+            expectedVar = expectedVar.First(1);
+            expectedMed = expectedMed.First(1);
+            expectedError = expectedError.First(1);
 
             var angles = analysis.Angles;
             var cos = analysis.CosineSum;
@@ -306,14 +291,14 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(variances.IsEqual(expectedVar, 1e-14));
 
             Assert.AreEqual(1, quartiles.Length);
-            Assert.AreEqual(23, quartiles[0].Min);
-            Assert.AreEqual(7.5, quartiles[0].Max);
+            Assert.AreEqual(0, quartiles[0].Min);
+            Assert.AreEqual(7.75, quartiles[0].Max, 1e-8);
 
-            Assert.AreEqual(22.25, inner[0].Min);
-            Assert.AreEqual(8.25, inner[0].Max);
+            Assert.AreEqual(12.375, inner[0].Min, 1e-8);
+            Assert.AreEqual(19.375, inner[0].Max, 1e-8);
 
-            Assert.AreEqual(21.5, outer[0].Min);
-            Assert.AreEqual(9, outer[0].Max);
+            Assert.AreEqual(0.75, outer[0].Min, 1e-8);
+            Assert.AreEqual(7.00, outer[0].Max, 1e-8);
         }
 
 
@@ -321,9 +306,9 @@ namespace Accord.Tests.Statistics
         private static void expectedValues(CircularDescriptiveAnalysis analysis, 
             out double[] expectedMean, out double[] expectedStdDev, 
             out double[] expectedVar, out double[] expectedMed,
-            out double[] expectedErrors)
+            out double[] expectedErrors, out DoubleRange[] expectedQuartiles)
         {
-            var data = analysis.Source.Transpose().ToArray();
+            var data = analysis.Source.Transpose().ToJagged();
 
             double[] expectedLengths = { 24, 60, 7 };
             expectedMean = data.ApplyWithIndex((x, i) => Circular.Mean(x, expectedLengths[i]));
@@ -331,7 +316,7 @@ namespace Accord.Tests.Statistics
             expectedErrors = data.ApplyWithIndex((x, i) => Circular.StandardError(x, expectedLengths[i], 0.05));
             expectedVar = data.ApplyWithIndex((x, i) => Circular.Variance(x, expectedLengths[i]));
             expectedMed = data.ApplyWithIndex((x, i) => Circular.Median(x, expectedLengths[i]));
-            DoubleRange[] expectedQuartiles = data
+            expectedQuartiles = data
                 .ApplyWithIndex((x, i) =>
                 {
                     DoubleRange q;
@@ -343,9 +328,9 @@ namespace Accord.Tests.Statistics
         private static void expectedValues(double[] original, int originalLength,
            out double[] expectedMean, out double[] expectedStdDev,
            out double[] expectedVar, out double[] expectedMed,
-           out double[] expectedErrors)
+           out double[] expectedErrors, out DoubleRange[] expectedQuartiles)
         {
-            var data = original.ToArray(asColumnVector: false);
+            var data = original.ToJagged(asColumnVector: false);
 
             double[] expectedLengths = { originalLength };
             expectedMean = data.ApplyWithIndex((x, i) => Circular.Mean(x, expectedLengths[i]));
@@ -353,7 +338,7 @@ namespace Accord.Tests.Statistics
             expectedErrors = data.ApplyWithIndex((x, i) => Circular.StandardError(x, expectedLengths[i], 0.05));
             expectedVar = data.ApplyWithIndex((x, i) => Circular.Variance(x, expectedLengths[i]));
             expectedMed = data.ApplyWithIndex((x, i) => Circular.Median(x, expectedLengths[i]));
-            DoubleRange[] expectedQuartiles = data
+            expectedQuartiles = data
                 .ApplyWithIndex((x, i) =>
                 {
                     DoubleRange q;
@@ -363,7 +348,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void DataBindTest()
         {
             double[,] data =

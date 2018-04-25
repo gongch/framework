@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,7 +23,11 @@
 namespace Accord.Math
 {
     using System;
+    using System.Collections;
+    using System.Collections.Generic;
+#if !NETSTANDARD1_4
     using System.Data;
+#endif
     using System.Globalization;
     using System.Linq;
 
@@ -34,16 +38,24 @@ namespace Accord.Math
         ///   Converts a jagged-array into a multidimensional array.
         /// </summary>
         /// 
-        public static T[,] ToMatrix<T>(this T[][] array)
+        public static Array DeepToMatrix(this Array array)
         {
-            return ToMatrix(array, false);
+            int[] shape = array.GetLength();
+            int totalLength = array.GetTotalLength();
+            Type elementType = array.GetInnerMostType();
+
+            Array flat = array.DeepFlatten();
+
+            Array result = Array.CreateInstance(elementType, shape);
+            Buffer.BlockCopy(flat, 0, result, 0, totalLength);
+            return result;
         }
 
         /// <summary>
         ///   Converts a jagged-array into a multidimensional array.
         /// </summary>
         /// 
-        public static T[,] ToMatrix<T>(this T[][] array, bool transpose)
+        public static T[,] ToMatrix<T>(this T[][] array, bool transpose = false)
         {
             int rows = array.Length;
             if (rows == 0) return new T[0, rows];
@@ -73,20 +85,7 @@ namespace Accord.Math
         ///   Converts an array into a multidimensional array.
         /// </summary>
         /// 
-        public static T[,] ToMatrix<T>(this T[] array)
-        {
-            T[,] m = new T[1, array.Length];
-            for (int i = 0; i < array.Length; i++)
-                m[0, i] = array[i];
-
-            return m;
-        }
-
-        /// <summary>
-        ///   Converts an array into a multidimensional array.
-        /// </summary>
-        /// 
-        public static T[][] ToArray<T>(this T[] array, bool asColumnVector = true)
+        public static T[][] ToJagged<T>(this T[] array, bool asColumnVector = true)
         {
             if (asColumnVector)
             {
@@ -99,6 +98,15 @@ namespace Accord.Math
             {
                 return new T[][] { array };
             }
+        }
+
+        /// <summary>
+        ///   Obsolete.
+        /// </summary>
+        [Obsolete("Please use ToJagged() instead.")]
+        public static T[][] ToArray<T>(this T[] array, bool asColumnVector = true)
+        {
+            return ToJagged(array, asColumnVector: asColumnVector);
         }
 
         /// <summary>
@@ -127,16 +135,7 @@ namespace Accord.Math
         ///   Converts a multidimensional array into a jagged array.
         /// </summary>
         /// 
-        public static T[][] ToArray<T>(this T[,] matrix)
-        {
-            return ToArray(matrix, false);
-        }
-
-        /// <summary>
-        ///   Converts a multidimensional array into a jagged array.
-        /// </summary>
-        /// 
-        public static T[][] ToArray<T>(this T[,] matrix, bool transpose)
+        public static T[][] ToJagged<T>(this T[,] matrix, bool transpose = false)
         {
             T[][] array;
 
@@ -160,377 +159,37 @@ namespace Accord.Math
             return array;
         }
 
+        /// <summary>
+        ///   Obsolete.
+        /// </summary>
+        /// 
+        [Obsolete("Please use ToJagged() instead.")]
+        public static T[][] ToArray<T>(this T[,] matrix, bool transpose = false)
+        {
+            return ToJagged(matrix, transpose);
+        }
+
 
 
         #region Type conversions
 
         /// <summary>
-        ///   Converts a double-precision floating point multidimensional
-        ///   array into a double-precision floating point multidimensional
-        ///   array.
+        ///   Converts the values of a vector using the given converter expression.
         /// </summary>
-        /// 
-        public unsafe static double[,] ToDouble(this float[,] matrix)
-        {
-            int rows = matrix.GetLength(0);
-            int cols = matrix.GetLength(1);
-            int length = matrix.Length;
-
-            double[,] result = new double[rows, cols];
-
-            fixed (float* srcPtr = matrix)
-            fixed (double* dstPtr = result)
-            {
-                float* src = srcPtr;
-                double* dst = dstPtr;
-
-                for (int i = 0; i < length; i++, src++, dst++)
-                    *dst = (double)*src;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts a byte multidimensional array into a double-
-        ///   precision floating point multidimensional array.
-        /// </summary>
-        /// 
-        public unsafe static double[,] ToDouble(this byte[,] matrix)
-        {
-            int rows = matrix.GetLength(0);
-            int cols = matrix.GetLength(1);
-            int length = matrix.Length;
-
-            double[,] result = new double[rows, cols];
-
-            fixed (byte* srcPtr = matrix)
-            fixed (double* dstPtr = result)
-            {
-                byte* src = srcPtr;
-                double* dst = dstPtr;
-
-                for (int i = 0; i < length; i++, src++, dst++)
-                    *dst = (double)*src;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts a double-precision floating point multidimensional
-        ///   array into a single-precision floating point multidimensional
-        ///   array.
-        /// </summary>
-        /// 
-        public unsafe static double[,] ToDouble(this int[,] matrix)
-        {
-            int rows = matrix.GetLength(0);
-            int cols = matrix.GetLength(1);
-            int length = matrix.Length;
-
-            double[,] result = new double[rows, cols];
-
-            fixed (int* srcPtr = matrix)
-            fixed (double* dstPtr = result)
-            {
-                int* src = srcPtr;
-                double* dst = dstPtr;
-
-                for (int i = 0; i < length; i++, src++, dst++)
-                    *dst = (double)*src;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts a single-precision floating point multidimensional
-        ///   array into a double-precision floating point multidimensional
-        ///   array.
-        /// </summary>
-        /// 
-        public unsafe static float[,] ToSingle(this double[,] matrix)
-        {
-            int rows = matrix.GetLength(0);
-            int cols = matrix.GetLength(1);
-            int length = matrix.Length;
-
-            float[,] result = new float[rows, cols];
-
-            fixed (double* srcPtr = matrix)
-            fixed (float* dstPtr = result)
-            {
-                double* src = srcPtr;
-                float* dst = dstPtr;
-
-                for (int i = 0; i < length; i++, src++, dst++)
-                    *dst = (float)*src;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Truncates a double matrix to integer values.
-        /// </summary>
-        /// <param name="matrix">The matrix to be truncated.</param>
-        /// 
-        public unsafe static int[,] ToInt32(this double[,] matrix)
-        {
-            int rows = matrix.GetLength(0);
-            int cols = matrix.GetLength(1);
-            int length = matrix.Length;
-
-            int[,] result = new int[rows, cols];
-
-            fixed (double* srcPtr = matrix)
-            fixed (int* dstPtr = result)
-            {
-                double* src = srcPtr;
-                int* dst = dstPtr;
-
-                for (int i = 0; i < length; i++, src++, dst++)
-                    *dst = (int)*src;
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Truncates a double matrix to integer values.
-        /// </summary>
-        /// <param name="matrix">The matrix to be truncated.</param>
-        /// 
-        public static int[][] ToInt32(this double[][] matrix)
-        {
-            int[][] result = new int[matrix.Length][];
-
-            for (int i = 0; i < matrix.Length; i++)
-            {
-                result[i] = new int[matrix[i].Length];
-                for (int j = 0; j < matrix[i].Length; j++)
-                    result[i][j] = (int)matrix[i][j];
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts a matrix to integer values.
-        /// </summary>
-        /// 
-        /// <param name="matrix">The matrix to be converted.</param>
-        /// 
-        public static int[][] ToInt32(this byte[][] matrix)
-        {
-            int[][] result = new int[matrix.Length][];
-
-            for (int i = 0; i < matrix.Length; i++)
-            {
-                result[i] = new int[matrix[i].Length];
-                for (int j = 0; j < matrix[i].Length; j++)
-                    result[i][j] = (int)matrix[i][j];
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts a matrix to integer values.
-        /// </summary>
-        /// 
-        /// <param name="matrix">The matrix to be converted.</param>
-        /// 
-        public static int[][] ToInt32(this sbyte[][] matrix)
-        {
-            int[][] result = new int[matrix.Length][];
-
-            for (int i = 0; i < matrix.Length; i++)
-            {
-                result[i] = new int[matrix[i].Length];
-                for (int j = 0; j < matrix[i].Length; j++)
-                    result[i][j] = (int)matrix[i][j];
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts an integer matrix to double values.
-        /// </summary>
-        /// 
-        /// <param name="matrix">The matrix to be converted.</param>
-        /// 
-        public static double[][] ToDouble(this int[][] matrix)
-        {
-            double[][] result = new double[matrix.Length][];
-
-            for (int i = 0; i < matrix.Length; i++)
-            {
-                result[i] = new double[matrix[i].Length];
-                for (int j = 0; j < matrix[i].Length; j++)
-                    result[i][j] = (double)matrix[i][j];
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts an integer matrix to double values.
-        /// </summary>
-        /// 
-        /// <param name="matrix">The matrix to be converted.</param>
-        /// 
-        public static double[][] ToDouble(this byte[][] matrix)
-        {
-            double[][] result = new double[matrix.Length][];
-
-            for (int i = 0; i < matrix.Length; i++)
-            {
-                result[i] = new double[matrix[i].Length];
-                for (int j = 0; j < matrix[i].Length; j++)
-                    result[i][j] = (double)matrix[i][j];
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts an integer matrix to double values.
-        /// </summary>
-        /// 
-        /// <param name="matrix">The matrix to be converted.</param>
-        /// 
-        public static double[][] ToDouble(this sbyte[][] matrix)
-        {
-            double[][] result = new double[matrix.Length][];
-
-            for (int i = 0; i < matrix.Length; i++)
-            {
-                result[i] = new double[matrix[i].Length];
-                for (int j = 0; j < matrix[i].Length; j++)
-                    result[i][j] = (double)matrix[i][j];
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts an integer matrix to double values.
-        /// </summary>
-        /// 
-        /// <param name="matrix">The matrix to be converted.</param>
-        /// 
-        public static float[][] ToSingle(this double[][] matrix)
-        {
-            var result = new float[matrix.Length][];
-
-            for (int i = 0; i < matrix.Length; i++)
-            {
-                result[i] = new float[matrix[i].Length];
-                for (int j = 0; j < matrix[i].Length; j++)
-                    result[i][j] = (float)matrix[i][j];
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts a double-precision floating point multidimensional
-        ///   array into a single-precision floating point multidimensional
-        ///   array.
-        /// </summary>
-        /// 
-        public static double[] ToDouble(this float[] vector)
-        {
-            double[] result = new double[vector.Length];
-            for (int i = 0; i < vector.Length; i++)
-                result[i] = (double)vector[i];
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts a double-precision floating point multidimensional
-        ///   array into a single-precision floating point multidimensional
-        ///   array.
-        /// </summary>
-        /// 
-        public static double[] ToDouble(this short[] vector)
-        {
-            double[] result = new double[vector.Length];
-            for (int i = 0; i < vector.Length; i++)
-                result[i] = (double)vector[i];
-            return result;
-        }
-
-        /// <summary>
-        ///   Truncates a double vector to integer values.
-        /// </summary>
-        /// <param name="vector">The vector to be truncated.</param>
-        /// 
-        public static int[] ToInt32(this double[] vector)
-        {
-            int[] result = new int[vector.Length];
-            for (int i = 0; i < vector.Length; i++)
-                result[i] = (int)vector[i];
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts a vector to integer values.
-        /// </summary>
-        /// 
+        /// <typeparam name="TInput">The type of the input.</typeparam>
+        /// <typeparam name="TOutput">The type of the output.</typeparam>
         /// <param name="vector">The vector to be converted.</param>
         /// 
-        public static int[] ToInt32(this byte[] vector)
+        public static TOutput[] Convert<TInput, TOutput>(this TInput[] vector)
+            where TOutput : TInput
         {
-            int[] result = new int[vector.Length];
-            for (int i = 0; i < vector.Length; i++)
-                result[i] = (int)vector[i];
+            TOutput[] result = new TOutput[vector.Length];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = (TOutput)vector[i];
             return result;
         }
 
-        /// <summary>
-        ///   Converts a vector to integer values.
-        /// </summary>
-        /// 
-        /// <param name="vector">The vector to be converted.</param>
-        /// 
-        public static int[] ToInt32(this sbyte[] vector)
-        {
-            int[] result = new int[vector.Length];
-            for (int i = 0; i < vector.Length; i++)
-                result[i] = (int)vector[i];
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts a integer vector into a double vector.
-        /// </summary>
-        /// <param name="vector">The vector to be converted.</param>
-        /// 
-        public static double[] ToDouble(this int[] vector)
-        {
-            double[] result = new double[vector.Length];
-            for (int i = 0; i < vector.Length; i++)
-                result[i] = (double)vector[i];
-            return result;
-        }
-
-        /// <summary>
-        ///   Converts a double vector into a single vector.
-        /// </summary>
-        /// <param name="vector">The vector to be converted.</param>
-        /// 
-        public static float[] ToSingle(this double[] vector)
-        {
-            float[] result = new float[vector.Length];
-            for (int i = 0; i < vector.Length; i++)
-                result[i] = (float)vector[i];
-            return result;
-        }
-
+#if !NETSTANDARD1_4
         /// <summary>
         ///   Converts the values of a vector using the given converter expression.
         /// </summary>
@@ -586,14 +245,256 @@ namespace Accord.Math
 
             return result;
         }
+
+        /// <summary>
+        ///   Converts an object into another type, irrespective of whether
+        ///   the conversion can be done at compile time or not. This can be
+        ///   used to convert generic types to numeric types during runtime.
+        /// </summary>
+        /// 
+        /// <typeparam name="TOutput">The type of the output.</typeparam>
+        /// 
+        /// <param name="array">The vector or array to be converted.</param>
+        /// 
+        public static TOutput To<TOutput>(this Array array)
+            where TOutput : class, ICloneable, IList, ICollection, IEnumerable
+#if !NET35
+, IStructuralComparable, IStructuralEquatable
+#endif
+        {
+            return To(array, typeof(TOutput)) as TOutput;
+        }
+
+        /// <summary>
+        ///   Converts an object into another type, irrespective of whether
+        ///   the conversion can be done at compile time or not. This can be
+        ///   used to convert generic types to numeric types during runtime.
+        /// </summary>
+        /// 
+        /// <param name="array">The vector or array to be converted.</param>
+        /// <param name="outputType">The type of the output.</param>
+        /// 
+        public static object To(this Array array, Type outputType)
+        {
+            Type inputType = array.GetType();
+
+            Type inputElementType = inputType.GetElementType();
+            Type outputElementType = outputType.GetElementType();
+
+            Array result;
+
+            if (inputElementType.IsArray && !outputElementType.IsArray)
+            {
+                // jagged -> multidimensional
+                result = Array.CreateInstance(outputElementType, array.GetLength(true));
+
+                foreach (var idx in GetIndices(result))
+                {
+                    object inputValue = array.GetValue(true, idx);
+                    object outputValue = convertValue(outputElementType, inputValue);
+                    result.SetValue(outputValue, idx);
+                }
+            }
+            else if (!inputElementType.IsArray && outputElementType.IsArray)
+            {
+                // multidimensional -> jagged
+                result = Array.CreateInstance(outputElementType, array.GetLength(0));
+
+                foreach (var idx in GetIndices(array))
+                {
+                    object inputValue = array.GetValue(idx);
+                    object outputValue = convertValue(outputElementType, inputValue);
+                    result.SetValue(outputValue, true, idx);
+                }
+            }
+            else
+            {
+                // Same nature (jagged or multidimensional) array
+                result = Array.CreateInstance(outputElementType, array.GetLength(false));
+
+                foreach (var idx in GetIndices(array))
+                {
+                    object inputValue = array.GetValue(idx);
+                    object outputValue = convertValue(outputElementType, inputValue);
+                    result.SetValue(outputValue, idx);
+                }
+            }
+
+            return result;
+        }
+#endif
+
+
+        /// <summary>
+        ///  Gets the value at the specified position in the multidimensional System.Array.
+        ///  The indexes are specified as an array of 32-bit integers.
+        /// </summary>
+        /// 
+        /// <param name="array">A jagged or multidimensional array.</param>
+        /// <param name="deep">If set to true, internal arrays in jagged arrays will be followed.</param>
+        /// <param name="indices">A one-dimensional array of 32-bit integers that represent the
+        ///   indexes specifying the position of the System.Array element to get.</param>
+        ///   
+        public static object GetValue(this Array array, bool deep, int[] indices)
+        {
+            if (array.IsVector())
+                return array.GetValue(indices);
+
+            if (deep && array.IsJagged())
+            {
+                Array current = array.GetValue(indices[0]) as Array;
+                if (indices.Length == 1)
+                    return current;
+                int[] last = indices.Get(1, 0);
+                return GetValue(current, true, last);
+            }
+            else
+            {
+                return array.GetValue(indices);
+            }
+        }
+
+        /// <summary>
+        ///  Gets the value at the specified position in the multidimensional System.Array.
+        ///  The indexes are specified as an array of 32-bit integers.
+        /// </summary>
+        /// 
+        /// <param name="array">A jagged or multidimensional array.</param>
+        /// <param name="deep">If set to true, internal arrays in jagged arrays will be followed.</param>
+        /// <param name="indices">A one-dimensional array of 32-bit integers that represent the
+        ///   indexes specifying the position of the System.Array element to get.</param>
+        /// <param name="value">The value retrieved from the array.</param>
+        ///   
+        public static bool TryGetValue(this Array array, bool deep, int[] indices, out object value)
+        {
+            value = null;
+
+            if (array.IsVector())
+            {
+                if (indices.Length > array.Rank)
+                    return false;
+
+                for (int i = 0; i < indices.Length; i++)
+                {
+                    if (indices[i] > array.GetUpperBound(i))
+                        return false;
+                }
+
+                value = array.GetValue(indices);
+                return true;
+            }
+
+            if (deep && array.IsJagged())
+            {
+                Array current = array.GetValue(indices[0]) as Array;
+                if (indices.Length == 1)
+                {
+                    value = current;
+                    return true;
+                }
+                int[] last = indices.Get(1, 0);
+                return TryGetValue(current, true, last, out value);
+            }
+            else
+            {
+                value = array.GetValue(indices);
+                return true;
+            }
+        }
+
+        /// <summary>
+        ///   Sets a value to the element at the specified position in the multidimensional
+        ///   or jagged System.Array. The indexes are specified as an array of 32-bit integers.
+        /// </summary>
+        /// 
+        /// <param name="array">A jagged or multidimensional array.</param>
+        /// <param name="value">The new value for the specified element.</param>
+        /// <param name="deep">If set to true, internal arrays in jagged arrays will be followed.</param>
+        /// <param name="indices">A one-dimensional array of 32-bit integers that represent
+        ///   the indexes specifying the position of the element to set.</param>
+        ///   
+        public static void SetValue(this Array array, object value, bool deep, int[] indices)
+        {
+            if (deep && array.IsJagged())
+            {
+                Array current = array.GetValue(indices[0]) as Array;
+                int[] last = indices.Get(1, 0);
+                SetValue(current, value, true, last);
+            }
+            else
+            {
+                array.SetValue(value, indices);
+            }
+        }
+
+#if !NETSTANDARD1_4
+        private static object convertValue(Type outputElementType, object inputValue)
+        {
+            object outputValue = null;
+
+            Array inputArray = inputValue as Array;
+
+            if (outputElementType.IsEnum)
+            {
+                outputValue = Enum.ToObject(outputElementType, (int)System.Convert.ChangeType(inputValue, typeof(int)));
+            }
+            else if (inputArray != null)
+            {
+                outputValue = To(inputArray, outputElementType);
+            }
+            else
+            {
+                outputValue = System.Convert.ChangeType(inputValue, outputElementType);
+            }
+            return outputValue;
+        }
+#endif
+
+
         #endregion
 
-
-
+        /// <summary>
+        ///   Creates a vector containing every index that can be used to
+        ///   address a given <paramref name="array"/>, in order.
+        /// </summary>
+        /// 
+        /// <param name="array">The array whose indices will be returned.</param>
+        /// <param name="deep">Pass true to retrieve all dimensions of the array,
+        ///   even if it contains nested arrays (as in jagged matrices).</param>
+        /// <param name="max">Bases computations on the maximum length possible for 
+        ///   each dimension (in case the jagged matrices has different lengths).</param>
+        /// 
+        /// <returns>
+        ///   An enumerable object that can be used to iterate over all
+        ///   positions of the given <paramref name="array">System.Array</paramref>.
+        /// </returns>
+        /// 
+        /// <example>
+        /// <code>
+        ///   double[,] a = 
+        ///   { 
+        ///      { 5.3, 2.3 },
+        ///      { 4.2, 9.2 }
+        ///   };
+        ///   
+        ///   foreach (int[] idx in a.GetIndices())
+        ///   {
+        ///      // Get the current element
+        ///      double e = (double)a.GetValue(idx);
+        ///   }
+        /// </code>
+        /// </example>
+        /// 
+        /// <seealso cref="Accord.Math.Vector.GetIndices{T}(T[])"/>
+        /// 
+        public static IEnumerable<int[]> GetIndices(this Array array, bool deep = false, bool max = false)
+        {
+            return Combinatorics.Sequences(array.GetLength(deep, max));
+        }
 
 
         #region DataTable Conversions
-
+#if !NETSTANDARD1_4
         /// <summary>
         ///   Converts a DataTable to a double[,] array.
         /// </summary>
@@ -662,7 +563,10 @@ namespace Accord.Math
             for (int j = 0; j < table.Columns.Count; j++)
             {
                 for (int i = 0; i < table.Rows.Count; i++)
-                    m[i, j] = (T)System.Convert.ChangeType(table.Rows[i][j], typeof(T));
+                {
+                    object obj = table.Rows[i][j];
+                    m[i, j] = (T)System.Convert.ChangeType(obj, typeof(T));
+                }
 
                 columnNames[j] = table.Columns[j].Caption;
             }
@@ -682,7 +586,10 @@ namespace Accord.Math
             for (int j = 0; j < table.Columns.Count; j++)
             {
                 for (int i = 0; i < table.Rows.Count; i++)
-                    m[i, j] = (T)System.Convert.ChangeType(table.Rows[i][j], typeof(T), provider);
+                {
+                    object obj = table.Rows[i][j];
+                    m[i, j] = (T)System.Convert.ChangeType(obj, typeof(T), provider);
+                }
 
                 columnNames[j] = table.Columns[j].Caption;
             }
@@ -765,7 +672,7 @@ namespace Accord.Math
         /// 
         public static DataTable ToTable(this double[][] matrix)
         {
-            int cols = matrix.GetLength(1);
+            int cols = matrix[0].Length;
 
             String[] columnNames = new String[cols];
             for (int i = 0; i < columnNames.Length; i++)
@@ -822,40 +729,78 @@ namespace Accord.Math
         /// 
         public static DataTable ToTable(this object[,] values)
         {
+            var columnNames = new string[values.Columns()];
+            for (int i = 0; i < columnNames.Length; i++)
+                columnNames[i] = "Column " + i;
+            return ToTable(values, columnNames);
+        }
+
+        /// <summary>
+        ///   Converts an array of values into a <see cref="DataTable"/>,
+        ///   attempting to guess column types by inspecting the data.
+        /// </summary>
+        /// 
+        /// <param name="matrix">The values to be converted.</param>
+        /// <param name="columnNames">The column names to use in the data table.</param>
+        /// 
+        /// <returns>A <see cref="DataTable"/> containing the given values.</returns>
+        /// 
+        /// <example>
+        /// <code>
+        /// // Specify some data in a table format
+        /// //
+        /// object[,] data = 
+        /// {
+        ///     { "Id", "IsSmoker", "Age" },
+        ///     {   0,       1,        10  },
+        ///     {   1,       1,        15  },
+        ///     {   2,       0,        40  },
+        ///     {   3,       1,        20  },
+        ///     {   4,       0,        70  },
+        ///     {   5,       0,        55  },
+        /// };
+        /// 
+        /// // Create a new table with the data
+        /// DataTable dataTable = data.ToTable();
+        /// </code>
+        /// </example>
+        /// 
+        public static DataTable ToTable(this object[,] matrix, string[] columnNames)
+        {
             DataTable table = new DataTable();
             table.Locale = System.Globalization.CultureInfo.InvariantCulture;
 
-            object[] headers = values.GetRow(0);
+            object[] headers = matrix.GetRow(0);
 
             if (headers.All(x => x is String))
             {
                 // Get first data row to set types
-                object[] first = values.GetRow(1);
+                object[] first = matrix.GetRow(1);
 
                 // Assume first row is header row
                 for (int i = 0; i < first.Length; i++)
                     table.Columns.Add(headers[i] as String, first[i].GetType());
 
                 // Parse all the other rows
-                int rows = values.GetLength(0);
+                int rows = matrix.GetLength(0);
                 for (int i = 1; i < rows; i++)
                 {
-                    var row = values.GetRow(i);
+                    var row = matrix.GetRow(i);
                     table.Rows.Add(row);
                 }
             }
             else
             {
-                // Get first data row to set types
-                object[] first = values.GetRow(1);
+                for (int i = 0; i < matrix.Columns(); i++)
+                {
+                    Type columnType = GetHighestEnclosingType(matrix.GetColumn(i));
+                    table.Columns.Add(columnNames[i], columnType);
+                }
 
-                for (int i = 0; i < first.Length; i++)
-                    table.Columns.Add("Column " + i, first[i].GetType());
-
-                int rows = values.GetLength(0);
+                int rows = matrix.GetLength(0);
                 for (int i = 0; i < rows; i++)
                 {
-                    var row = values.GetRow(i);
+                    var row = matrix.GetRow(i);
                     table.Rows.Add(row);
                 }
             }
@@ -863,78 +808,105 @@ namespace Accord.Math
             return table;
         }
 
+        private static Type GetHighestEnclosingType(object[] values)
+        {
+            var types = values.Select(x => x != null ? x.GetType() : null);
+            if (types.Any(x => x == typeof(object)))
+                return typeof(object);
+            if (types.Any(x => x == typeof(string)))
+                return typeof(string);
+            if (types.Any(x => x == typeof(decimal)))
+                return typeof(decimal);
+            if (types.Any(x => x == typeof(double)))
+                return typeof(double);
+            if (types.Any(x => x == typeof(float)))
+                return typeof(float);
+            if (types.Any(x => x == typeof(int)))
+                return typeof(int);
+            if (types.Any(x => x == typeof(uint)))
+                return typeof(uint);
+            if (types.Any(x => x == typeof(short)))
+                return typeof(int);
+            if (types.Any(x => x == typeof(byte)))
+                return typeof(int);
+            if (types.Any(x => x == typeof(sbyte)))
+                return typeof(int);
+
+            return typeof(object);
+        }
+
 
 
         /// <summary>
         ///   Converts a DataTable to a double[][] array.
         /// </summary>
         /// 
-        public static double[][] ToArray(this DataTable table)
+        public static double[][] ToJagged(this DataTable table)
         {
-            return ToArray<double>(table);
+            return ToJagged<double>(table);
         }
 
         /// <summary>
         ///   Converts a DataTable to a double[][] array.
         /// </summary>
         /// 
-        public static double[][] ToArray(this DataTable table, IFormatProvider provider)
+        public static double[][] ToJagged(this DataTable table, IFormatProvider provider)
         {
-            return ToArray<double>(table, provider);
+            return ToJagged<double>(table, provider);
         }
 
         /// <summary>
         ///   Converts a DataTable to a double[][] array.
         /// </summary>
         /// 
-        public static double[][] ToArray(this DataTable table, out string[] columnNames)
+        public static double[][] ToJagged(this DataTable table, out string[] columnNames)
         {
-            return ToArray<double>(table, out columnNames);
+            return ToJagged<double>(table, out columnNames);
         }
 
         /// <summary>
         ///   Converts a DataTable to a double[][] array.
         /// </summary>
         /// 
-        public static double[][] ToArray(this DataTable table, IFormatProvider provider, out string[] columnNames)
+        public static double[][] ToJagged(this DataTable table, IFormatProvider provider, out string[] columnNames)
         {
-            return ToArray<double>(table, provider, out columnNames);
+            return ToJagged<double>(table, provider, out columnNames);
         }
 
         /// <summary>
         ///   Converts a DataTable to a double[][] array.
         /// </summary>
         /// 
-        public static double[][] ToArray(this DataTable table, params string[] columnNames)
+        public static double[][] ToJagged(this DataTable table, params string[] columnNames)
         {
-            return ToArray<double>(table, columnNames);
+            return ToJagged<double>(table, columnNames);
         }
 
         /// <summary>
         ///   Converts a DataTable to a double[][] array.
         /// </summary>
         /// 
-        public static T[][] ToArray<T>(this DataTable table)
+        public static T[][] ToJagged<T>(this DataTable table)
         {
             String[] names;
-            return ToArray<T>(table, out names);
+            return ToJagged<T>(table, out names);
         }
 
         /// <summary>
         ///   Converts a DataTable to a double[][] array.
         /// </summary>
         /// 
-        public static T[][] ToArray<T>(this DataTable table, IFormatProvider provider)
+        public static T[][] ToJagged<T>(this DataTable table, IFormatProvider provider)
         {
             String[] names;
-            return ToArray<T>(table, provider, out names);
+            return ToJagged<T>(table, provider, out names);
         }
 
         /// <summary>
         ///   Converts a DataTable to a double[][] array.
         /// </summary>
         /// 
-        public static T[][] ToArray<T>(this DataTable table, out string[] columnNames)
+        public static T[][] ToJagged<T>(this DataTable table, out string[] columnNames)
         {
             T[][] m = new T[table.Rows.Count][];
             columnNames = new string[table.Columns.Count];
@@ -960,7 +932,7 @@ namespace Accord.Math
         ///   Converts a DataTable to a double[][] array.
         /// </summary>
         /// 
-        public static T[][] ToArray<T>(this DataTable table, IFormatProvider provider, out string[] columnNames)
+        public static T[][] ToJagged<T>(this DataTable table, IFormatProvider provider, out string[] columnNames)
         {
             T[][] m = new T[table.Rows.Count][];
             columnNames = new string[table.Columns.Count];
@@ -983,7 +955,7 @@ namespace Accord.Math
         ///   Converts a DataTable to a double[][] array.
         /// </summary>
         /// 
-        public static T[][] ToArray<T>(this DataTable table, params string[] columnNames)
+        public static T[][] ToJagged<T>(this DataTable table, params string[] columnNames)
         {
             T[][] m = new T[table.Rows.Count][];
 
@@ -999,6 +971,217 @@ namespace Accord.Math
             }
 
             return m;
+        }
+
+
+
+
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        public static double[] ToVector(this DataTable table)
+        {
+            return ToVector<double>(table);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[] array.
+        /// </summary>
+        /// 
+        public static double[] ToVector(this DataTable table, IFormatProvider provider)
+        {
+            return ToVector<double>(table, provider);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        public static double[] ToVector(this DataTable table, out string columnName)
+        {
+            return ToVector<double>(table, out columnName);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[] array.
+        /// </summary>
+        /// 
+        public static double[] ToVector(this DataTable table, IFormatProvider provider, out string columnName)
+        {
+            return ToVector<double>(table, provider, out columnName);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[] array.
+        /// </summary>
+        /// 
+        public static double[] ToVector(this DataTable table, string columnName)
+        {
+            return ToVector<double>(table, columnName);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[] array.
+        /// </summary>
+        /// 
+        public static T[] ToVector<T>(this DataTable table)
+        {
+            String name;
+            return ToVector<T>(table, out name);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[] array.
+        /// </summary>
+        /// 
+        public static T[] ToVector<T>(this DataTable table, IFormatProvider provider)
+        {
+            String name;
+            return ToVector<T>(table, provider, out name);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[] array.
+        /// </summary>
+        /// 
+        public static T[] ToVector<T>(this DataTable table, out string columnName)
+        {
+            if (table.Columns.Count > 1)
+                throw new ArgumentException("The given table has more than one column. Please specify which column should be converted.");
+
+            columnName = table.Columns[0].ColumnName;
+            return table.Columns[0].ToArray<T>();
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[] array.
+        /// </summary>
+        /// 
+        public static T[] ToVector<T>(this DataTable table, IFormatProvider provider, out string columnName)
+        {
+            if (table.Columns.Count > 1)
+                throw new ArgumentException("The given table has more than one column. Please specify which column should be converted.");
+
+            columnName = table.Columns[0].ColumnName;
+            return table.Columns[0].ToArray<T>(provider);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[] array.
+        /// </summary>
+        /// 
+        public static T[] ToVector<T>(this DataTable table, string columnName)
+        {
+            return table.Columns[columnName].ToArray<T>();
+        }
+
+
+
+
+
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        [Obsolete("Please use ToJagged() instead.")]
+        public static double[][] ToArray(this DataTable table)
+        {
+            return ToJagged<double>(table);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        [Obsolete("Please use ToJagged() instead.")]
+        public static double[][] ToArray(this DataTable table, IFormatProvider provider)
+        {
+            return ToJagged<double>(table, provider);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        [Obsolete("Please use ToJagged() instead.")]
+        public static double[][] ToArray(this DataTable table, out string[] columnNames)
+        {
+            return ToJagged<double>(table, out columnNames);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        [Obsolete("Please use ToJagged() instead.")]
+        public static double[][] ToArray(this DataTable table, IFormatProvider provider, out string[] columnNames)
+        {
+            return ToJagged<double>(table, provider, out columnNames);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        [Obsolete("Please use ToJagged() instead.")]
+        public static double[][] ToArray(this DataTable table, params string[] columnNames)
+        {
+            return ToJagged<double>(table, columnNames);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        [Obsolete("Please use ToJagged() instead.")]
+        public static T[][] ToArray<T>(this DataTable table)
+        {
+            String[] names;
+            return ToJagged<T>(table, out names);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        [Obsolete("Please use ToJagged() instead.")]
+        public static T[][] ToArray<T>(this DataTable table, IFormatProvider provider)
+        {
+            String[] names;
+            return ToJagged<T>(table, provider, out names);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        [Obsolete("Please use ToJagged() instead.")]
+        public static T[][] ToArray<T>(this DataTable table, out string[] columnNames)
+        {
+            return ToJagged<T>(table, out columnNames);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        [Obsolete("Please use ToJagged() instead.")]
+        public static T[][] ToArray<T>(this DataTable table, IFormatProvider provider, out string[] columnNames)
+        {
+            return ToJagged<T>(table, provider, out columnNames);
+        }
+
+        /// <summary>
+        ///   Converts a DataTable to a double[][] array.
+        /// </summary>
+        /// 
+        [Obsolete("Please use ToJagged() instead.")]
+        public static T[][] ToArray<T>(this DataTable table, params string[] columnNames)
+        {
+            return ToJagged<T>(table, columnNames);
         }
 
         /// <summary>
@@ -1122,13 +1305,14 @@ namespace Accord.Math
 
             return m;
         }
-
+#endif
         #endregion
 
 
 
 
         #region Obsolete
+#if !NETSTANDARD1_4
         /// <summary>
         ///   Converts a DataColumn to a int[] array.
         /// </summary>
@@ -1148,6 +1332,7 @@ namespace Accord.Math
         {
             return ToArray<int>(table, columnNames);
         }
+#endif
         #endregion
 
 

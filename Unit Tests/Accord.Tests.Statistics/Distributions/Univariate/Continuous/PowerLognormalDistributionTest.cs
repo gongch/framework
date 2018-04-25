@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,33 +24,16 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
     using Accord.Statistics;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using Accord.Statistics.Distributions.Multivariate;
     using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class PowerLognormalDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest1()
         {
             var plog = new PowerLognormalDistribution(power: 4.2, shape: 1.2);
@@ -76,25 +59,25 @@ namespace Accord.Tests.Statistics
 
             string str = plog.ToString(CultureInfo.InvariantCulture); // PLD(x; p = 4.2, σ = 1.2)
 
-            Assert.AreEqual(3.9591972920568446, chf);
-            Assert.AreEqual(0.98092157745191766, cdf);
-            Assert.AreEqual(0.046958580233533977, pdf);
-            Assert.AreEqual(-3.0584893374471496, lpdf);
-            Assert.AreEqual(10.337649063164642, hf);
-            Assert.AreEqual(0.019078422548082351, ccdf);
-            Assert.AreEqual(1.4000000000000001, icdf);
+            Assert.AreEqual(3.9591972920568446, chf, 1e-10);
+            Assert.AreEqual(0.98092157745191766, cdf, 1e-10);
+            Assert.AreEqual(0.046958580233533977, pdf, 1e-10);
+            Assert.AreEqual(-3.0584893374471496, lpdf, 1e-10);
+            Assert.AreEqual(10.337649063164642, hf, 1e-10);
+            Assert.AreEqual(0.019078422548082351, ccdf, 1e-10);
+            Assert.AreEqual(1.4000000000000001, icdf, 1e-10);
             Assert.AreEqual("PLD(x; p = 4.2, σ = 1.2)", str);
 
             var range1 = plog.GetRange(0.95);
             var range2 = plog.GetRange(0.99);
             var range3 = plog.GetRange(0.01);
 
-            Assert.AreEqual(0.066986543067356463, range1.Min);
-            Assert.AreEqual(1.0304177429659382, range1.Max);
-            Assert.AreEqual(0.033851065908457677, range2.Min);
-            Assert.AreEqual(1.672824432596103, range2.Max);
-            Assert.AreEqual(0.033851065908457677, range3.Min);
-            Assert.AreEqual(1.672824432596103, range3.Max);
+            Assert.AreEqual(0.066986543067356463, range1.Min, 1e-10);
+            Assert.AreEqual(1.0304177429659382, range1.Max, 1e-10);
+            Assert.AreEqual(0.033851065908457677, range2.Min, 1e-10);
+            Assert.AreEqual(1.672824432596103, range2.Max, 1e-10);
+            Assert.AreEqual(0.033851065908457677, range3.Min, 1e-10);
+            Assert.AreEqual(1.672824432596103, range3.Max, 1e-10);
         }
 
     }

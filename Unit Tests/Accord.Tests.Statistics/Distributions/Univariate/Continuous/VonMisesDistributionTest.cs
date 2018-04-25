@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,30 +23,14 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class VonMisesDistributionTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             var vonMises = new VonMisesDistribution(mean: 0.42, concentration: 1.2);
@@ -94,10 +78,16 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(3.2755782410688861, range2.Max, 1e-14);
             Assert.AreEqual(-2.4355782410688764, range3.Min, 1e-14);
             Assert.AreEqual(3.2755782410688861, range3.Max, 1e-14);
+
+            Assert.AreEqual(-2.7215926535897932, vonMises.Support.Min, 1e-10);
+            Assert.AreEqual(3.561592653589793, vonMises.Support.Max, 1e-10);
+
+            Assert.AreEqual(vonMises.InverseDistributionFunction(0), vonMises.Support.Min);
+            Assert.AreEqual(vonMises.InverseDistributionFunction(1), vonMises.Support.Max);
         }
 
 
-        [TestMethod()]
+        [Test]
         public void FitTest()
         {
             double[] angles = 
@@ -116,7 +106,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.2441525, distribution.Variance, 1e-3);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest()
         {
             VonMisesDistribution dist = new VonMisesDistribution(2.249981, 2.411822);
@@ -127,7 +117,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionTest()
         {
             VonMisesDistribution dist = new VonMisesDistribution(2.249981, 2.411822);
@@ -139,7 +129,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             VonMisesDistribution target = new VonMisesDistribution(1.621, 4.52);

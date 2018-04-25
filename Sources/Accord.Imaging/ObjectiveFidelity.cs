@@ -22,13 +22,10 @@
 
 namespace Accord.Imaging
 {
-    using AForge.Imaging;
     using System;
-    using System.Collections.Generic;
     using System.Drawing;
     using System.Drawing.Imaging;
-    using System.Linq;
-    using System.Text;
+    using Accord.Compat;
     using System.Threading.Tasks;
 
     /// <summary>
@@ -51,7 +48,7 @@ namespace Accord.Imaging
     /// Bitmap ori = ... // Original picture
     /// Bitmap recon = ... // Reconstructed picture
     /// 
-    /// // Create a new Wolf-Joulion threshold:
+    /// // Create a new Objective fidelity comparer:
     /// var of = new ObjectiveFidelity(ori, recon);
     /// 
     /// // Get the results
@@ -194,21 +191,16 @@ namespace Accord.Imaging
         /// <param name="a">The first image to be compared.</param>
         /// <param name="b">The second image that will be compared.</param>
         /// 
-        public unsafe void Compute(Bitmap a, Bitmap b)
+        public void Compute(Bitmap a, Bitmap b)
         {
             // lock source image
-            BitmapData dataOriginal = a.LockBits(
-                new Rectangle(0, 0, a.Width, a.Height),
-                ImageLockMode.ReadOnly, a.PixelFormat);
-
-            BitmapData dataReconstructed = b.LockBits(
-                new Rectangle(0, 0, b.Width, b.Height),
-                ImageLockMode.ReadOnly, b.PixelFormat);
+            BitmapData dataOriginal = a.LockBits(ImageLockMode.ReadOnly);
+            BitmapData dataReconstructed = b.LockBits(ImageLockMode.ReadOnly);
 
             Compute(new UnmanagedImage(dataOriginal), new UnmanagedImage(dataReconstructed));
 
             a.UnlockBits(dataOriginal);
-            a.UnlockBits(dataReconstructed);
+            b.UnlockBits(dataReconstructed);
         }
 
         /// <summary>
@@ -218,7 +210,7 @@ namespace Accord.Imaging
         /// <param name="a">The first image to be compared.</param>
         /// <param name="b">The second image that will be compared.</param>
         /// 
-        public unsafe void Compute(BitmapData a, BitmapData b)
+        public void Compute(BitmapData a, BitmapData b)
         {
             Compute(new UnmanagedImage(a), new UnmanagedImage(b));
         }
@@ -230,7 +222,7 @@ namespace Accord.Imaging
         /// <param name="a">The first image to be compared.</param>
         /// <param name="b">The second image that will be compared.</param>
         /// 
-        public unsafe void Compute(UnmanagedImage a, UnmanagedImage b)
+        public void Compute(UnmanagedImage a, UnmanagedImage b)
         {
             // check image format
             if (!(a.PixelFormat == PixelFormat.Format8bppIndexed ||
@@ -260,39 +252,41 @@ namespace Accord.Imaging
             int stride = a.Stride;
             int offset = stride - a.Width * pixelSize;
 
-            byte* ptrA = (byte*)a.ImageData.ToPointer();
-            byte* ptrB = (byte*)b.ImageData.ToPointer();
-
-
             // Total error
             long sum = 0;
             double sumOfSquares = 0;
             double imageSumOfSquares = 0;
 
-
-            // Compute all metrics above
-            for (int y = 0; y < height; y++)
+            unsafe
             {
-                for (int x = 0; x < width; x++, ptrA++, ptrB++)
+                byte* ptrA = (byte*)a.ImageData.ToPointer();
+                byte* ptrB = (byte*)b.ImageData.ToPointer();
+
+
+                // Compute all metrics above
+                for (int y = 0; y < height; y++)
                 {
-                    long pA = *ptrA;
-                    long pB = *ptrB;
+                    for (int x = 0; x < width; x++, ptrA++, ptrB++)
+                    {
+                        long pA = *ptrA;
+                        long pB = *ptrB;
 
-                    long error = pB - pA;
-                    long square = error * error;
+                        long error = pB - pA;
+                        long square = error * error;
 
-                    // total error 
-                    sum += error;
+                        // total error 
+                        sum += error;
 
-                    // root mean square
-                    sumOfSquares += square;
+                        // root mean square
+                        sumOfSquares += square;
 
-                    // signal to noise ratio
-                    imageSumOfSquares += pB * pB;
+                        // signal to noise ratio
+                        imageSumOfSquares += pB * pB;
+                    }
+
+                    ptrA += offset;
+                    ptrB += offset;
                 }
-
-                ptrA += offset;
-                ptrB += offset;
             }
 
 

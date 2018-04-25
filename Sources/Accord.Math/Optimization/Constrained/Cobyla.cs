@@ -5,7 +5,7 @@
 // Copyright © Anders Gustafsson, Cureos AB, 2012
 // http://www.cureos.com/
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -54,7 +54,13 @@ namespace Accord.Math.Optimization
         ///   Size of rounding error is becoming damaging, terminating prematurely.
         /// </summary>
         /// 
-        DivergingRoundingErrors
+        DivergingRoundingErrors,
+
+        /// <summary>
+        ///   The posed constraints cannot be fulfilled.
+        /// </summary>
+        /// 
+        NoPossibleSolution
     }
 
 
@@ -158,7 +164,7 @@ namespace Accord.Math.Optimization
 
         /// <summary>
         ///   Gets the number of iterations performed in the last
-        ///   call to <see cref="IOptimizationMethod.Minimize()"/>.
+        ///   call to <see cref="IOptimizationMethod{TInput, TOutput}.Minimize()"/>.
         /// </summary>
         /// 
         /// <value>
@@ -184,8 +190,8 @@ namespace Accord.Math.Optimization
 
         /// <summary>
         ///   Get the exit code returned in the last call to the
-        ///   <see cref="IOptimizationMethod.Maximize()"/> or 
-        ///   <see cref="IOptimizationMethod.Minimize()"/> methods.
+        ///   <see cref="IOptimizationMethod{TInput, TOutput}.Maximize()"/> or 
+        ///   <see cref="IOptimizationMethod{TInput, TOutput}.Minimize()"/> methods.
         /// </summary>
         /// 
         public CobylaStatus Status { get; private set; }
@@ -913,6 +919,14 @@ namespace Accord.Math.Optimization
         L_620:
 
             maxfun = iterations;
+
+            if (status == CobylaStatus.Success)
+            {
+                // Check if all constraints have been fulfilled
+                for (int i = 0; i < constraints.Length; i++)
+                    if (constraints[i].IsViolated(x))
+                        status = CobylaStatus.NoPossibleSolution;
+            }
 
             return status;
         }

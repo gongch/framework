@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
+#if !NETSTANDARD1_4
 namespace Accord.Statistics.Filters
 {
 
@@ -90,7 +91,8 @@ namespace Accord.Statistics.Filters
     /// <seealso cref="Codification"/>
     /// 
     [Serializable]
-    public class Normalization : BaseFilter<Normalization.Options>, IAutoConfigurableFilter
+    public class Normalization : BaseFilter<Normalization.Options, Normalization>,
+        IAutoConfigurableFilter
     {
 
         /// <summary>
@@ -262,7 +264,7 @@ namespace Accord.Statistics.Filters
             int rows = data.Length;
             int cols = data[0].Length;
 
-            double[] means = data.Mean();
+            double[] means = data.Mean(dimension: 0);
             double[] stdDev = data.StandardDeviation(means);
 
             for (int i = 0; i < cols; i++)
@@ -284,7 +286,7 @@ namespace Accord.Statistics.Filters
         /// </summary>
         ///
         [Serializable]
-        public class Options : ColumnOptionsBase
+        public class Options : ColumnOptionsBase<Normalization>
         {
             /// <summary>
             ///   Gets or sets the mean of the data contained in the column.
@@ -341,3 +343,4 @@ namespace Accord.Statistics.Filters
 
     }
 }
+#endif

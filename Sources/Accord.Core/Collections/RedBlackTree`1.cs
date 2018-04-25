@@ -5,7 +5,7 @@
 // Copyright © Steven G. Johnson, 2008
 // stevenj@alum.mit.edu
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -53,6 +53,7 @@ namespace Accord.Collections
 {
     using System;
     using System.Collections.Generic;
+    using Accord.Compat;
 
     /// <summary>
     ///   Red-black tree.
@@ -95,7 +96,8 @@ namespace Accord.Collections
     /// <typeparam name="T">The type of the value to be stored.</typeparam>
     /// 
     [Serializable]
-    public class RedBlackTree<T> : ICollection<RedBlackTreeNode<T>>, ICollection<T>
+    public class RedBlackTree<T> : BinaryTree<RedBlackTreeNode<T>>, 
+        ICollection<RedBlackTreeNode<T>>, ICollection<T>
     {
 
         IComparer<T> compare;
@@ -164,13 +166,6 @@ namespace Accord.Collections
         /// </summary>
         /// 
         public int Count { get { return count; } }
-
-        /// <summary>
-        ///   Gets the <see cref="RedBlackTreeNode{T}">
-        ///   root node</see> of this red-black tree.
-        /// </summary>
-        /// 
-        public RedBlackTreeNode<T> Root { get { return root; } }
 
         /// <summary>
         ///   Gets the <see cref="IComparer{T}"/> for this red black tree.
@@ -571,7 +566,6 @@ namespace Accord.Collections
             get { return false; }
         }
 
-
         /// <summary>
         ///   Returns an enumerator that iterates through this tree in-order.
         /// </summary>
@@ -581,7 +575,7 @@ namespace Accord.Collections
         ///   be used to traverse through this tree using in-order traversal.
         /// </returns>
         /// 
-        public IEnumerator<RedBlackTreeNode<T>> GetEnumerator()
+        public override IEnumerator<RedBlackTreeNode<T>> GetEnumerator()
         {
             RedBlackTreeNode<T> node = root;
             RedBlackTreeNode<T> lastNode = null;
@@ -625,13 +619,7 @@ namespace Accord.Collections
                 }
             }
         }
-
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            foreach (RedBlackTreeNode<T> node in this)
-                yield return node.Value;
-        }
-
+        
         /// <summary>
         ///   Returns an enumerator that iterates through this tree in-order.
         /// </summary>
@@ -644,6 +632,12 @@ namespace Accord.Collections
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            foreach (RedBlackTreeNode<T> node in this)
+                yield return node.Value;
         }
 
         /// <summary>

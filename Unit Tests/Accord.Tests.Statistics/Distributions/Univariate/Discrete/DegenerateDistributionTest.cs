@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,32 +23,16 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Math;
     using System.Globalization;
     using Accord.Statistics.Distributions;
 
-    [TestClass()]
+    [TestFixture]
     public class DegenerateDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             var dist = new DegenerateDistribution(value: 2);
@@ -68,7 +52,7 @@ namespace Accord.Tests.Statistics
             double lpdf = dist.LogProbabilityMassFunction(k: 2); // 0
             double ccdf = dist.ComplementaryDistributionFunction(k: 2); // 0.0
 
-            int icdf1 = dist.InverseDistributionFunction(p: 0.0); // 3
+            int icdf1 = dist.InverseDistributionFunction(p: 0.0); // 1
             int icdf2 = dist.InverseDistributionFunction(p: 0.7); // 3
             int icdf3 = dist.InverseDistributionFunction(p: 1.0); // 2
 
@@ -107,7 +91,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(3.0, range3.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest_DoubleIntConversionTest()
         {
             IUnivariateDistribution dist = new DegenerateDistribution(value: 2);
@@ -128,7 +112,7 @@ namespace Accord.Tests.Statistics
             double lpdf = dist.LogProbabilityFunction(x: 2); // 0
             double ccdf = dist.ComplementaryDistributionFunction(x: 2); // 0.0
 
-            double icdf1 = dist.InverseDistributionFunction(p: 0.0); // 3
+            double icdf1 = dist.InverseDistributionFunction(p: 0.0); // 1
             double icdf2 = dist.InverseDistributionFunction(p: 0.7); // 3
             double icdf3 = dist.InverseDistributionFunction(p: 1.0); // 2
 

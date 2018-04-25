@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -28,11 +28,15 @@ namespace Accord.Tests.Imaging
     using Accord.Imaging.Converters;
     using Accord.Math;
     using AForge;
-    using AForge.Imaging;
-    using AForge.Imaging.Filters;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Accord.Imaging;
+    using Accord.Imaging.Filters;
+    using NUnit.Framework;
+    using Accord.Tests.Imaging.Properties;
+#if NO_BITMAP
+    using Resources = Accord.Tests.Imaging.Properties.Resources_Standard;
+#endif
 
-    [TestClass()]
+    [TestFixture]
     public class ImageToMatrixTest
     {
 
@@ -52,7 +56,7 @@ namespace Accord.Tests.Imaging
 
 
 
-        [TestMethod()]
+        [Test]
         public void ImageToMatrixConstructorTest()
         {
             double min = -10;
@@ -64,7 +68,7 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(0, target.Channel);
         }
 
-        [TestMethod()]
+        [Test]
         public void ImageToMatrixConstructorTest1()
         {
             ImageToMatrix target = new ImageToMatrix();
@@ -74,7 +78,7 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(0, target.Channel);
         }
 
-        [TestMethod()]
+        [Test]
         public void ImageToMatrixConstructorTest2()
         {
             double min = -10;
@@ -87,11 +91,11 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(channel, target.Channel);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest()
         {
             ImageToMatrix target = new ImageToMatrix(min: 0, max: 255);
-            Bitmap image = Properties.Resources.image1;
+            Bitmap image = Accord.Imaging.Image.Clone(Resources.image1);
 
             new Invert().ApplyInPlace(image);
             new Threshold().ApplyInPlace(image);
@@ -125,11 +129,11 @@ namespace Accord.Tests.Imaging
                     Assert.AreEqual(outputExpected[i, j], output[i, j]);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest2()
         {
             // Load a test image
-            Bitmap sourceImage = Properties.Resources.image1;
+            Bitmap sourceImage = Accord.Imaging.Image.Clone(Resources.image1);
 
             // Make sure values are binary
             new Threshold().ApplyInPlace(sourceImage);
@@ -161,7 +165,7 @@ namespace Accord.Tests.Imaging
             Assert.IsTrue(equals);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest3()
         {
             double[] pixels = 
@@ -213,11 +217,11 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(16 * 16, matrix.Length);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest4()
         {
             ImageToMatrix target = new ImageToMatrix(min: 0, max: 255);
-            Bitmap image = Properties.Resources.image3;
+            Bitmap image = Accord.Imaging.Image.Clone(Resources.image3);
             Assert.AreEqual(PixelFormat.Format32bppArgb, image.PixelFormat);
 
             {

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,6 +24,9 @@ namespace Accord.Statistics.Kernels
 {
     using System;
     using AForge;
+    using Accord.Math.Distances;
+    using Accord.Math;
+    using Accord.Compat;
 
     /// <summary>
     ///   Laplacian Kernel.
@@ -31,7 +34,8 @@ namespace Accord.Statistics.Kernels
     /// 
     [Serializable]
     public sealed class Laplacian : KernelBase, IKernel, 
-        IRadialBasisKernel, IDistance, ICloneable, IEstimable, IReverseDistance
+        IRadialBasisKernel, IDistance, ICloneable, IEstimable, IReverseDistance,
+        IKernel<Sparse<double>>, IDistance<Sparse<double>>
     {
         private double sigma;
         private double gamma;
@@ -41,7 +45,8 @@ namespace Accord.Statistics.Kernels
         ///   Constructs a new Laplacian Kernel
         /// </summary>
         /// 
-        public Laplacian() : this(1) { }
+        public Laplacian() 
+            : this(1) { }
 
         /// <summary>
         ///   Constructs a new Laplacian Kernel
@@ -117,6 +122,28 @@ namespace Accord.Statistics.Kernels
         ///   Laplacian Kernel function.
         /// </summary>
         /// 
+        /// <param name="x">Vector <c>x</c> in input space.</param>
+        /// <param name="y">Vector <c>y</c> in input space.</param>
+        /// 
+        /// <returns>Dot product in feature (kernel) space.</returns>
+        /// 
+        public double Function(Sparse<double> x, Sparse<double> y)
+        {
+            // Optimization in case x and y are
+            // exactly the same object reference.
+
+            if (x == y)
+                return 1.0;
+
+            double norm = Accord.Math.Distance.Euclidean(x, y);
+
+            return Math.Exp(-gamma * norm);
+        }
+
+        /// <summary>
+        ///   Laplacian Kernel function.
+        /// </summary>
+        /// 
         /// <param name="z">Distance <c>z</c> in input space.</param>
         /// 
         /// <returns>Dot product in feature (kernel) space.</returns>
@@ -149,6 +176,26 @@ namespace Accord.Statistics.Kernels
             }
 
             norm = Math.Sqrt(norm);
+
+            return 2 - 2 * Math.Exp(-gamma * norm);
+        }
+
+        /// <summary>
+        ///   Computes the squared distance in input space
+        ///   between two points given in feature space.
+        /// </summary>
+        /// 
+        /// <param name="x">Vector <c>x</c> in feature (kernel) space.</param>
+        /// <param name="y">Vector <c>y</c> in feature (kernel) space.</param>
+        /// 
+        /// <returns>Squared distance between <c>x</c> and <c>y</c> in input space.</returns>
+        /// 
+        public double Distance(Sparse<double> x, Sparse<double> y)
+        {
+            if (x == y)
+                return 0.0;
+
+            double norm = Accord.Math.Distance.Euclidean(x, y);
 
             return 2 - 2 * Math.Exp(-gamma * norm);
         }
@@ -241,7 +288,7 @@ namespace Accord.Statistics.Kernels
 
             double q1 = distances[(int)Math.Ceiling(0.15 * distances.Length)];
             double q9 = distances[(int)Math.Ceiling(0.85 * distances.Length)];
-            double qm = Accord.Statistics.Tools.Median(distances, alreadySorted: true);
+            double qm = Measures.Median(distances, alreadySorted: true);
 
             range = new DoubleRange(q1, q9);
 
@@ -263,7 +310,7 @@ namespace Accord.Statistics.Kernels
 
 
 
-        void IEstimable.Estimate(double[][] inputs)
+        void IEstimable<double[]>.Estimate(double[][] inputs)
         {
             var l = Estimate(inputs);
             this.Sigma = l.Sigma;

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,31 +23,15 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Math;
     using Accord.Statistics.Testing;
 
-    [TestClass()]
+    [TestFixture]
     public class ChiSquareDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             var chisq = new ChiSquareDistribution(degreesOfFreedom: 7);
@@ -70,31 +54,31 @@ namespace Accord.Tests.Statistics
             string str = chisq.ToString(); // "χ²(x; df = 7)
 
             Assert.AreEqual(7, mean);
-            Assert.AreEqual(6.345811195595612, median, 1e-6);
+            Assert.AreEqual(6.345811195595612, median, 1e-10);
             Assert.AreEqual(14, var);
             Assert.AreEqual(5.0, mode);
-            Assert.AreEqual(0.67609276602233315, chf);
-            Assert.AreEqual(0.49139966433823956, cdf);
-            Assert.AreEqual(0.11388708001184455, pdf);
-            Assert.AreEqual(-2.1725478476948092, lpdf);
-            Assert.AreEqual(0.22392254197721179, hf);
-            Assert.AreEqual(0.50860033566176044, ccdf);
-            Assert.AreEqual(6.2700000000852318, icdf, 1e-6);
+            Assert.AreEqual(0.67609276602233315, chf, 1e-10);
+            Assert.AreEqual(0.49139966433823956, cdf, 1e-10);
+            Assert.AreEqual(0.11388708001184455, pdf, 1e-10);
+            Assert.AreEqual(-2.1725478476948092, lpdf, 1e-10);
+            Assert.AreEqual(0.22392254197721179, hf, 1e-10);
+            Assert.AreEqual(0.50860033566176044, ccdf, 1e-10);
+            Assert.AreEqual(6.2700000000852318, icdf, 1e-10);
             Assert.AreEqual("χ²(x; df = 7)", str);
 
             var range1 = chisq.GetRange(0.95);
             var range2 = chisq.GetRange(0.99);
             var range3 = chisq.GetRange(0.01);
 
-            Assert.AreEqual(2.1673499092980579, range1.Min);
-            Assert.AreEqual(14.067140449340167, range1.Max);
-            Assert.AreEqual(1.2390423055679316, range2.Min);
-            Assert.AreEqual(18.475306906582361, range2.Max);
-            Assert.AreEqual(1.2390423055679316, range3.Min);
-            Assert.AreEqual(18.475306906582361, range3.Max);
+            Assert.AreEqual(2.1673499092980579, range1.Min, 1e-10);
+            Assert.AreEqual(14.067140449340167, range1.Max, 1e-10);
+            Assert.AreEqual(1.2390423055679316, range2.Min, 1e-10);
+            Assert.AreEqual(18.475306906582361, range2.Max, 1e-10);
+            Assert.AreEqual(1.2390423055679316, range3.Min, 1e-10);
+            Assert.AreEqual(18.475306906582361, range3.Max, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             var target = new ChiSquareDistribution(degreesOfFreedom: 4);
@@ -102,7 +86,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.Median, target.InverseDistributionFunction(0.5));
         }
 
-        [TestMethod()]
+        [Test]
         public void InverseCumulativeFunctionTest()
         {
             double a;
@@ -119,7 +103,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest()
         {
             int degreesOfFreedom;
@@ -148,7 +132,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-4);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionTest()
         {
             int degreesOfFreedom;
@@ -177,7 +161,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest()
         {
             int degreesOfFreedom;
@@ -200,7 +184,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-4);
         }
 
-        [TestMethod()]
+        [Test]
         public void InverseTest()
         {
             double expected = 1.8307038053275149991e+01;
@@ -208,7 +192,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-14);
         }
 
-        [TestMethod()]
+        [Test]
         public void InverseTest2()
         {
             double[] p = 
@@ -235,7 +219,7 @@ namespace Accord.Tests.Statistics
             for (int i = 0; i < actual.Length; i++)
                 actual[i] = ChiSquareDistribution.Inverse(p[i], 1);
 
-            Assert.IsTrue(expected.IsEqual(actual, 1e-14));
+            Assert.IsTrue(expected.IsEqual(actual, atol: 1e-14));
         }
 
 

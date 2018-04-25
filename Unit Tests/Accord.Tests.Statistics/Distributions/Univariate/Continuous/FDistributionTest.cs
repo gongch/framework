@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,30 +23,14 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class FDistributionTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             var F = new FDistribution(degrees1: 8, degrees2: 5);
@@ -67,6 +51,12 @@ namespace Accord.Tests.Statistics
             double chf = F.CumulativeHazardFunction(x: 0.27); // 0.050728620222091653
 
             string str = F.ToString(CultureInfo.InvariantCulture); // F(x; df1 = 8, df2 = 5)
+
+            Assert.AreEqual(0, F.Support.Min);
+            Assert.AreEqual(double.PositiveInfinity, F.Support.Max);
+
+            Assert.AreEqual(F.InverseDistributionFunction(0), F.Support.Min);
+            Assert.AreEqual(F.InverseDistributionFunction(1), F.Support.Max);
 
             Assert.AreEqual(1.6666666666666667, mean);
             Assert.AreEqual(1.0545096252132447, median);
@@ -93,7 +83,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(10.289311046135927, range3.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void MeanVarianceTest()
         {
             int[] d = { 1, 2, 3, 4, 5 };
@@ -114,7 +104,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest()
         {
             FDistribution f = new FDistribution(2, 3);
@@ -128,7 +118,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-6);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             FDistribution target = new FDistribution(2, 3);
@@ -136,7 +126,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.Median, target.InverseDistributionFunction(0.5));
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest2()
         {
             double actual;
@@ -162,7 +152,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ComplementaryDistributionFunctionTest()
         {
             double actual;
@@ -188,7 +178,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest3()
         {
 
@@ -211,7 +201,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDistributionFunctionTest()
         {
             FDistribution f = new FDistribution(2, 3);
@@ -222,7 +212,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-6);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDistributionFunctionTest()
         {
             FDistribution f = new FDistribution(2, 3);
@@ -235,7 +225,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDistributionFunctionTest2()
         {
             FDistribution f = new FDistribution(2, 2);
@@ -254,7 +244,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(new FDistribution(10, 10).ProbabilityDensityFunction(3), 0.0487, 1e-4);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDistributionFunctionTest2()
         {
             FDistribution f = new FDistribution(2, 2);
@@ -280,7 +270,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void InverseDistributionFunctionTest()
         {
 

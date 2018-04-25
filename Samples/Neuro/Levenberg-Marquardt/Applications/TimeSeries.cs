@@ -38,13 +38,14 @@ using System.Threading;
 using System.Windows.Forms;
 using Accord.Neuro.Learning;
 using AForge;
-using AForge.Controls;
-using AForge.Neuro;
+using Accord.Controls;
+using Accord.Neuro;
 using System.Globalization;
 using Accord.IO;
 using Accord.Math;
+using Accord;
 
-namespace Samples.LM
+namespace SampleApp
 {
     public class TimeSeries : System.Windows.Forms.Form
     {
@@ -54,7 +55,7 @@ namespace Samples.LM
         private System.Windows.Forms.ColumnHeader estimatedYColumnHeader;
         private System.Windows.Forms.Button loadDataButton;
         private System.Windows.Forms.GroupBox groupBox2;
-        private AForge.Controls.Chart chart;
+        private Accord.Controls.Chart chart;
         private System.Windows.Forms.OpenFileDialog openFileDialog;
         private System.Windows.Forms.Button stopButton;
         private System.Windows.Forms.Button startButton;
@@ -151,7 +152,7 @@ namespace Samples.LM
             this.estimatedYColumnHeader = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.loadDataButton = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.chart = new AForge.Controls.Chart();
+            this.chart = new Accord.Controls.Chart();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.stopButton = new System.Windows.Forms.Button();
             this.startButton = new System.Windows.Forms.Button();
@@ -241,8 +242,6 @@ namespace Samples.LM
             // 
             this.chart.Location = new System.Drawing.Point(16, 29);
             this.chart.Name = "chart";
-            this.chart.RangeX = ((AForge.Range)(resources.GetObject("chart.RangeX")));
-            this.chart.RangeY = ((AForge.Range)(resources.GetObject("chart.RangeY")));
             this.chart.Size = new System.Drawing.Size(448, 512);
             this.chart.TabIndex = 0;
             // 
@@ -481,6 +480,7 @@ namespace Samples.LM
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "TimeSeries";
             this.Text = "Time Series Prediction using Multi-Layer Neural Network (Levenberg-Marquardt)";
@@ -495,15 +495,6 @@ namespace Samples.LM
 
         }
         #endregion
-
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        [STAThread]
-        static void Main()
-        {
-            Application.Run(new MainForm());
-        }
 
         // Delegates to enable async calls for setting controls properties
         private delegate void SetTextCallback(System.Windows.Forms.Control control, string text);
@@ -583,7 +574,7 @@ namespace Samples.LM
                     return;
                 }
 
-                dataToShow = Matrix.Stack(Matrix.Indices(0, data.Length).ToDouble(), data).Transpose();
+                dataToShow = Matrix.Stack(Vector.Range(0, data.Length).ToDouble(), data).Transpose();
 
                 // update list and chart
                 UpdateDataListView();

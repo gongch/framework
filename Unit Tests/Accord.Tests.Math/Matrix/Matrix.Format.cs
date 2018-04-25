@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,30 +23,17 @@
 namespace Accord.Tests.Math
 {
     using Accord.Math;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Collections.Generic;
     using System;
+    using Accord;
+    using System.IO;
 
-    [TestClass()]
+    [TestFixture]
     public class MatrixFormatTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-        [TestMethod()]
+        [Test]
         public void ParseTest1()
         {
             // Parsing a matrix from Octave format
@@ -57,7 +44,7 @@ namespace Accord.Tests.Math
             double[,] I = Matrix.Identity(size: 2);
 
             // Matrix multiplication
-            double[,] b = a.Multiply(I);
+            double[,] b = Matrix.Multiply(a, I);
 
             Assert.AreEqual(1, b[0, 0]);
             Assert.AreEqual(2, b[0, 1]);
@@ -66,7 +53,7 @@ namespace Accord.Tests.Math
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ParseTest()
         {
             string str;
@@ -110,7 +97,7 @@ namespace Accord.Tests.Math
             Assert.IsTrue(actual.IsEqual(expected));
         }
 
-        [TestMethod()]
+        [Test]
         public void ParseJaggedTest()
         {
             string str;
@@ -154,7 +141,7 @@ namespace Accord.Tests.Math
             Assert.IsTrue(actual.IsEqual(expected));
         }
 
-        [TestMethod()]
+        [Test]
         public void ToStringTest()
         {
             double[,] matrix = 
@@ -170,28 +157,28 @@ namespace Accord.Tests.Math
             Assert.AreEqual(expected, actual);
 
 
-            expected = "1 2 \r\n3 4";
+            expected = String.Format("1 2 {0}3 4", Environment.NewLine);
             actual = Matrix.ToString(matrix, DefaultMatrixFormatProvider.InvariantCulture);
             Assert.AreEqual(expected, actual);
 
 
-            expected = "new double[][] {\r\n" +
-                       "    new double[] { 1, 2 },\r\n" +
-                       "    new double[] { 3, 4 } \r\n" +
-                       "};";
+            expected = String.Format("new double[][] {{{0}" +
+                       "    new double[] {{ 1, 2 }},{0}" +
+                       "    new double[] {{ 3, 4 }} {0}" +
+                       "}};", Environment.NewLine);
             actual = Matrix.ToString(matrix, CSharpJaggedMatrixFormatProvider.InvariantCulture);
             Assert.AreEqual(expected, actual);
 
 
-            expected = "new double[,] {\r\n" +
-                       "    { 1, 2 },\r\n" +
-                       "    { 3, 4 } \r\n" +
-                       "};";
+            expected = String.Format("new double[,] {{{0}" +
+                       "    {{ 1, 2 }},{0}" +
+                       "    {{ 3, 4 }} {0}" +
+                       "}};", Environment.NewLine);
             actual = Matrix.ToString(matrix, CSharpMatrixFormatProvider.InvariantCulture);
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void ToStringTest2()
         {
             double[][] matrix = 
@@ -207,28 +194,28 @@ namespace Accord.Tests.Math
             Assert.AreEqual(expected, actual);
 
 
-            expected = "1 2 \r\n3 4";
+            expected = "1 2 " + Environment.NewLine + "3 4";
             actual = Matrix.ToString(matrix, DefaultMatrixFormatProvider.InvariantCulture);
             Assert.AreEqual(expected, actual);
 
 
-            expected = "new double[][] {\r\n" +
-                       "    new double[] { 1, 2 },\r\n" +
-                       "    new double[] { 3, 4 } \r\n" +
+            expected = "new double[][] {" + Environment.NewLine +
+                       "    new double[] { 1, 2 }," + Environment.NewLine +
+                       "    new double[] { 3, 4 } " + Environment.NewLine +
                        "};";
             actual = Matrix.ToString(matrix, CSharpJaggedMatrixFormatProvider.InvariantCulture);
             Assert.AreEqual(expected, actual);
 
 
-            expected = "new double[,] {\r\n" +
-                       "    { 1, 2 },\r\n" +
-                       "    { 3, 4 } \r\n" +
+            expected = "new double[,] {" + Environment.NewLine +
+                       "    { 1, 2 }," + Environment.NewLine +
+                       "    { 3, 4 } " + Environment.NewLine +
                        "};";
             actual = Matrix.ToString(matrix, CSharpMatrixFormatProvider.InvariantCulture);
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void StringFormat()
         {
             double[,] matrix = 
@@ -281,7 +268,7 @@ namespace Accord.Tests.Math
 
         }
 
-        [TestMethod()]
+        [Test]
         public void StringFormat2()
         {
             double[][] matrix = 
@@ -311,7 +298,7 @@ namespace Accord.Tests.Math
 
         }
 
-        [TestMethod()]
+        [Test]
         public void ToStringTest3()
         {
             double[] x = { 1, 2, 3 };
@@ -329,6 +316,19 @@ namespace Accord.Tests.Math
             str = x.ToString(CSharpArrayFormatProvider.CurrentCulture);
 
             Assert.AreEqual("new double[] { 1, 2, 3 };", str);
+        }
+
+        [Test]
+        public void vector_parse_test()
+        {
+            double[][] ex = new Accord.IO.CsvReader(new StringReader(Properties.Resources.data16), hasHeaders: false).ToJagged<double>();
+            int[] ey = new Accord.IO.CsvReader(new StringReader(Properties.Resources.labels16), hasHeaders: false).ToJagged<int>().GetColumn(0);
+
+            double[][] ax = Jagged.Parse(Properties.Resources.data16);
+            double[] ay = Vector.Parse(Properties.Resources.labels16);
+
+            Assert.IsTrue(ex.IsEqual(ax));
+            Assert.IsTrue(ey.IsEqual(ay));
         }
     }
 }

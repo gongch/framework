@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,35 +22,18 @@
 
 namespace Accord.Tests.Statistics
 {
-    using System;
-    using Accord.Statistics.Distributions.Fitting;
-    using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
     using Accord.Math;
     using Accord.Statistics;
+    using Accord.Statistics.Distributions.Fitting;
+    using Accord.Statistics.Distributions.Univariate;
+    using NUnit.Framework;
+    using System;
 
-    [TestClass()]
+    [TestFixture]
     public class EmpiricalDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void EmpiricalDistributionConstructorTest1()
         {
             double[] samples = { 5, 5, 1, 4, 1, 2, 2, 3, 3, 3, 4, 3, 3, 3, 4, 3, 2, 3 };
@@ -65,7 +48,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.Variance, target.Variance);
         }
 
-        [TestMethod()]
+        [Test]
         public void EmpiricalDistributionConstructorTest2()
         {
             double[] samples = { 5, 5, 1, 4, 1, 2, 2, 3, 3, 3, 4, 3, 3, 3, 4, 3, 2, 3 };
@@ -74,7 +57,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.67595864392399474, target.Smoothing);
         }
 
-        [TestMethod()]
+        [Test]
         public void EmpiricalDistributionConstructorTest3()
         {
             double[] samples = { 5, 5, 1, 4, 1, 2, 2, 3, 3, 3, 4, 3, 3, 3, 4, 3, 2, 3 };
@@ -123,7 +106,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(5.0000004605903117, range3.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void WeightedEmpiricalDistributionConstructorTest()
         {
             double[] original = { 5, 5, 1, 4, 1, 2, 2, 3, 3, 3, 4, 3, 3, 3, 4, 3, 2, 3 };
@@ -184,7 +167,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void WeightedEmpiricalDistributionConstructorTest2()
         {
             double[] original = { 5, 5, 1, 4, 1, 2, 2, 3, 3, 3, 4, 3, 3, 3, 4, 3, 2, 3 };
@@ -247,7 +230,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void WeightedEmpiricalDistributionConstructorTest3()
         {
             double[] weights = { 2, 1, 1, 1, 2, 3, 1, 3, 1, 1, 1, 1 };
@@ -260,7 +243,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1.2377597081667415, target.Smoothing);
         }
 
-        [TestMethod()]
+        [Test]
         public void EmpiricalDistributionConstructorTest4()
         {
             double[] samples = { 5, 5, 1, 4, 1, 2, 2, 3, 3, 3, 4, 3, 3, 3, 4, 3, 2, 3 };
@@ -269,7 +252,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1.9144923416414432, target.Smoothing);
         }
 
-        [TestMethod()]
+        [Test]
         public void EmpiricalDistributionConstructorTest5()
         {
             double[] samples = { 5, 5, 1, 4, 1, 2, 2, 3, 3, 3, 4, 3, 3, 3, 4, 3, 2, 3 };
@@ -305,7 +288,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual("Fn(x; S)", str);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             double[] samples = { 1, 5, 2, 5, 1, 7, 1, 9 };
@@ -314,7 +297,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.Median, target.InverseDistributionFunction(0.5));
         }
 
-        [TestMethod()]
+        [Test]
         public void CloneTest()
         {
             double[] samples = { 4, 2 };
@@ -333,7 +316,7 @@ namespace Accord.Tests.Statistics
                 Assert.AreEqual(target.Samples[i], clone.Samples[i]);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest()
         {
             double[] samples = { 1, 5, 2, 5, 1, 7, 1, 9 };
@@ -347,7 +330,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1.000, target.DistributionFunction(9));
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest1()
         {
             EmpiricalDistribution target = new EmpiricalDistribution(new double[] { 0 });
@@ -362,7 +345,7 @@ namespace Accord.Tests.Statistics
             CollectionAssert.AreEqual(observations, target.Samples);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest2()
         {
             EmpiricalDistribution target = new EmpiricalDistribution(new double[] { 0 });
@@ -377,7 +360,7 @@ namespace Accord.Tests.Statistics
             CollectionAssert.AreEqual(observations, target.Samples);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest()
         {
             double[] samples = { 1, 5, 2, 5, 1, 7, 1, 9, 4, 2 };
@@ -406,7 +389,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.049293898826709738, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionTest()
         {
             double[] samples = { 1, 5, 2, 5, 1, 7, 1, 9, 4, 2 };
@@ -445,7 +428,7 @@ namespace Accord.Tests.Statistics
 
         private static double FaultySmoothingRule(double[] observations)
         {
-            double sigma = Accord.Statistics.Tools.StandardDeviation(observations);
+            double sigma = Measures.StandardDeviation(observations);
             return sigma * Math.Pow(4.0 / (3.0 * observations.Length), -1 / 5.0);
         }
 

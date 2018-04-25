@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -20,26 +20,27 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-namespace Accord.Tests.Math
+namespace Accord.Tests.MachineLearning
 {
+    using Accord.Collections;
     using Accord.MachineLearning;
-    using Accord.MachineLearning.Structures;
     using Accord.Math;
     using Accord.Math.Comparers;
+    using Accord.Math.Distances;
     using Accord.Statistics.Distributions.Multivariate;
     using Accord.Statistics.Distributions.Univariate;
     using Accord.Tests.MachineLearning.Structures;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using System.Collections.Generic;
     using System.Linq;
 
-    [TestClass()]
+    [TestFixture]
     public class KDTreeTest
     {
 
 
-        [TestMethod()]
+        [Test]
         public void FromDataTest()
         {
             // This is the same example found in Wikipedia page on
@@ -78,14 +79,14 @@ namespace Accord.Tests.Math
 
             // Locate all nearby points within an Euclidean distance of 1.5
             // (answer should be a single point located at position (5,4))
-            List<KDTreeNodeDistance<int>> result = tree.Nearest(query, radius: 1.5);
+            var result = tree.Nearest(query, radius: 1.5);
 
             // We can also use alternate distance functions
-            tree.Distance = Accord.Math.Distance.Manhattan;
+            tree.Distance = new Manhattan();
 
             // And also query for a fixed number of neighbor points
             // (answer should be the points at (5,4), (7,2), (2,3))
-            KDTreeNodeCollection<int> neighbors = tree.Nearest(query, neighbors: 3);
+            var neighbors = tree.Nearest(query, neighbors: 3);
 
 
             Assert.IsTrue(node.IsLeaf);
@@ -128,7 +129,7 @@ namespace Accord.Tests.Math
         }
 
 
-        [TestMethod()]
+        [Test]
         public void FromDataTest2()
         {
             double[][] points =
@@ -171,7 +172,7 @@ namespace Accord.Tests.Math
         }
 
 
-        [TestMethod()]
+        [Test]
         public void NearestTest()
         {
             double[][] points =
@@ -185,7 +186,7 @@ namespace Accord.Tests.Math
 
             var tree = KDTree.FromData<int>(points);
 
-            tree.Distance = Accord.Math.Distance.Manhattan;
+            tree.Distance = new Manhattan();
 
 
             for (int i = 0; i < points.Length; i++)
@@ -216,7 +217,7 @@ namespace Accord.Tests.Math
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void NearestTest3()
         {
             double[][] points =
@@ -230,7 +231,7 @@ namespace Accord.Tests.Math
 
             var tree = KDTree.FromData<int>(points);
 
-            tree.Distance = Accord.Math.Distance.Manhattan;
+            tree.Distance = new Manhattan();
 
 
             for (int i = 0; i < points.Length; i++)
@@ -242,7 +243,7 @@ namespace Accord.Tests.Math
                 Assert.AreEqual(points[i][1], retrieval[0].Node.Position[1]);
             }
 
-            KDTreeNodeCollection<int> result = tree.Nearest(new double[] { 3, 3 }, 5);
+            var result = tree.Nearest(new double[] { 3, 3 }, 5);
 
             double[][] expected =
             {
@@ -261,7 +262,7 @@ namespace Accord.Tests.Math
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void NearestTest2()
         {
             double[][] points =
@@ -272,7 +273,7 @@ namespace Accord.Tests.Math
             };
 
             var tree = KDTree.FromData<int>(points);
-            tree.Distance = Accord.Math.Distance.Manhattan;
+            tree.Distance = new Manhattan();
 
             Assert.AreEqual(3, tree.Root.Position[0]);
             Assert.AreEqual(3, tree.Root.Position[1]);
@@ -327,7 +328,7 @@ namespace Accord.Tests.Math
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void TraverseTest0()
         {
             double[][] points =
@@ -355,7 +356,7 @@ namespace Accord.Tests.Math
             };
 
             int i = 0;
-            foreach (var node in tree.Traverse(KDTreeTraversal.InOrder))
+            foreach (var node in tree.Traverse(TreeTraversal.InOrder))
             {
                 Assert.AreEqual(node.Position[0], inOrder[i][0]);
                 Assert.AreEqual(node.Position[1], inOrder[i][1]);
@@ -363,7 +364,7 @@ namespace Accord.Tests.Math
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void TraverseTest1()
         {
             double[][] points =
@@ -421,14 +422,15 @@ namespace Accord.Tests.Math
             };
 
 
-            AreEqual(tree, breadth, KDTreeTraversal.BreadthFirst);
-            AreEqual(tree, preOrder, KDTreeTraversal.PreOrder);
-            AreEqual(tree, inOrder, KDTreeTraversal.InOrder);
-            AreEqual(tree, postOrder, KDTreeTraversal.PostOrder);
+            AreEqual(tree, breadth, TreeTraversal.BreadthFirst);
+            AreEqual(tree, preOrder, TreeTraversal.PreOrder);
+            AreEqual(tree, inOrder, TreeTraversal.InOrder);
+            AreEqual(tree, postOrder, TreeTraversal.PostOrder);
         }
 
 
-        private static void AreEqual(KDTree<int> tree, double[][] expected, Func<KDTree<int>, IEnumerator<KDTreeNode<int>>> method)
+        private static void AreEqual(KDTree<int> tree, double[][] expected, 
+            Func<BinaryTree<KDTreeNode<int>>, IEnumerator<KDTreeNode<int>>> method)
         {
             double[][] actual = tree.Traverse(method.Invoke).Select(p => p.Position).ToArray();
 

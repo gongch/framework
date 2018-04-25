@@ -1,11 +1,11 @@
-// Accord Math Library
+ï»¿// Accord Math Library
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright Â© CÃ©sar Souza, 2009-2017
 // cesarsouza at gmail.com
 //
-// Original work copyright © Lutz Roeder, 2000
+// Original work copyright Â© Lutz Roeder, 2000
 //  Adapted from Mapack for .NET, September 2000
 //  Adapted from Mapack for COM and Jama routines
 //  http://www.aisto.com/roeder/dotnet
@@ -29,10 +29,12 @@ namespace Accord.Math.Decompositions
 {
     using System;
     using Accord.Math;
+	using Accord.Compat;
 
     /// <summary>
-    ///   LU decomposition of a rectangular matrix.
+    ///   LU decomposition of a multidimensional rectangular matrix.
     /// </summary>
+	///
     /// <remarks>
     ///   <para>
     ///     For an m-by-n matrix <c>A</c> with <c>m >= n</c>, the LU decomposition is an m-by-n
@@ -44,9 +46,23 @@ namespace Accord.Math.Decompositions
     ///     singular, so the constructor will never fail.  The primary use of the
     ///     LU decomposition is in the solution of square systems of simultaneous
     ///     linear equations. This will fail if <see cref="Nonsingular"/> returns
-    ///     <see langword="false"/>.
-    ///   </para>
+    ///     <see langword="false"/>.</para>
+	///   <para>
+	///     If you need to compute a LU decomposition for matrices with data types other than
+	///     double, see <see cref="LuDecompositionF"/>, <see cref="LuDecompositionD"/>. If you
+	///     need to compute a LU decomposition for a jagged matrix, see <see cref="JaggedLuDecomposition"/>,
+	///     <see cref="JaggedLuDecompositionF"/>, and <see cref="JaggedLuDecompositionD"/>.</para>
     /// </remarks>
+	///
+    /// <example>
+    ///   <code source="Unit Tests\Accord.Tests.Math\Decompositions\LuDecompositionTest.cs" region="doc_ctor" />
+	/// </example>
+	///
+	/// <seealso cref="CholeskyDecomposition"/>
+	/// <seealso cref="EigenvalueDecomposition"/>
+    /// <seealso cref="SingularValueDecomposition"/>
+    /// <seealso cref="JaggedEigenvalueDecomposition"/>
+    /// <seealso cref="JaggedSingularValueDecomposition"/>
     /// 
     public sealed class LuDecomposition : ICloneable, ISolverMatrixDecomposition<Double>
     {
@@ -395,7 +411,7 @@ namespace Accord.Math.Decompositions
 
             // Copy right hand side with pivoting
             int count = value.GetLength(1);
-            Double[,] X = value.Submatrix(pivotVector, null);
+            Double[,] X = value.Get(pivotVector, null);
 
 
             // Solve L*Y = B(piv,:)
@@ -437,7 +453,7 @@ namespace Accord.Math.Decompositions
 
 
             // Copy right hand side with pivoting
-            var X = value.Submatrix(null, pivotVector);
+            var X = value.Get(null, pivotVector);
 
             int count = X.GetLength(1);
 
@@ -506,6 +522,28 @@ namespace Accord.Math.Decompositions
             return X;
         }
 
+        /// <summary>
+        ///   Reverses the decomposition, reconstructing the original matrix <c>X</c>.
+        /// </summary>
+        /// 
+        public Double[,] Reverse()
+        {
+            return LowerTriangularFactor.Dot(UpperTriangularFactor)
+                .Get(PivotPermutationVector.ArgSort(), null);
+        }
+
+        /// <summary>
+        ///   Computes <c>(Xt * X)^1</c> (the inverse of the covariance matrix). This
+        ///   matrix can be used to determine standard errors for the coefficients when
+        ///   solving a linear set of equations through any of the <see cref="Solve(Double[,])"/>
+        ///   methods.
+        /// </summary>
+        /// 
+        public Double[,] GetInformationMatrix()
+        {
+            var X = Reverse();
+            return X.TransposeAndDot(X).Inverse();
+        }
 
 
         #region ICloneable Members

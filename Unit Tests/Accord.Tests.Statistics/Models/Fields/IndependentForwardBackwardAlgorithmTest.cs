@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 namespace Accord.Tests.Statistics.Models.Fields
 {
     using Accord.Statistics.Models.Fields;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Statistics.Models.Fields.Functions;
     using Accord.Statistics.Models.Markov;
     using Accord.Math;
@@ -31,28 +31,12 @@ namespace Accord.Tests.Statistics.Models.Fields
     using Accord.Statistics.Distributions.Multivariate;
     using Accord.Statistics.Models.Markov.Topology;
 
-    [TestClass()]
+    [TestFixture]
     public class IndependentForwardBackwardAlgorithmTest
     {
 
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ForwardTest()
         {
             double[][][] observations;
@@ -93,7 +77,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void LogForwardTest()
         {
             double[][][] observations;
@@ -121,7 +105,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void LogBackwardTest()
         {
             double[][][] observations;
@@ -151,7 +135,7 @@ namespace Accord.Tests.Statistics.Models.Fields
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ForwardTest2()
         {
             double[][][] observations;
@@ -196,7 +180,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void LogForwardTest2()
         {
             double[][][] observations;
@@ -229,7 +213,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void LogBackwardTest2()
         {
             double[][][] observations;
@@ -262,7 +246,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void LogForwardGesturesTest()
         {
             int[] labels;
@@ -296,7 +280,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void LogForwardGesturesPriorsTest()
         {
             int[] labels;
@@ -333,7 +317,7 @@ namespace Accord.Tests.Statistics.Models.Fields
 
 
 #pragma warning disable 0618
-        [TestMethod()]
+        [Test]
         public void LogForwardGesturesDeoptimizedTest()
         {
             int[] labels;
@@ -369,7 +353,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void LogForwardGesturesPriorsDeoptimizedTest()
         {
             int[] labels;

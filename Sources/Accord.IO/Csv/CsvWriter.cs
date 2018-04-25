@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,7 +23,9 @@
 namespace Accord.IO
 {
     using System;
+#if !NETSTANDARD1_4
     using System.Data;
+#endif
     using System.Globalization;
     using System.IO;
     using System.Text;
@@ -31,6 +33,25 @@ namespace Accord.IO
     /// <summary>
     ///   Writer for CSV data.
     /// </summary>
+    /// 
+    /// <example>
+    /// <para>
+    ///   The following example shows how to use <see cref="CsvWriter"/> to write a matrix in .csv format.</para>
+    ///   <code source="Unit Tests\Accord.Tests.IO\CsvWriterTest.cs" region="doc_matrix" />
+    ///   
+    /// <para>
+    ///   The following example shows how to use <see cref="CsvWriter"/> to write a jagged array in .csv format.</para>
+    ///   <code source="Unit Tests\Accord.Tests.IO\CsvWriterTest.cs" region="doc_jagged" />
+    ///   
+    /// <para>
+    ///   The following example shows how to use <see cref="CsvWriter"/> to write a DataTable in .csv format.</para>
+    ///   <code source="Unit Tests\Accord.Tests.IO\CsvWriterTest.cs" region="doc_table" />
+    ///   
+    /// <para>
+    ///   It is also possible to use <see cref="CsvWriter"/> to write matrices (or jagged arrays) 
+    ///   containing objects with mixed types:</para>
+    ///   <code source="Unit Tests\Accord.Tests.IO\CsvWriterTest.cs" region="doc_objects" />
+    /// </example>
     /// 
     public class CsvWriter : IDisposable
     {
@@ -92,11 +113,13 @@ namespace Accord.IO
         ///   Initializes a new instance of the <see cref="CsvWriter"/> class.
         /// </summary>
         /// 
-        /// <param name="writer">A <see cref="T:TextWriter"/> pointing to the CSV file.</param>
+        /// <param name="path">The path to the file to be written.</param>
+        /// <param name="delimiter">The field delimiter character to separate values in the CSV file.
+        ///   If set to zero, will use the system's default text separator. Default is '\0' (zero).</param>
         /// 
-        public CsvWriter(TextWriter writer)
-            : this(writer, CsvReader.DefaultDelimiter)
+        public CsvWriter(String path, char delimiter = CsvReader.DefaultDelimiter)
         {
+            init(new StreamWriter(new FileStream(path, FileMode.Create, FileAccess.Write)), delimiter);
         }
 
         /// <summary>
@@ -107,7 +130,12 @@ namespace Accord.IO
         /// <param name="delimiter">The field delimiter character to separate values in the CSV file.
         ///   If set to zero, will use the system's default text separator. Default is '\0' (zero).</param>
         /// 
-        public CsvWriter(TextWriter writer, char delimiter)
+        public CsvWriter(TextWriter writer, char delimiter = CsvReader.DefaultDelimiter)
+        {
+            init(writer, delimiter);
+        }
+
+        private void init(TextWriter writer, char delimiter)
         {
             this.Writer = writer;
             this.Quote = CsvReader.DefaultQuote;
@@ -127,26 +155,31 @@ namespace Accord.IO
         /// </summary>
         /// 
         /// <param name="builder">A <see cref="T:StringBuilder"/> to write to.</param>
-        /// 
-        public static CsvWriter ToText(StringBuilder builder)
-        {
-            return new CsvWriter(new StringWriter(builder));
-        }
-
-        /// <summary>
-        ///   Initializes a new instance of the <see cref="CsvWriter"/> 
-        ///   class to write the CSV fields to a in-memory string.
-        /// </summary>
-        /// 
-        /// <param name="builder">A <see cref="T:StringBuilder"/> to write to.</param>
         /// <param name="delimiter">The field delimiter character to separate values in the CSV file.
         ///   If set to zero, will use the system's default text separator. Default is '\0' (zero).</param>
         /// 
-        public static CsvWriter ToText(StringBuilder builder, char delimiter)
+        public static CsvWriter ToText(StringBuilder builder, char delimiter = CsvReader.DefaultDelimiter)
         {
-            return new CsvWriter(new StringWriter(builder), delimiter);
+            using (var writer = new StringWriter(builder))
+                return new CsvWriter(writer, delimiter);
         }
 
+        /// <summary>
+        ///   Writes the column names of a data table as the headers of the CSV file.
+        /// </summary>
+        /// 
+        /// <param name="columnNames">A list of column names to use.</param>
+        /// 
+        public void WriteHeaders(params string[] columnNames)
+        {
+            var headers = new string[columnNames.Length];
+            for (int i = 0; i < headers.Length; i++)
+                headers[i] = quote(columnNames[i]);
+
+            write(headers, String.Empty);
+        }
+
+#if !NETSTANDARD1_4
         /// <summary>
         ///   Writes the column names of a data table as the headers of the CSV file.
         /// </summary>
@@ -161,7 +194,7 @@ namespace Accord.IO
 
             write(headers, String.Empty);
         }
-
+#endif
 
         /// <summary>
         ///   Writes the specified matrix in CSV format.
@@ -210,6 +243,7 @@ namespace Accord.IO
             Writer.Flush();
         }
 
+#if !NETSTANDARD1_4
         /// <summary>
         ///   Writes the specified table in a CSV format.
         /// </summary>
@@ -232,6 +266,7 @@ namespace Accord.IO
 
             Writer.Flush();
         }
+#endif
 
         /// <summary>
         ///   Writes the specified fields in a CSV format.
@@ -256,7 +291,7 @@ namespace Accord.IO
             string[] items = new string[fields.Length];
 
             for (int i = 0; i < items.Length; i++)
-                items[i] = quote(items[i]);
+                items[i] = quote(fields[i]);
 
             write(items, comment);
         }

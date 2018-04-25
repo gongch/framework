@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,13 +24,13 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Statistics;
     using Accord.Statistics.Running;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;  
+    using NUnit.Framework;  
     
-    [TestClass()]
+    [TestFixture]
     public class RunningNormalStatisticsTest
     {
 
-        [TestMethod()]
+        [Test]
         public void ClearTest()
         {
             double[] values = { 0.5, -1.2, 0.7, 0.2, 1.1 };
@@ -47,12 +47,13 @@ namespace Accord.Tests.Statistics
             for (int i = 0; i < values.Length; i++)
                 target.Push(values2[i]);
 
-            Assert.AreEqual(Tools.Mean(values2), target.Mean, 1e-10);
-            Assert.AreEqual(Tools.StandardDeviation(values2), target.StandardDeviation, 1e-10);
-            Assert.AreEqual(Tools.Variance(values2), target.Variance, 1e-10);
+            Assert.AreEqual(values2.Mean(), target.Mean, 1e-10);
+            Assert.AreEqual(values2.StandardDeviation(), target.StandardDeviation, 1e-10);
+            Assert.AreEqual(values2.Variance(), target.Variance, 1e-10);
+            Assert.AreEqual(values2.Length, target.Count);
         }
 
-        [TestMethod()]
+        [Test]
         public void MeanTest()
         {
             double[] values = { 0.5, -1.2, 0.7, 0.2, 1.1 };
@@ -62,13 +63,13 @@ namespace Accord.Tests.Statistics
             for (int i = 0; i < values.Length; i++)
                 target.Push(values[i]);
 
-            double expected = Tools.Mean(values);
+            double expected = values.Mean();
             double actual = target.Mean;
 
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void StandardDeviationTest()
         {
             double[] values = { 0.5, -1.2, 0.7, 0.2, 1.1 };
@@ -78,13 +79,13 @@ namespace Accord.Tests.Statistics
             for (int i = 0; i < values.Length; i++)
                 target.Push(values[i]);
 
-            double expected = Tools.StandardDeviation(values);
+            double expected = values.StandardDeviation();
             double actual = target.StandardDeviation;
 
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void VarianceTest()
         {
             double[] values = { 0.5, -1.2, 0.7, 0.2, 1.1 };
@@ -94,19 +95,20 @@ namespace Accord.Tests.Statistics
             for (int i = 0; i < values.Length; i++)
                 target.Push(values[i]);
 
-            double expected = Tools.Variance(values);
+            double expected = values.Variance();
             double actual = target.Variance;
 
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void RunningNormalStatisticsConstructorTest()
         {
             RunningNormalStatistics target = new RunningNormalStatistics();
             Assert.AreEqual(0, target.Mean);
             Assert.AreEqual(0, target.StandardDeviation);
             Assert.AreEqual(0, target.Variance);
+            Assert.AreEqual(0, target.Count);
         }
 
     }

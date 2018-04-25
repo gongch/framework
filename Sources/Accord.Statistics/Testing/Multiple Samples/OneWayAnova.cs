@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@ namespace Accord.Statistics.Testing
     using System;
     using System.Collections.Generic;
     using Accord.Math;
+    using Accord.Compat;
 
     /// <summary>
     ///   One-way Analysis of Variance (ANOVA).
@@ -94,7 +95,7 @@ namespace Accord.Statistics.Testing
     /// 
     /// <para>Result in:</para>
     /// 
-    /// <img src="../images/one-way-anova.png"/>
+    /// <img src="..\images\one-way-anova.png"/>
     /// 
     /// <para>
     ///  The p-level for the analysis is about 0.002, meaning the test is
@@ -163,7 +164,7 @@ namespace Accord.Statistics.Testing
             for (int i = 0; i < groups.Length; i++)
             {
                 int[] idx = labels.Find(label => label == i);
-                double[] group = samples.Submatrix(idx);
+                double[] group = samples.Get(idx);
 
                 groups[i] = group;
                 sizes[i] = group.Length;
@@ -196,10 +197,10 @@ namespace Accord.Statistics.Testing
             DFt = totalSize - 1;
 
             // Step 1. Calculate the mean within each group
-            means = Statistics.Tools.Mean(samples, 1);
+            means = Measures.Mean(samples, 1);
 
             // Step 2. Calculate the overall mean
-            totalMean = Statistics.Tools.GrandMean(means, sizes);
+            totalMean = Measures.GrandMean(means, sizes);
 
 
             // Step 3. Calculate the "between-group" sum of squares

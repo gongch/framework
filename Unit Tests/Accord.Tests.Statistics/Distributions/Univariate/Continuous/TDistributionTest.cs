@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,33 +23,16 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using Accord.Statistics.Distributions.Fitting;
     using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class TDistributionTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             var t = new TDistribution(degreesOfFreedom: 4.2);
@@ -70,6 +53,14 @@ namespace Accord.Tests.Statistics
             double chf = t.CumulativeHazardFunction(x: 1.4); // 2.1590162088918525
 
             string str = t.ToString(CultureInfo.InvariantCulture); // T(x; df = 4.2)
+
+            Assert.AreEqual(double.NegativeInfinity, t.Support.Min);
+            Assert.AreEqual(double.PositiveInfinity, t.Support.Max);
+
+            double icdf0 = t.InverseDistributionFunction(0);
+            double icdf1 = t.InverseDistributionFunction(1);
+            Assert.AreEqual(icdf0, t.Support.Min);
+            Assert.AreEqual(icdf1, t.Support.Max);
 
             Assert.AreEqual(0.0, mean);
             Assert.AreEqual(0.0, median);
@@ -96,7 +87,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(3.6502571302187774, range3.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void VarianceTest()
         {
             TDistribution target = new TDistribution(3);
@@ -114,7 +105,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(Double.IsNaN(actual));
         }
 
-        [TestMethod()]
+        [Test]
         public void MeanTest()
         {
             TDistribution target;
@@ -135,38 +126,38 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest()
         {
             TDistribution target = new TDistribution(1);
             double expected = 0.31830988618379075;
             double actual = target.ProbabilityDensityFunction(0);
-            Assert.AreEqual(expected, actual);
+            Assert.AreEqual(expected, actual, 1e-10);
 
             expected = 0.017076710632177614;
             actual = target.ProbabilityDensityFunction(4.2);
-            Assert.AreEqual(expected, actual);
+            Assert.AreEqual(expected, actual, 1e-10);
 
             target = new TDistribution(2);
             expected = 0.35355339059327379;
             actual = target.ProbabilityDensityFunction(0);
-            Assert.AreEqual(expected, actual);
+            Assert.AreEqual(expected, actual, 1e-10);
 
             expected = 0.011489146700777093;
             actual = target.ProbabilityDensityFunction(4.2);
-            Assert.AreEqual(expected, actual);
+            Assert.AreEqual(expected, actual, 1e-10);
 
             target = new TDistribution(3);
             expected = 0.36755259694786141;
             actual = target.ProbabilityDensityFunction(0);
-            Assert.AreEqual(expected, actual);
+            Assert.AreEqual(expected, actual, 1e-10);
 
             expected = 0.0077650207237835792;
             actual = target.ProbabilityDensityFunction(4.2);
-            Assert.AreEqual(expected, actual);
+            Assert.AreEqual(expected, actual, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void InverseDistributionFunctionTest()
         {
             TDistribution target;
@@ -196,7 +187,7 @@ namespace Accord.Tests.Statistics
 
         }
 
-        [TestMethod()]
+        [Test]
         public void InverseDistributionFunctionTest2()
         {
             TDistribution target = new TDistribution(24);
@@ -207,7 +198,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-06);
         }
 
-        [TestMethod()]
+        [Test]
         public void InverseDistributionFunctionLeftTailTest()
         {
             double[] a = { 0.1, 0.05, 0.025, 0.01, 0.005, 0.001, 0.0005 };
@@ -263,7 +254,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionTest()
         {
             TDistribution target = new TDistribution(1);
@@ -294,7 +285,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-6);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest()
         {
             bool thrown = false;
@@ -304,7 +295,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest()
         {
             TDistribution target = new TDistribution(1);
@@ -341,7 +332,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void CloneTest()
         {
             int degreesOfFreedom = 5;
@@ -354,7 +345,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.Variance, clone.Variance);
         }
 
-        [TestMethod()]
+        [Test]
         public void TDistributionConstructorTest()
         {
             int degreesOfFreedom = 4;
@@ -372,7 +363,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             TDistribution target = new TDistribution(7.6);

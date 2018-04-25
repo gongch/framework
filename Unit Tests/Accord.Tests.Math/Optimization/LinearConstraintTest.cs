@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,10 +24,10 @@ namespace Accord.Tests.Math
 {
     using System;
     using Accord.Math.Optimization;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Math;
 
-    [TestClass()]
+    [TestFixture]
     public class LinearConstraintTest
     {
 
@@ -46,9 +46,52 @@ namespace Accord.Tests.Math
             }
         }
 
+        [Test]
+        public void DocumentationTest()
+        {
+            #region doc_example
+            // Linear constraints are common in numerical optimization.
+            // Constraints can be defined using strings, expressions or
+            // vectors. Suppose we have a quadratic objective function:
+            var f = new QuadraticObjectiveFunction("2x² + 4y² - 2xy + 6");
 
+            // Then the following three are all equivalent:
+            var lc1 = new LinearConstraint(f, "3*x + 5*y <= 7");
 
-        [TestMethod]
+            double x = 0, y = 0; // Define some dummy variables
+            var lc2 = new LinearConstraint(f, () => 3*x + 5*y <= 7);
+
+            var lc3 = new LinearConstraint(numberOfVariables: 2)
+            {
+                CombinedAs = new double[] { 3, 5 },
+                ShouldBe = ConstraintType.LesserThanOrEqualTo,
+                Value = 7
+            };
+
+            // Then, we can check whether a constraint is violated and, if so,
+            // by how much.
+            double[] vector = { -2, 3 };
+
+            if (lc1.IsViolated(vector))
+            {
+                // act on violation...
+            }
+
+            double violation = lc2.GetViolation(vector); // negative if violated
+
+            #endregion
+
+            double expected = -2;
+            double v1 = lc1.GetViolation(vector);
+            double v2 = lc2.GetViolation(vector);
+            double v3 = lc3.GetViolation(vector);
+
+            Assert.AreEqual(expected, v1);
+            Assert.AreEqual(expected, v2);
+            Assert.AreEqual(expected, v3);
+        }
+
+        [Test]
         public void ConstructorTest1()
         {
             var f = new QuadraticObjectiveFunction("a + b = 0");
@@ -89,7 +132,7 @@ namespace Accord.Tests.Math
             }
         }
 
-        [TestMethod]
+        [Test]
         public void ConstructorTest2()
         {
             double a = 0, b = 0;
@@ -149,6 +192,82 @@ namespace Accord.Tests.Math
                     }
                 }
             }
+        }
+
+        [Test]
+        public void TestGradientWithIndices()
+        {
+            // Arrange1
+            int[] indices1 = { 2, 4, 6 };
+            int[] indices2 = { 0, 4, 6 };
+            double[] combinedAs1 = { 2, 3, 4 };
+            double[] combinedAs2 = { 9, 5, 1 };
+            double[] x = Vector.Random(8);
+            double[] expected1 = { 0, 0, 2, 0, 3, 0, 4, 0 };
+            double[] expected2 = { 0, 0, 9, 0, 5, 0, 1, 0 };
+            double[] expected3 = { 9, 0, 0, 0, 5, 0, 1, 0 };
+
+            var linearConstraint = new LinearConstraint(indices1.Length)
+            {
+                CombinedAs = combinedAs1,
+                VariablesAtIndices = indices1,
+                ShouldBe = ConstraintType.EqualTo,
+                Value = 42
+            };
+
+            // Act1
+            double[] gradient = linearConstraint.Gradient(x);
+
+            // Assert1
+            Assert.True(gradient.IsEqual(expected1));
+
+            // Arrange2
+            linearConstraint.CombinedAs = combinedAs2;
+
+            // Act2
+            double[] gradient2 = linearConstraint.Gradient(x);
+
+            // Assert2
+            Assert.True(gradient2.IsEqual(expected2));
+
+            // Arrange3
+            linearConstraint.VariablesAtIndices = indices2;
+
+            // Act3
+            double[] gradient3 = linearConstraint.Gradient(x);
+
+            // Assert3
+            Assert.True(gradient3.IsEqual(expected3));
+        }
+
+        [Test]
+        public void TestGradientWithoutIndices()
+        {
+            // Arrange1
+            double[] combinedAs1 = { 2, 3, 4, 5, 6 };
+            double[] combinedAs2 = { 9, 5, 1, 5, 8 };
+            double[] x = Vector.Random(5);
+
+            var linearConstraint = new LinearConstraint(combinedAs1)
+            {
+                ShouldBe = ConstraintType.EqualTo,
+                Value = 42
+            };
+
+            // Act1
+            double[] gradient = linearConstraint.Gradient(x);
+
+            // Assert1
+            Assert.True(gradient.IsEqual(combinedAs1));
+
+            // Arrange2
+            linearConstraint.CombinedAs = combinedAs2;
+
+            // Act2
+            double[] gradient2 = linearConstraint.Gradient(x);
+
+            // Assert2
+            Assert.True(gradient2.IsEqual(combinedAs2));
         }
 
     }

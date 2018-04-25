@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -27,31 +27,16 @@ namespace Accord.Tests.Audio
     using Accord.Audio.Formats;
     using Accord.Audio.Windows;
     using Accord.Math;
-    using AForge.Math;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
+    using Accord.Compat;
+    using System.Numerics;
 
-    [TestClass()]
+    [TestFixture]
     public class ComplexSignalTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-        private Complex[,] data = 
+        private Complex[,] data =
         {
             { new Complex( 0.42, 0.0), new Complex(0.2, 0.0) },
             { new Complex( 0.32, 0.0), new Complex(0.1, 0.0) },
@@ -64,7 +49,7 @@ namespace Accord.Tests.Audio
         };
 
 
-        [TestMethod()]
+        [Test]
         public void GetEnergyTest()
         {
             ComplexSignal target = ComplexSignal.FromArray(data, 8000);
@@ -73,7 +58,7 @@ namespace Accord.Tests.Audio
             Assert.AreEqual(expected, actual, 1e-4);
         }
 
-        [TestMethod()]
+        [Test]
         public void ComplexSignalConstructorTest()
         {
             ComplexSignal target = ComplexSignal.FromArray(data, 8000);
@@ -84,10 +69,10 @@ namespace Accord.Tests.Audio
             Assert.IsNotNull(target.RawData);
         }
 
-        [TestMethod()]
+        [Test]
         public void ComplexSignalConstructor()
         {
-            UnmanagedMemoryStream sourceStream = Properties.Resources.Grand_Piano___Fazioli___major_A_middle;
+            var sourceStream = SignalTest.GetSignal("a.wav");
             MemoryStream destinationStream = new MemoryStream();
 
             // Create a decoder for the source stream
@@ -115,7 +100,7 @@ namespace Accord.Tests.Audio
             {
                 ComplexSignal c = complex[i];
                 Assert.AreEqual(2, c.Channels);
-                Assert.AreEqual(92, c.Duration);
+                Assert.AreEqual(93, c.Duration.TotalMilliseconds);
                 Assert.AreEqual(4096, c.Length);
                 Assert.AreEqual(SampleFormat.Format128BitComplex, c.SampleFormat);
                 Assert.AreEqual(44100, c.SampleRate);
@@ -132,7 +117,7 @@ namespace Accord.Tests.Audio
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ComplexRectangularWindowTest()
         {
             int length = 2;
@@ -156,8 +141,8 @@ namespace Accord.Tests.Audio
             {
                 int min = System.Math.Min(i + length, samples.Length / 2);
 
-                Complex[] segment = windows[i].ToArray().Reshape(1);
-                Complex[] sub = samples.Submatrix(i, min - 1, null).Reshape(1);
+                Complex[] segment = windows[i].ToArray().Reshape();
+                Complex[] sub = samples.Submatrix(i, min - 1, null).Reshape();
 
                 var expected = new Complex[length * 2];
                 for (int j = 0; j < sub.Length; j++)

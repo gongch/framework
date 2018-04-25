@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -26,37 +26,26 @@ namespace Accord.Tests.Math
     using System.Collections.Generic;
     using Accord.Math;
     using Accord.Math.Optimization;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.IO;
     using Accord.Tests.Math.Properties;
     using System.Globalization;
+    using Accord.IO;
+#if NO_CULTURE
+    using CultureInfo = Accord.Compat.CultureInfoEx;
+#endif
 
-
-    [TestClass()]
+    [TestFixture]
     public class GoldfarbIdnaniTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-        [TestMethod()]
+        [Test]
         public void RunTest()
         {
             double[,] D = Matrix.Identity(3);
             double[] d = { 0, 5, 0 };
 
-            double[,] A = 
+            double[,] A =
             {
                 { -4,  2,  0 },
                 { -3,  1, -2 },
@@ -92,13 +81,13 @@ namespace Accord.Tests.Math
                 Assert.IsFalse(double.IsNaN(v));
         }
 
-        [TestMethod()]
+        [Test]
         public void RunTest1()
         {
             double[,] D = Matrix.Identity(3);
             double[] d = { 1, 5, 3 };
 
-            double[,] A = 
+            double[,] A =
             {
                 { -4,  2,  0 },
                 { -3,  1, -2 },
@@ -132,7 +121,7 @@ namespace Accord.Tests.Math
                 Assert.IsFalse(double.IsNaN(v));
         }
 
-        [TestMethod()]
+        [Test]
         public void RunTest2()
         {
             // Maximize f(x) = x² + 4y² -8x -16y
@@ -142,7 +131,7 @@ namespace Accord.Tests.Math
             //             x,y >= 0
             //
 
-            double[,] D = 
+            double[,] D =
             {
                 { 2, 0 }, // 1x²
                 { 0, 8 }, // 4y²
@@ -151,7 +140,7 @@ namespace Accord.Tests.Math
             double[] d = { -8, -16 };
 
 
-            double[,] A = 
+            double[,] A =
             {
                 { 1, 1 }, // x + y
                 { 1, 0 }, // x
@@ -182,7 +171,7 @@ namespace Accord.Tests.Math
                 Assert.IsFalse(double.IsNaN(v));
         }
 
-        [TestMethod()]
+        [Test]
         public void RunTest3()
         {
             // Tested against R's QuadProg package
@@ -198,7 +187,7 @@ namespace Accord.Tests.Math
 
             double[] d = { 1, 5, 3 };
 
-            double[,] A = 
+            double[,] A =
             {
                 { -4,  2,  1 },
                 { -3,  1, -2 },
@@ -238,11 +227,11 @@ namespace Accord.Tests.Math
                 Assert.IsFalse(double.IsNaN(v));
         }
 
-        [TestMethod()]
+        [Test]
         public void RunTest4()
         {
 
-            double[,] D = 
+            double[,] D =
             {
                 {  5, -2, -1 },
                 { -2,  4,  3 },
@@ -252,11 +241,11 @@ namespace Accord.Tests.Math
             double[] d = { -2, +35, +47 };
 
 
-            double[,] A = 
+            double[,] A =
             {
-                { 0, 0, 0 }, 
-                { 0, 0, 0 }, 
-                { 0, 0, 0 }, 
+                { 0, 0, 0 },
+                { 0, 0, 0 },
+                { 0, 0, 0 },
             };
 
             double[] b = { 0, 0, 0 };
@@ -287,7 +276,7 @@ namespace Accord.Tests.Math
                 Assert.IsFalse(double.IsNaN(v));
         }
 
-        [TestMethod()]
+        [Test]
         public void RunTest5()
         {
             // example from http://www.mail-archive.com/r-help@r-project.org/msg00831.html
@@ -334,13 +323,13 @@ namespace Accord.Tests.Math
 
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniConstructorTest1()
         {
             double[,] D = Matrix.Identity(3);
             double[] d = { 0, 5, 0 };
 
-            double[,] A = 
+            double[,] A =
             {
                 { -4, -3, 0 },
                 {  2,  1, 0 },
@@ -362,9 +351,10 @@ namespace Accord.Tests.Math
             Assert.IsTrue(b.IsEqual(target.ConstraintValues));
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniConstructorTest2()
         {
+            #region doc_matrix
             // Solve the following optimization problem:
             //
             //  min f(x) = 2x² - xy + 4y² - 5x - 6y
@@ -395,13 +385,13 @@ namespace Accord.Tests.Math
             // relationship between the different variables in the
             // constraint, like this:
 
-            double[,] A = 
+            double[,] A =
             {
                 { 1, -1 }, // This line says that x + (-y) ... (a)
                 { 1,  0 }, // This line says that x alone  ... (b)
             };
 
-            double[] b = 
+            double[] b =
             {
                  5, // (a) ... should be equal to 5.
                 10, // (b) ... should be greater than or equal to 10.
@@ -414,11 +404,11 @@ namespace Accord.Tests.Math
             int numberOfEqualities = 1;
 
 
-            // Alternatively, we may use a more explicitly form:
-            List<LinearConstraint> list = new List<LinearConstraint>();
-
-            // Define the first constraint, which involves only x
-            list.Add(new LinearConstraint(numberOfVariables: 1)
+            // Alternatively, we may use an explicit form:
+            var constraints = new List<LinearConstraint>()
+            {
+                // Define the first constraint, which involves only x
+                new LinearConstraint(numberOfVariables: 1)
                 {
                     // x is the first variable, thus located at
                     // index 0. We are specifying that x >= 10:
@@ -426,10 +416,10 @@ namespace Accord.Tests.Math
                     VariablesAtIndices = new[] { 0 }, // index 0 (x)
                     ShouldBe = ConstraintType.GreaterThanOrEqualTo,
                     Value = 10
-                });
+                },
 
-            // Define the second constraint, which involves x and y
-            list.Add(new LinearConstraint(numberOfVariables: 2)
+                // Define the second constraint, which involves x and y
+                new LinearConstraint(numberOfVariables: 2)
                 {
                     // x is the first variable, located at index 0, and y is
                     // the second, thus located at 1. We are specifying that
@@ -441,39 +431,47 @@ namespace Accord.Tests.Math
                     CombinedAs = new double[] { 1, -1 }, // when combined as x - y
                     ShouldBe = ConstraintType.EqualTo,
                     Value = 5
-                });
+                }
+            };
 
 
             // Now we can finally create our optimization problem
-            var target = new GoldfarbIdnani(new QuadraticObjectiveFunction(Q, d), constraints: list);
+            var solver = new GoldfarbIdnani(
+                function: new QuadraticObjectiveFunction(Q, d),
+                constraints: constraints);
 
 
-            Assert.IsTrue(A.IsEqual(target.ConstraintMatrix));
-            Assert.IsTrue(b.IsEqual(target.ConstraintValues));
-            Assert.AreEqual(numberOfEqualities, target.NumberOfEqualities);
+            // And attempt solve for the min:
+            bool success = solver.Minimize();
+
+            // The solution was { 10, 5 }
+            double[] solution = solver.Solution;
+
+            // With the minimum value 170.0
+            double minValue = solver.Value;
+            #endregion
 
 
-            // And attempt to solve it.
-            Assert.IsTrue(target.Minimize());
-            double minimumValue = target.Value;
+            Assert.IsTrue(A.IsEqual(solver.ConstraintMatrix));
+            Assert.IsTrue(b.IsEqual(solver.ConstraintValues));
+            Assert.AreEqual(numberOfEqualities, solver.NumberOfEqualities);
 
+            Assert.AreEqual(170, minValue, 1e-10);
+            Assert.AreEqual(10, solver.Solution[0]);
+            Assert.AreEqual(05, solver.Solution[1]);
 
-            Assert.AreEqual(170, minimumValue, 1e-10);
-            Assert.AreEqual(10, target.Solution[0]);
-            Assert.AreEqual(05, target.Solution[1]);
-
-            foreach (double v in target.Solution)
+            foreach (double v in solver.Solution)
                 Assert.IsFalse(double.IsNaN(v));
 
-            foreach (double v in target.Lagrangian)
+            foreach (double v in solver.Lagrangian)
                 Assert.IsFalse(double.IsNaN(v));
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniConstructorTest3()
         {
             // http://www.wolframalpha.com/input/?i=min+2x%C2%B2+-+xy+%2B+4y%C2%B2+-+5x+-+6y+s.t.+x+-+y++%3D%3D+++5%2C+x++%3E%3D++10
-
+            #region doc_lambdas
             // Solve the following optimization problem:
             //
             //  min f(x) = 2x² - xy + 4y² - 5x - 6y
@@ -490,33 +488,47 @@ namespace Accord.Tests.Math
             var f = new QuadraticObjectiveFunction(() => 2 * (x * x) - (x * y) + 4 * (y * y) - 5 * x - 6 * y);
 
             // Now, create the constraints
-            List<LinearConstraint> constraints = new List<LinearConstraint>();
-            constraints.Add(new LinearConstraint(f, () => x - y == 5));
-            constraints.Add(new LinearConstraint(f, () => x >= 10));
-
-            // Now we create the quadratic programming solver for 2 variables, using the constraints.
-            GoldfarbIdnani solver = new GoldfarbIdnani(f, constraints);
-
-
-            double[,] A = 
+            List<LinearConstraint> constraints = new List<LinearConstraint>()
             {
-                { 1, -1 }, 
-                { 1,  0 }, 
+                new LinearConstraint(f, () => x - y == 5),
+                new LinearConstraint(f, () => x >= 10)
             };
 
-            double[] b = 
+            // Now we create the quadratic programming solver 
+            var solver = new GoldfarbIdnani(f, constraints);
+
+            // And attempt solve for the min:
+            bool success = solver.Minimize();
+
+            // The solution was { 10, 5 }
+            double[] solution = solver.Solution;
+
+            // With the minimum value 170.0
+            double minValue = solver.Value;
+            #endregion
+
+            Assert.AreEqual(170, solver.Value);
+            Assert.IsTrue(success);
+
+            double[,] A =
             {
-                 5, 
-                10, 
+                { 1, -1 },
+                { 1,  0 },
+            };
+
+            double[] b =
+            {
+                 5,
+                10,
             };
 
             Assert.IsTrue(A.IsEqual(solver.ConstraintMatrix));
             Assert.IsTrue(b.IsEqual(solver.ConstraintValues));
 
 
-            double[,] Q = 
-            {   
-                { +2*2,  -1   }, 
+            double[,] Q =
+            {
+                { +2*2,  -1   },
                 {   -1,  +4*2 },
             };
 
@@ -528,15 +540,9 @@ namespace Accord.Tests.Math
 
             Assert.IsTrue(Q.IsEqual(actualQ));
             Assert.IsTrue(d.IsEqual(actuald));
-
-
-            // And attempt to solve it.
-            bool success = solver.Minimize();
-            Assert.AreEqual(170, solver.Value);
-            Assert.IsTrue(success);
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniConstructorTest10()
         {
             // http://www.wolframalpha.com/input/?i=minimize+f%28x%2Cy%29+%3D+2x%5E2+-+xy+%2B+4y%5E2+-+5x+-+6y+-+100%2C+s.t.+x+-+y++%3D+++5%2C+x++%3E%3D++10
@@ -551,9 +557,9 @@ namespace Accord.Tests.Math
 
             GoldfarbIdnani solver = new GoldfarbIdnani(f, constraints);
 
-            double[,] Q = 
-            {   
-                { +2*2,  -1   }, 
+            double[,] Q =
+            {
+                { +2*2,  -1   },
                 {   -1,  +4*2 },
             };
 
@@ -571,7 +577,7 @@ namespace Accord.Tests.Math
             Assert.IsTrue(success);
         }
 
-        [TestMethod]
+        [Test]
         public void GoldfarbIdnaniConstructorTest11()
         {
             // http://www.wolframalpha.com/input/?i=minimize+f%28x%2Cy%29+%3D+2x%5E2+-+xy+%2B+4y%5E2+-+5x+-+6y+-+100%2C+s.t.+x+-+y++%3D+++5%2C+x++%3E%3D++10
@@ -586,9 +592,9 @@ namespace Accord.Tests.Math
 
             GoldfarbIdnani solver = new GoldfarbIdnani(f, constraints);
 
-            double[,] Q = 
-            {   
-                { +2*2,  -1   }, 
+            double[,] Q =
+            {
+                { +2*2,  -1   },
                 {   -1,  +4*2 },
             };
 
@@ -606,7 +612,7 @@ namespace Accord.Tests.Math
             Assert.IsTrue(success);
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniConstructorTest4()
         {
             // Solve the following optimization problem:
@@ -626,24 +632,24 @@ namespace Accord.Tests.Math
 
             GoldfarbIdnani target = new GoldfarbIdnani(f, constraints);
 
-            double[,] A = 
+            double[,] A =
             {
-                { 1, -1 }, 
-                { 1,  0 }, 
+                { 1, -1 },
+                { 1,  0 },
             };
 
-            double[] b = 
+            double[] b =
             {
-                 5, 
-                10, 
+                 5,
+                10,
             };
 
             Assert.IsTrue(A.IsEqual(target.ConstraintMatrix));
             Assert.IsTrue(b.IsEqual(target.ConstraintValues));
 
-            double[,] Q = 
-            {   
-                { +2*2,  -1   }, 
+            double[,] Q =
+            {
+                { +2*2,  -1   },
                 {   -1,  +4*2 },
             };
 
@@ -657,7 +663,7 @@ namespace Accord.Tests.Math
             Assert.IsTrue(d.IsEqual(actuald));
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniConstructorTest5()
         {
             // min 1x² - 2xy + 3y² +z² - 4x - 5y -z, 6x-7y <= 8, 9x + 1y <= 11, 9x-y <= 11, -z-y = 12
@@ -692,7 +698,7 @@ namespace Accord.Tests.Math
 
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniConstructorTest6()
         {
             // min 1x² - 2xy + 3y² +z² - 4x - 5y -z, 6x-7y <= 8, 9x + 1y <= 11, 9x-y <= 11, -z-y = 12
@@ -723,7 +729,7 @@ namespace Accord.Tests.Math
                 Assert.IsFalse(double.IsNaN(v));
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniConstructorTest7()
         {
             // Solve the following optimization problem:
@@ -746,24 +752,24 @@ namespace Accord.Tests.Math
 
             GoldfarbIdnani target = new GoldfarbIdnani(f, constraints);
 
-            double[,] A = 
+            double[,] A =
             {
-                { 1, 0 }, 
-                { 0, 1 }, 
+                { 1, 0 },
+                { 0, 1 },
             };
 
-            double[] b = 
+            double[] b =
             {
-                 1, 
-                 1, 
+                 1,
+                 1,
             };
 
             Assert.IsTrue(A.IsEqual(target.ConstraintMatrix));
             Assert.IsTrue(b.IsEqual(target.ConstraintValues));
 
-            double[,] Q = 
-            {   
-                { 6, 2 }, 
+            double[,] Q =
+            {
+                { 6, 2 },
                 { 2, 6 },
             };
 
@@ -797,7 +803,7 @@ namespace Accord.Tests.Math
                 Assert.IsFalse(double.IsNaN(v));
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniConstructorTest8()
         {
             // Solve the following optimization problem:
@@ -820,24 +826,24 @@ namespace Accord.Tests.Math
 
             GoldfarbIdnani target = new GoldfarbIdnani(f, constraints);
 
-            double[,] A = 
+            double[,] A =
             {
-                { 1, 0 }, 
-                { 0, 1 }, 
+                { 1, 0 },
+                { 0, 1 },
             };
 
-            double[] b = 
+            double[] b =
             {
-                 1, 
-                 1, 
+                 1,
+                 1,
             };
 
             Assert.IsTrue(A.IsEqual(target.ConstraintMatrix));
             Assert.IsTrue(b.IsEqual(target.ConstraintValues));
 
-            double[,] Q = 
-            {   
-                { 2, 2 }, 
+            double[,] Q =
+            {
+                { 2, 2 },
                 { 2, 2 },
             };
 
@@ -855,7 +861,7 @@ namespace Accord.Tests.Math
             Assert.IsFalse(success);
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniConstructorTest9()
         {
             // Solve the following optimization problem:
@@ -883,7 +889,7 @@ namespace Accord.Tests.Math
 
             GoldfarbIdnani target = new GoldfarbIdnani(f, constraints);
 
-            double[,] expectedA = 
+            double[,] expectedA =
             {
                 { -1, -3 },
                 { -1, -1 },
@@ -891,18 +897,18 @@ namespace Accord.Tests.Math
                 {  0,  1 },
             };
 
-            double[] expectedb = 
+            double[] expectedb =
             {
                 -2, 0, 0, 0
             };
 
-            double[,] expectedQ = 
+            double[,] expectedQ =
             {
                 { 4, 1 },
                 { 1, 2 },
             };
 
-            double[] expectedd = 
+            double[] expectedd =
             {
                 0, -5
             };
@@ -952,9 +958,10 @@ namespace Accord.Tests.Math
                 Assert.IsFalse(double.IsNaN(v));
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniMaximizeTest1()
         {
+            #region doc_string
             // Solve the following optimization problem:
             //
             //  max f(x) = -2x² + xy - y² + 5y
@@ -967,24 +974,33 @@ namespace Accord.Tests.Math
             var f = new QuadraticObjectiveFunction("-2x² + xy - y² + 5y");
 
             // Now, create the constraints
-            List<LinearConstraint> constraints = new List<LinearConstraint>();
-            constraints.Add(new LinearConstraint(f, "x + y <= 0"));
-            constraints.Add(new LinearConstraint(f, "    y >= 0"));
+            List<LinearConstraint> constraints = new List<LinearConstraint>()
+            {
+                new LinearConstraint(f, "x + y <= 0"),
+                new LinearConstraint(f, "    y >= 0")
+            };
 
-            // Now we create the quadratic programming solver for 2 variables, using the constraints.
-            GoldfarbIdnani solver = new GoldfarbIdnani(f, constraints);
+            // Now we create the quadratic programming solver 
+            var solver = new GoldfarbIdnani(f, constraints);
 
-            // And attempt to solve it.
-            Assert.IsTrue(solver.Maximize());
+            // And attempt solve for the max:
+            bool success = solver.Maximize();
+
+            // The solution was { -0.625, 0.625 }
+            double[] solution = solver.Solution;
+
+            // With the minimum value 1.5625
             double maxValue = solver.Value;
+            #endregion
 
+            Assert.IsTrue(success);
             Assert.AreEqual(25 / 16.0, maxValue);
 
             Assert.AreEqual(-5 / 8.0, solver.Solution[0]);
             Assert.AreEqual(5 / 8.0, solver.Solution[1]);
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniParseGlobalizationTestBase()
         {
             // minimize 0.5x² + 0.2y² + 0.3xy s.t. 0.01x + 0.02y - 0.03 = 0 AND x + y = 100
@@ -992,10 +1008,10 @@ namespace Accord.Tests.Math
 
             String strObjective = "0.5x² + 0.2y² + 0.3xy";
 
-            String[] strConstraints = 
-            { 
-                "0.01x + 0.02y - 0.03 = 0", 
-                "x + y = 100" 
+            String[] strConstraints =
+            {
+                "0.01x + 0.02y - 0.03 = 0",
+                "x + y = 100"
             };
 
             QuadraticObjectiveFunction function = new QuadraticObjectiveFunction(strObjective);
@@ -1011,7 +1027,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(15553.60, result, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniParseGlobalizationTest()
         {
             var fr = CultureInfo.GetCultureInfo("fr-FR");
@@ -1022,12 +1038,12 @@ namespace Accord.Tests.Math
                 + "x² +" + 0.2.ToString(fr) + "y² +"
                 + 0.3.ToString(fr) + "xy";
 
-            String[] strConstraints = 
-            { 
-                0.01.ToString(fr) + "x" + " + " + 
-                0.02.ToString(fr) + "y - " + 
-                0.03.ToString(fr) + " = 0", 
-                "x + y = 100" 
+            String[] strConstraints =
+            {
+                0.01.ToString(fr) + "x" + " + " +
+                0.02.ToString(fr) + "y - " +
+                0.03.ToString(fr) + " = 0",
+                "x + y = 100"
             };
 
             QuadraticObjectiveFunction function = new QuadraticObjectiveFunction(strObjective, fr);
@@ -1043,19 +1059,19 @@ namespace Accord.Tests.Math
             Assert.AreEqual(15553.60, result, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniParseGlobalizationTest2()
         {
             String strObjective = 0.5.ToString(CultureInfo.InvariantCulture)
                 + "x² +" + 0.2.ToString(CultureInfo.InvariantCulture) + "y² +"
                 + 0.3.ToString(CultureInfo.InvariantCulture) + "xy";
 
-            String[] strConstraints = 
-            { 
-                0.01.ToString(CultureInfo.InvariantCulture) + "x" + " + " + 
-                0.02.ToString(CultureInfo.InvariantCulture) + "y - " + 
-                0.03.ToString(CultureInfo.InvariantCulture) + " = 0", 
-                "x + y = 100" 
+            String[] strConstraints =
+            {
+                0.01.ToString(CultureInfo.InvariantCulture) + "x" + " + " +
+                0.02.ToString(CultureInfo.InvariantCulture) + "y - " +
+                0.03.ToString(CultureInfo.InvariantCulture) + " = 0",
+                "x + y = 100"
             };
 
             QuadraticObjectiveFunction function = new QuadraticObjectiveFunction(strObjective);
@@ -1071,17 +1087,17 @@ namespace Accord.Tests.Math
             Assert.AreEqual(15553.60, result, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniParseTest()
         {
             var s = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
 
             String strObjective = "0" + s + "5x² + 0" + s + "2y² + 0" + s + "3xy";
 
-            String[] strConstraints = 
-            { 
-                "0" + s + "01x + 0" + s + "02y - 0" + s + "03 = 0", 
-                "x + y = 100" 
+            String[] strConstraints =
+            {
+                "0" + s + "01x + 0" + s + "02y - 0" + s + "03 = 0",
+                "x + y = 100"
             };
 
             // Now we can start creating our function:
@@ -1098,7 +1114,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(15553.60, result, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniMinimizeWithEqualityTest()
         {
             // This test reproduces Issue #33 at Google Code Tracker
@@ -1171,7 +1187,7 @@ namespace Accord.Tests.Math
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniMinimizeLessThanWithEqualityTest()
         {
             // This test reproduces Issue #33 at Google Code Tracker
@@ -1241,7 +1257,7 @@ namespace Accord.Tests.Math
         }
 
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniLargeSampleTest1()
         {
             var Q = readMatrixFile(new StringReader(Resources.dmatFull));
@@ -1267,7 +1283,7 @@ namespace Accord.Tests.Math
             double expectedSol = 0.049316494677822;
             double actualSol = value;
 
-            double[] expected = 
+            double[] expected =
             {
                 0.74083116998144, // 2
                 0.14799651298617, // 13
@@ -1284,7 +1300,7 @@ namespace Accord.Tests.Math
                 Assert.AreEqual(expected[i], actual[i], 1e-5);
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniLargeSampleTest2()
         {
             var Q = readMatrixFile(new StringReader(Resources.dmatFull));
@@ -1301,7 +1317,7 @@ namespace Accord.Tests.Math
             GoldfarbIdnani gfI = new GoldfarbIdnani(Q, dvec, AMat, b, 2);
 
             for (int i = 0; i < gfI.ConstraintTolerances.Length; i++)
-                Assert.AreEqual(0, gfI.ConstraintTolerances[i]);
+                Assert.AreEqual(LinearConstraint.DefaultTolerance, gfI.ConstraintTolerances[i]);
 
             bool success = gfI.Minimize();
 
@@ -1313,7 +1329,7 @@ namespace Accord.Tests.Math
             double expectedSol = 0.048224950997808;
             double actualSol = value;
 
-            double[] expected = 
+            double[] expected =
             {
                 0.41144782323407, // 2
                 0.27310552838116, // 13
@@ -1330,7 +1346,7 @@ namespace Accord.Tests.Math
                 Assert.AreEqual(expected[i], actual[i], 1e-5);
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnaniLargeSampleTest3_InfiniteLoop()
         {
             var Q = readMatrixFile(new StringReader(Resources.dmatFull));
@@ -1359,7 +1375,7 @@ namespace Accord.Tests.Math
             double expectedSol = 0.052870914138455;
             double actualSol = value;
 
-            double[] expected = 
+            double[] expected =
             {
                 0.4, // 2
                 0.0016271524831373, // 4
@@ -1379,7 +1395,7 @@ namespace Accord.Tests.Math
                 Assert.AreEqual(expected[i], actual[i], 1e-5);
         }
 
-        [TestMethod()]
+        [Test]
         public void GoldfarbIdnani3()
         {
             double[] bvec = { 1, 0, -1, 0, -1, 0, -1, 0, -1 };
@@ -1410,10 +1426,10 @@ namespace Accord.Tests.Math
 
 
             double[,] AMat = new double[9, 4];
-            AMat[0, 0] = 1; AMat[1, 0] = 1; AMat[2, 0] = -1; AMat[3, 0] = 0; AMat[4, 0] =  0; AMat[5, 0] = 0; AMat[6, 0] =  0; AMat[7, 0] = 0; AMat[8, 0] =  0;
-            AMat[0, 1] = 1; AMat[1, 1] = 0; AMat[2, 1] =  0; AMat[3, 1] = 1; AMat[4, 1] = -1; AMat[5, 1] = 0; AMat[6, 1] =  0; AMat[7, 1] = 0; AMat[8, 1] =  0;
-            AMat[0, 2] = 1; AMat[1, 2] = 0; AMat[2, 2] =  0; AMat[3, 2] = 0; AMat[4, 2] =  0; AMat[5, 2] = 1; AMat[6, 2] = -1; AMat[7, 2] = 0; AMat[8, 2] =  0;
-            AMat[0, 3] = 1; AMat[1, 3] = 0; AMat[2, 3] =  0; AMat[3, 3] = 0; AMat[4, 3] =  0; AMat[5, 3] = 0; AMat[6, 3] =  0; AMat[7, 3] = 1; AMat[8, 3] = -1;
+            AMat[0, 0] = 1; AMat[1, 0] = 1; AMat[2, 0] = -1; AMat[3, 0] = 0; AMat[4, 0] = 0; AMat[5, 0] = 0; AMat[6, 0] = 0; AMat[7, 0] = 0; AMat[8, 0] = 0;
+            AMat[0, 1] = 1; AMat[1, 1] = 0; AMat[2, 1] = 0; AMat[3, 1] = 1; AMat[4, 1] = -1; AMat[5, 1] = 0; AMat[6, 1] = 0; AMat[7, 1] = 0; AMat[8, 1] = 0;
+            AMat[0, 2] = 1; AMat[1, 2] = 0; AMat[2, 2] = 0; AMat[3, 2] = 0; AMat[4, 2] = 0; AMat[5, 2] = 1; AMat[6, 2] = -1; AMat[7, 2] = 0; AMat[8, 2] = 0;
+            AMat[0, 3] = 1; AMat[1, 3] = 0; AMat[2, 3] = 0; AMat[3, 3] = 0; AMat[4, 3] = 0; AMat[5, 3] = 0; AMat[6, 3] = 0; AMat[7, 3] = 1; AMat[8, 3] = -1;
 
             var oldA = (double[,])AMat.Clone();
             var oldD = (double[,])DMat.Clone();
@@ -1465,11 +1481,15 @@ namespace Accord.Tests.Math
                 for (int j = 0; j < parts.Length; j++)
                 {
                     string prt = parts[j];
-                    double prtdbl = double.Parse(prt, System.Globalization.CultureInfo.GetCultureInfo("en-US"));
+                    double prtdbl = double.Parse(prt, CultureInfo.GetCultureInfo("en-US"));
                     v[i, j] = prtdbl;
                 }
             }
+#if NETCORE
+            reader.Dispose();
+#else
             reader.Close();
+#endif
             return v;
         }
 
@@ -1487,11 +1507,240 @@ namespace Accord.Tests.Math
             for (int i = 0; i < str.Count; i++)
             {
                 parts = str[i].Split(sep);
-                double prtdbl = double.Parse(parts[0], System.Globalization.CultureInfo.GetCultureInfo("en-US"));
+                double prtdbl = double.Parse(parts[0], CultureInfo.GetCultureInfo("en-US"));
                 v[i] = prtdbl;
             }
+#if NETCORE
+            reader.Dispose();
+#else
             reader.Close();
+#endif
             return v;
+        }
+
+
+
+
+        [Test]
+        public void GoldfarbIdnani4()
+        {
+            // https://github.com/accord-net/framework/issues/171
+
+            int n = 21;
+            var Q = Matrix.Diagonal(n, 2.0);
+            var d = Vector.Create(3132.0, 6264, 15660, 18792, 21924, 6264, 18792, 21924, 9396, 3132, 12528, 6264, 9396, 18792, 21924, 9396, 3132, 3132, 6264, 15660, 18792);
+
+            int m = 44;
+
+            double[] b =
+            {
+                703.999,
+                -704.001,
+                1267.999,
+                -1268.001,
+                1565.999,
+                -1566.001,
+                471.999,
+                -472.001,
+                1425.999,
+                -1426.001,
+                -107.001,
+                -1164.001,
+                -57.001,
+                -311.001,
+                -1433.001,
+                -0.001,
+                -0.001,
+                -788.001,
+                -472.001,
+                -850.001,
+                -273.001,
+                -0.001, -0.001, -0.001, -0.001,
+                -0.001, -0.001, -0.001, -0.001, -0.001,
+                -0.001, -0.001, -0.001, -0.001, -0.001,
+                -0.001, -0.001, -0.001, -0.001, -0.001,
+                -0.001, -0.001, -0.001, -0.001
+            };
+
+            var A = Matrix.Create(m, n,
+                 1.0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1,
+                 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0,
+                -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 
+                 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 0,
+                 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 0, 
+                 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, 
+                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1);
+
+
+            var solver = new GoldfarbIdnani(Q, d, A, b, 0);
+
+            //for (int i = 0; i < solver.ConstraintTolerances.Length; i++)
+            //    solver.ConstraintTolerances[i] = 1e-1;
+
+            Assert.IsTrue(solver.Minimize());
+
+            QuadraticObjectiveFunction f = new QuadraticObjectiveFunction(Q, d);
+            f.Function(solver.Solution);
+
+            var constraints = LinearConstraintCollection.Create(A, b, 0);
+
+            double[] violation = constraints.Apply(x => x.GetViolation(solver.Solution));
+        }
+
+        [Test]
+        public void GoldfarbIdnaniMinimizeWithEqualityTest2()
+        {
+            // This test reproduces Issue #171 at GitHub
+            // Solve the following optimization problem:
+            //
+            //  min f(x) = a² + b² + c² + d² + e² + f² + 10a + 10b + 30c + 20d + 30e + 20f
+            // 
+            //  s.t.                  a == 4
+            //                b + c + d == 5
+            //                    e + f == 1
+            //                    a + b <= 7
+            //                    c + e <= 1
+            //                    d + f <= 2
+            //                        a >= 0
+            //                        b >= 0
+            //                        c >= 0
+            //                        d >= 0
+            //                        e >= 0
+            //                        f >= 0
+
+            double[,] A =
+            {
+                    { 1,0,0,0,0,0,},
+                    { 0,1,1,1,0,0,},
+                    { 0,0,0,0,1,1,},
+                    { -1,-1,0,0,0,0,},
+                    { 0,0,-1,0,-1,0,},
+                    { 0,0,0,-1,0,-1,},
+                    { 1,0,0,0,0,0,},
+                    { 0,1,0,0,0,0,},
+                    { 0,0,1,0,0,0,},
+                    { 0,0,0,1,0,0,},
+                    { 0,0,0,0,1,0,},
+                    { 0,0,0,0,0,1 },
+            };
+
+            double[] b =
+            {
+                4,5,1,-7,-1,-2,0,0,0,0,0,0
+            };
+
+            double[,] Q =
+            {
+                {  2,  0,  0,  0,  0,  0},
+                {  0,  2,  0,  0,  0,  0},
+                {  0,  0,  2,  0,  0,  0},
+                {  0,  0,  0,  2,  0,  0},
+                {  0,  0,  0,  0,  2,  0},
+                {  0,  0,  0,  0,  0,  2 },
+            };
+
+            double[] d =
+            {
+                10,10,30,20,30,20
+            };
+
+            GoldfarbIdnani target = new GoldfarbIdnani(Q, d, A, b, 3);
+            var tolerance = 0.001;
+            target.ConstraintTolerances.ApplyInPlace(a => tolerance);
+
+            Assert.IsTrue(target.Minimize());
+            double[] solution = target.Solution;
+
+            Assert.AreEqual(4, solution[0], tolerance);
+            Assert.AreEqual(3, solution[1], tolerance);
+            Assert.AreEqual(0.75, solution[2], tolerance);
+            Assert.AreEqual(1.25, solution[3], tolerance);
+            Assert.AreEqual(0.25, solution[4], tolerance);
+            Assert.AreEqual(0.75, solution[5], tolerance);
+        }
+
+        [Test, Ignore("Same problem happens in R")]
+        public void GoldfarbIdnaniMinimizeUnfeasible()
+        {
+            /*
+                install.packages('quadprog')
+                library('quadprog')
+                 A = as.matrix(read.csv('C:\\Projects\\Accord.NET\\framework\\Unit Tests\\Accord.Tests.Math\\Resources\\unfeasible_qp_1\\unf_1_constraintMat.csv', header = FALSE))
+                 b = as.matrix(read.csv('C:\\Projects\\Accord.NET\\framework\\Unit Tests\\Accord.Tests.Math\\Resources\\unfeasible_qp_1\\unf_1_constraintValues.csv', header = FALSE))
+                 Q = as.matrix(read.csv('C:\\Projects\\Accord.NET\\framework\\Unit Tests\\Accord.Tests.Math\\Resources\\unfeasible_qp_1\\unf_1_quadTerms.csv', header = FALSE))
+                 d = as.matrix(read.csv('C:\\Projects\\Accord.NET\\framework\\Unit Tests\\Accord.Tests.Math\\Resources\\unfeasible_qp_1\\unf_1_linTerms.csv', header = FALSE))
+                 solve.QP(Q, d, t(A), b)
+            */
+
+
+            var A = CsvReader.FromText(Resources.unf_1_constraintMat, hasHeaders: false).ToMatrix();
+            double[] b = CsvReader.FromText(Resources.unf_1_constraintValues, hasHeaders: false).ToMatrix().GetRow(0);
+
+            var Q = CsvReader.FromText(Resources.unf_1_quadTerms, hasHeaders: false).ToMatrix();
+            double[] d = CsvReader.FromText(Resources.unf_1_linTerms, hasHeaders: false).ToMatrix().GetRow(0);
+
+            Assert.IsTrue(Q.IsSymmetric());
+
+            GoldfarbIdnani target = new GoldfarbIdnani(Q, d, A, b);
+            Assert.AreEqual(12, target.NumberOfConstraints);
+            Assert.AreEqual(0, target.NumberOfEqualities);
+            Assert.AreEqual(32, target.NumberOfVariables);
+
+            Assert.IsTrue(target.Minimize());
+            double[] solution = target.Solution;
+
+            // Check:
+            // minimize 1 / 2 * x ^ T D x +d ^ T x
+            //       where   A1 x  = b1
+            //               A2 x >= b2
+
+            double[] error = solution.Multiply(A).Subtract(b);
+
+            double tolerance = 1e-10;
+
+            Assert.AreEqual(4, solution[0], tolerance);
+            Assert.AreEqual(3, solution[1], tolerance);
+            Assert.AreEqual(0.75, solution[2], tolerance);
+            Assert.AreEqual(1.25, solution[3], tolerance);
+            Assert.AreEqual(0.25, solution[4], tolerance);
+            Assert.AreEqual(0.75, solution[5], tolerance);
         }
     }
 }

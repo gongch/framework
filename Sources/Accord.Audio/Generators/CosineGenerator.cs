@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -86,6 +86,7 @@ namespace Accord.Audio.Generators
             this.Frequency = frequency;
             this.Amplitude = amplitude;
             this.Format = SampleFormat.Format32BitIeeeFloat;
+            this.SamplingRate = samplingRate;
             this.Channels = 1;
 
             this.theta = 2.0 * Math.PI * frequency / samplingRate;
@@ -95,27 +96,30 @@ namespace Accord.Audio.Generators
         ///   Generates a signal.
         /// </summary>
         /// 
-        public unsafe Signal Generate(int samples)
+        public Signal Generate(int samples)
         {
             Signal signal = new Signal(Channels, samples, SamplingRate, Format);
 
-            if (Format == SampleFormat.Format32BitIeeeFloat)
+            unsafe
             {
-                var dst = (float*)signal.Data.ToPointer();
-                for (int i = 0; i < signal.Samples; i++)
-                    for (int c = 0; c < signal.Channels; c++, dst++)
-                        *dst = (float)(Amplitude * Math.Cos(i * theta));
-            }
-            else if (Format == SampleFormat.Format64BitIeeeFloat)
-            {
-                var dst = (double*)signal.Data.ToPointer();
-                for (int i = 0; i < signal.Samples; i++)
-                    for (int c = 0; c < signal.Channels; c++, dst++)
-                        *dst = (Amplitude * Math.Cos(i * theta));
-            }
-            else
-            {
-                throw new UnsupportedSampleFormatException("Sample format is not supported by the filter.");
+                if (Format == SampleFormat.Format32BitIeeeFloat)
+                {
+                    var dst = (float*)signal.Data.ToPointer();
+                    for (int i = 0; i < signal.Samples; i++)
+                        for (int c = 0; c < signal.Channels; c++, dst++)
+                            *dst = (float)(Amplitude * Math.Cos(i * theta));
+                }
+                else if (Format == SampleFormat.Format64BitIeeeFloat)
+                {
+                    var dst = (double*)signal.Data.ToPointer();
+                    for (int i = 0; i < signal.Samples; i++)
+                        for (int c = 0; c < signal.Channels; c++, dst++)
+                            *dst = (Amplitude * Math.Cos(i * theta));
+                }
+                else
+                {
+                    throw new UnsupportedSampleFormatException("Sample format is not supported by the filter.");
+                }
             }
 
             return signal;

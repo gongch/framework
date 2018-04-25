@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,29 +24,13 @@ namespace Accord.Tests.MachineLearning
 {
     using Accord.MachineLearning.DecisionTrees;
     using Accord.MachineLearning.DecisionTrees.Rules;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class DecisionRuleTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void IsInconsistentTest()
         {
             var a1 = new Antecedent(0, ComparisonKind.Equal, 1.0);
@@ -64,7 +48,7 @@ namespace Accord.Tests.MachineLearning
             Assert.IsFalse(a13);
         }
 
-        [TestMethod()]
+        [Test]
         public void AntecedentTest()
         {
             var a1 = new Antecedent(0, ComparisonKind.Equal, 1.0);

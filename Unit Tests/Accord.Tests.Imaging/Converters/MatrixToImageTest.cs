@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,32 +25,19 @@ namespace Accord.Tests.Imaging
     using System.Drawing;
     using Accord.Imaging.Converters;
     using AForge;
-    using AForge.Imaging;
-    using AForge.Imaging.Filters;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Accord.Imaging;
+    using Accord.Imaging.Filters;
+    using NUnit.Framework;
+    using Accord.Tests.Imaging.Properties;
+#if NO_BITMAP
+    using Resources = Accord.Tests.Imaging.Properties.Resources_Standard;
+#endif
 
-    [TestClass()]
+    [TestFixture]
     public class MatrixToImageTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void MatrixToImageConstructorTest()
         {
             MatrixToImage target = new MatrixToImage();
@@ -58,7 +45,7 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(1, target.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void MatrixToImageConstructorTest1()
         {
             double min = -100;
@@ -67,7 +54,7 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(min, target.Min);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest()
         {
             MatrixToImage target = new MatrixToImage(min: 0, max: 128);
@@ -92,7 +79,7 @@ namespace Accord.Tests.Imaging
 
 
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest1()
         {
             MatrixToImage target = new MatrixToImage();
@@ -110,7 +97,7 @@ namespace Accord.Tests.Imaging
                  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // 8
                  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // 9
                  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // 10
-                 { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // 11
+                 { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // 11new Bitmap(Properties
                  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // 12
                  { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 }, // 13
                  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // 14
@@ -126,7 +113,7 @@ namespace Accord.Tests.Imaging
             c.Convert(imageActual, out actual);
 
             double[,] expected;
-            Bitmap imageExpected = Properties.Resources.image1;
+            Bitmap imageExpected = Accord.Imaging.Image.Clone(Resources.image1);
             new Threshold().ApplyInPlace(imageExpected);
             new Invert().ApplyInPlace(imageExpected);
             c.Convert(imageExpected, out expected);
@@ -137,7 +124,7 @@ namespace Accord.Tests.Imaging
                     Assert.AreEqual(actual[i, j], expected[i, j]);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest2()
         {
             // Create a matrix representation 

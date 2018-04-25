@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -27,9 +27,9 @@ namespace Accord.Tests.Statistics
     using Accord.Statistics;
     using Accord.Statistics.Testing;
     using Accord.Statistics.Testing.Power;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class TTestPowerAnalysisTest
     {
 
@@ -51,7 +51,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void TTestPowerAnalysisConstructorTest4()
         {
             // Example from http://www.ats.ucla.edu/stat/stata/dae/t_test_power2.htm,
@@ -101,7 +101,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void TTestPowerAnalysisConstructorTest()
         {
             // Let's say we have two samples, and we would like to know whether those
@@ -282,7 +282,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void TTestPowerAnalysisConstructorTest2()
         {
             // Example from R's graphical manual
@@ -338,7 +338,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-6);
         }
 
-        [TestMethod()]
+        [Test]
         public void TTestPowerAnalysisConstructorTest3()
         {
             // Examples from R's graphical manual
@@ -392,7 +392,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void TTestPowerAnalysisConstructorTest7()
         {
             // When creating a power analysis, we have three things we can
@@ -438,7 +438,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.33167864622935495, power);
         }
 
-        [TestMethod()]
+        [Test]
         public void TTestPowerAnalysisConstructorTest5()
         {
             var analysis = new TwoSampleTTestPowerAnalysis(TwoSampleHypothesis.ValuesAreDifferent);
@@ -447,7 +447,7 @@ namespace Accord.Tests.Statistics
             analysis.Power = 0.95;
             analysis.ComputeSize();
 
-            Assert.AreEqual(0.12207248549844732, analysis.Size);
+            Assert.AreEqual(0.12207248549844732, analysis.Size, 1e-10);
             Assert.AreEqual(2, analysis.Samples1);
             Assert.AreEqual(2, analysis.Samples2);
         }

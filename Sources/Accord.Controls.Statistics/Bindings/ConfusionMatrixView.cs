@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -105,7 +105,7 @@ namespace Accord.Controls
         {
             this.Matrix = matrix;
 
-            int classes = matrix.Classes;
+            int classes = matrix.NumberOfClasses;
 
             rows = new ConfusionMatrixRowView[classes + 1];
             RowNames = new String[classes + 1];

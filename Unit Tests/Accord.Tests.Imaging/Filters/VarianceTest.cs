@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -26,50 +26,39 @@ namespace Accord.Tests.Imaging
     using Accord.Imaging.Converters;
     using Accord.Imaging.Filters;
     using Accord.Math;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Drawing.Imaging;
+    using Accord.Tests.Imaging.Properties;
+#if NO_BITMAP
+    using Resources = Accord.Tests.Imaging.Properties.Resources_Standard;
+#endif
 
-    [TestClass]
+    [TestFixture]
     public class VarianceFilterTest
     {
 
-        private TestContext testContextInstance;
 
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void VarianceTest1()
         {
-            Bitmap image = Properties.Resources.lena512;
+            Bitmap image = Accord.Imaging.Image.Clone(Resources.lena512);
             Variance variance = new Variance();
             Bitmap result = variance.Apply(image);
             Assert.IsNotNull(result);
         }
 
-        [TestMethod()]
+        [Test]
+        [Category("Slow")]
         public void VarianceColorRotate()
         {
-            Bitmap image = Properties.Resources.wiki_flower;
-            Bitmap expected = Properties.Resources.variance_color_expected;
+            Bitmap image = Accord.Imaging.Image.Clone(Resources.wiki_flower);
+            Bitmap expected = Accord.Imaging.Image.Clone(Resources.variance_color_expected);
 
             bool answer = ImageUtils.RotateTest32bpp(new Variance(), image, expected);
             Assert.IsTrue(answer);
         }
 
-        [TestMethod]
+        [Test]
         public void ProcessImageTest()
         {
             double[,] diag = Matrix.Magic(5);

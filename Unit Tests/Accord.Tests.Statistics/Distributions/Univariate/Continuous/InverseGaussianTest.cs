@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,30 +23,14 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class InverseGaussianTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest2()
         {
             var invGaussian = new InverseGaussianDistribution(mean: 0.42, shape: 1.2);
@@ -91,9 +75,15 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1.2855706686397079, range2.Max);
             Assert.AreEqual(0.10646291322190739, range3.Min);
             Assert.AreEqual(1.2855706686397079, range3.Max);
+
+            Assert.AreEqual(0, invGaussian.Support.Min);
+            Assert.AreEqual(double.PositiveInfinity, invGaussian.Support.Max);
+
+            Assert.AreEqual(invGaussian.InverseDistributionFunction(0), invGaussian.Support.Min);
+            Assert.AreEqual(invGaussian.InverseDistributionFunction(1), invGaussian.Support.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             InverseGaussianDistribution g = new InverseGaussianDistribution(1.2, 4.2);
@@ -104,7 +94,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.64142698058981851, g.StandardDeviation);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityFunctionTest()
         {
             InverseGaussianDistribution g = new InverseGaussianDistribution(1.2, 4.2);
@@ -115,7 +105,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-6);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityFunctionTest2()
         {
             InverseGaussianDistribution g = new InverseGaussianDistribution(4.1, 1.2);
@@ -136,7 +126,7 @@ namespace Accord.Tests.Statistics
             
         }
 
-        [TestMethod()]
+        [Test]
         public void CumulativeFunctionTest()
         {
             InverseGaussianDistribution g = new InverseGaussianDistribution(1.2, 4.2);
@@ -148,7 +138,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(double.IsNaN(actual));
         }
 
-        [TestMethod()]
+        [Test]
         public void CumulativeFunctionTest2()
         {
             InverseGaussianDistribution g = new InverseGaussianDistribution(4.1, 1.2);
@@ -168,7 +158,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             InverseGaussianDistribution target = new InverseGaussianDistribution(6, 2);
@@ -176,7 +166,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(target.Median, target.InverseDistributionFunction(0.5));
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest()
         {
             InverseGaussianDistribution target = new InverseGaussianDistribution(1, 1);
@@ -190,36 +180,54 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1, actual.Shape, 0.01);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest2()
         {
             Accord.Math.Tools.SetupGenerator(0);
 
             InverseGaussianDistribution target = new InverseGaussianDistribution(5, 2);
 
-            double[] samples = target.Generate(1000000);
+            double[] samples = target.Generate(10000000);
 
             var actual = InverseGaussianDistribution.Estimate(samples);
             actual.Fit(samples);
 
-            Assert.AreEqual(5, actual.Mean, 0.01);
-            Assert.AreEqual(2, actual.Shape, 0.01);
+            Assert.AreEqual(5, actual.Mean, 1e-3);
+            Assert.AreEqual(2, actual.Shape, 1e-3);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest3()
         {
+            Accord.Math.Random.Generator.Seed = 0;
             InverseGaussianDistribution target = new InverseGaussianDistribution(4, 2);
 
-            double[] samples = new double[1000000];
+            double[] samples = new double[10000000];
             for (int i = 0; i < samples.Length; i++)
                 samples[i] = target.Generate();
 
             var actual = InverseGaussianDistribution.Estimate(samples);
             actual.Fit(samples);
 
-            Assert.AreEqual(4, actual.Mean, 0.01);
-            Assert.AreEqual(2, actual.Shape, 0.01);
+            Assert.AreEqual(4, actual.Mean, 1e-2);
+            Assert.AreEqual(2, actual.Shape, 1e-3);
+        }
+
+        [Test]
+        public void GenerateTest4()
+        {
+            Accord.Math.Random.Generator.Seed = 0;
+            InverseGaussianDistribution target = new InverseGaussianDistribution(0.4, 0.2);
+
+            double[] samples = new double[10000000];
+            for (int i = 0; i < samples.Length; i++)
+                samples[i] = target.Generate();
+
+            var actual = InverseGaussianDistribution.Estimate(samples);
+            actual.Fit(samples);
+
+            Assert.AreEqual(0.4, actual.Mean, 1e-3);
+            Assert.AreEqual(0.2, actual.Shape, 1e-3);
         }
 
     }

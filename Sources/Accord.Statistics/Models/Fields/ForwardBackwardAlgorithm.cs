@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -48,9 +48,9 @@ namespace Accord.Statistics.Models.Fields
             double s = 0;
 
             // Ensures minimum requirements
-            System.Diagnostics.Debug.Assert(fwd.GetLength(0) >= T);
-            System.Diagnostics.Debug.Assert(fwd.GetLength(1) == states);
-            System.Diagnostics.Debug.Assert(scaling.Length >= T);
+            Accord.Diagnostics.Debug.Assert(fwd.GetLength(0) >= T);
+            Accord.Diagnostics.Debug.Assert(fwd.GetLength(1) == states);
+            Accord.Diagnostics.Debug.Assert(scaling.Length >= T);
             Array.Clear(fwd, 0, fwd.Length);
 
 
@@ -99,9 +99,20 @@ namespace Accord.Statistics.Models.Fields
             TObservation[] observations, int output = 0)
         {
             int states = function.States;
+            double[,] fwd = new double[observations.Length, states];
+            return Forward(function, observations, fwd, output);
+        }
 
+        /// <summary>
+        ///   Computes Forward probabilities for a given potential function and a set of observations.
+        /// </summary>
+        /// 
+        public static double[,] Forward<TObservation>(FactorPotential<TObservation> function,
+            TObservation[] observations, double[,] fwd, int output = 0)
+        {
+            int states = function.States;
             int T = observations.Length;
-            double[,] fwd = new double[T, states];
+            Array.Clear(fwd, 0, fwd.Length);
 
             // 1. Initialization
             for (int i = 0; i < states; i++)
@@ -189,8 +200,8 @@ namespace Accord.Statistics.Models.Fields
             int T = observations.Length;
 
             // Ensures minimum requirements
-            System.Diagnostics.Debug.Assert(bwd.GetLength(0) >= T);
-            System.Diagnostics.Debug.Assert(bwd.GetLength(1) == states);
+            Accord.Diagnostics.Debug.Assert(bwd.GetLength(0) >= T);
+            Accord.Diagnostics.Debug.Assert(bwd.GetLength(1) == states);
             Array.Clear(bwd, 0, bwd.Length);
 
             // For backward variables, we use the same scale factors
@@ -222,9 +233,22 @@ namespace Accord.Statistics.Models.Fields
             TObservation[] observations, int output = 0)
         {
             int states = function.States;
-
             int T = observations.Length;
             double[,] bwd = new double[T, states];
+            return Backward(function, observations, bwd, output)
+;
+        }
+
+        /// <summary>
+        ///   Computes Backward probabilities for a given potential function and a set of observations.
+        /// </summary>
+        /// 
+        public static double[,] Backward<TObservation>(FactorPotential<TObservation> function,
+            TObservation[] observations, double[,] bwd, int output = 0)
+        {
+            int states = function.States;
+            int T = observations.Length;
+            Array.Clear(bwd, 0, bwd.Length);
 
             // 1. Initialization
             for (int i = 0; i < states; i++)
@@ -289,8 +313,8 @@ namespace Accord.Statistics.Models.Fields
             int T = observations.Length;
 
             // Ensures minimum requirements
-            System.Diagnostics.Debug.Assert(lnFwd.GetLength(0) >= T);
-            System.Diagnostics.Debug.Assert(lnFwd.GetLength(1) == states);
+            Accord.Diagnostics.Debug.Assert(lnFwd.GetLength(0) >= T);
+            Accord.Diagnostics.Debug.Assert(lnFwd.GetLength(1) == states);
             Array.Clear(lnFwd, 0, lnFwd.Length);
 
 
@@ -341,7 +365,7 @@ namespace Accord.Statistics.Models.Fields
             for (int j = 0; j < states; j++)
                 logLikelihood = Special.LogSum(logLikelihood, lnFwd[T - 1, j]);
 
-            System.Diagnostics.Debug.Assert(!Double.IsNaN(logLikelihood));
+            Accord.Diagnostics.Debug.Assert(!Double.IsNaN(logLikelihood));
 
             return lnFwd;
         }
@@ -359,8 +383,8 @@ namespace Accord.Statistics.Models.Fields
             int T = observations.Length;
 
             // Ensures minimum requirements
-            System.Diagnostics.Debug.Assert(lnBwd.GetLength(0) >= T);
-            System.Diagnostics.Debug.Assert(lnBwd.GetLength(1) == states);
+            Accord.Diagnostics.Debug.Assert(lnBwd.GetLength(0) >= T);
+            Accord.Diagnostics.Debug.Assert(lnBwd.GetLength(1) == states);
             Array.Clear(lnBwd, 0, lnBwd.Length);
 
             // 1. Initialization

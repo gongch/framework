@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,26 +22,66 @@
 
 namespace Accord.Statistics.Distributions
 {
+    using Accord.Math.Random;
+    using System;
 
     /// <summary>
     ///   Common interface for sampleable distributions (i.e. distributions that
-    ///   allow the generation of new samples through the <see cref="Generate()"/>
+    ///   allow the generation of new samples through the <see cref="IRandomNumberGenerator{T}.Generate()"/>
     ///   method.
     /// </summary>
     /// 
     /// <typeparam name="TObservations">The type of the observations, such as <see cref="System.Double"/>.</typeparam>
     /// 
-    public interface ISampleableDistribution<out TObservations> : IDistribution
+    public interface ISampleableDistribution<TObservations> : IDistribution<TObservations>,
+        IRandomNumberGenerator<TObservations>
     {
+        /// <summary>
+        ///   Generates a random observation from the current distribution.
+        /// </summary>
+        /// 
+        /// <param name="result">The location where to store the sample.</param>
+        /// 
+        /// <returns>A random observation drawn from this distribution.</returns>
+        /// 
+        TObservations Generate(TObservations result);
+
+        /// <summary>
+        ///   Generates a random observation from the current distribution.
+        /// </summary>
+        /// 
+        /// <param name="result">The location where to store the sample.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        /// 
+        /// <returns>A random observation drawn from this distribution.</returns>
+        /// 
+        TObservations Generate(TObservations result, Random source);
 
         /// <summary>
         ///   Generates a random vector of observations from the current distribution.
         /// </summary>
         /// 
         /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        /// 
         /// <returns>A random vector of observations drawn from this distribution.</returns>
         /// 
-        TObservations[] Generate(int samples);
+        TObservations[] Generate(int samples, Random source);
+
+        /// <summary>
+        ///   Generates a random vector of observations from the current distribution.
+        /// </summary>
+        /// 
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        /// 
+        /// <returns>A random vector of observations drawn from this distribution.</returns>
+        /// 
+        TObservations[] Generate(int samples, TObservations[] result, Random source);
 
         /// <summary>
         ///   Generates a random observation from the current distribution.
@@ -49,7 +89,6 @@ namespace Accord.Statistics.Distributions
         /// 
         /// <returns>A random observations drawn from this distribution.</returns>
         /// 
-        TObservations Generate();
-
+        TObservations Generate(Random source);
     }
 }

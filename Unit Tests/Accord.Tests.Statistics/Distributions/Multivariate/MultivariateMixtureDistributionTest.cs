@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -22,19 +22,20 @@
 
 namespace Accord.Tests.Statistics
 {
-    using Accord.Statistics.Distributions.Multivariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Accord.Math;
     using Accord.IO;
+    using Accord.Math;
+    using Accord.Statistics;
+    using Accord.Statistics.Distributions.Multivariate;
     using Accord.Tests.Statistics.Properties;
-    using System.IO;
+    using NUnit.Framework;
     using System.Data;
+    using System.IO;
 
-    [TestClass()]
+    [TestFixture]
     public class MultivariateMixtureDistributionTest
     {
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest1()
         {
             MultivariateNormalDistribution[] components = new MultivariateNormalDistribution[2];
@@ -49,7 +50,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(components, mixture.Components);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest()
         {
             MultivariateNormalDistribution[] components = new MultivariateNormalDistribution[2];
@@ -70,7 +71,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTestPerComponent()
         {
             MultivariateNormalDistribution[] components = new MultivariateNormalDistribution[2];
@@ -91,7 +92,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTestPerComponent()
         {
             MultivariateNormalDistribution[] components = new MultivariateNormalDistribution[2];
@@ -112,7 +113,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionTest()
         {
             MultivariateNormalDistribution[] components = new MultivariateNormalDistribution[2];
@@ -134,7 +135,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(double.IsNaN(actual));
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionTestPerComponent()
         {
             MultivariateNormalDistribution[] components = new MultivariateNormalDistribution[2];
@@ -156,7 +157,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(double.IsNaN(actual));
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest()
         {
             double[] coefficients = { 0.50, 0.50 };
@@ -186,19 +187,19 @@ namespace Accord.Tests.Statistics
             target.Fit(values);
 
 
-            var mean1 = Accord.Statistics.Tools.Mean(part1);
-            var var1 = Accord.Statistics.Tools.Variance(part1);
+            var mean1 = Measures.Mean(part1, dimension: 0);
+            var var1 = Measures.Variance(part1);
             Assert.AreEqual(mean1[0], target.Components[0].Mean[0], 1e-5);
             Assert.AreEqual(var1[0], target.Components[0].Variance[0], 1e-5);
 
-            var mean2 = Accord.Statistics.Tools.Mean(part2);
-            var var2 = Accord.Statistics.Tools.Variance(part2);
+            var mean2 = Measures.Mean(part2, dimension: 0);
+            var var2 = Measures.Variance(part2);
             Assert.AreEqual(mean2[0], target.Components[1].Mean[0], 1e-5);
             Assert.AreEqual(var2[0], target.Components[1].Variance[0], 1e-5);
 
 
-            var expectedMean = Accord.Statistics.Tools.Mean(values);
-            var expectedVar = Accord.Statistics.Tools.Covariance(values);
+            var expectedMean = Measures.Mean(values, dimension: 0);
+            var expectedVar = Measures.Covariance(values);
 
             var actualMean = target.Mean;
             var actualVar = target.Covariance;
@@ -207,7 +208,7 @@ namespace Accord.Tests.Statistics
             // Assert.AreEqual(expectedVar[0, 0], actualVar[0, 0], 0.0000001);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest2()
         {
             double[] coefficients = { 0.50, 0.50 };
@@ -238,19 +239,19 @@ namespace Accord.Tests.Statistics
 
             target.Fit(values, weights);
 
-            var mean1 = Accord.Statistics.Tools.Mean(part1);
-            var var1 = Accord.Statistics.Tools.Variance(part1);
+            var mean1 = Measures.Mean(part1, dimension: 0);
+            var var1 = Measures.Variance(part1);
             Assert.AreEqual(mean1[0], target.Components[0].Mean[0], 1e-5);
             Assert.AreEqual(var1[0], target.Components[0].Variance[0], 1e-5);
 
-            var mean2 = Accord.Statistics.Tools.Mean(part2);
-            var var2 = Accord.Statistics.Tools.Variance(part2);
+            var mean2 = Measures.Mean(part2, dimension: 0);
+            var var2 = Measures.Variance(part2);
             Assert.AreEqual(mean2[0], target.Components[1].Mean[0], 1e-5);
             Assert.AreEqual(var2[0], target.Components[1].Variance[0], 1e-5);
 
 
-            var expectedMean = Accord.Statistics.Tools.WeightedMean(values, weights);
-            var expectedVar = Accord.Statistics.Tools.WeightedCovariance(values, weights);
+            var expectedMean = Measures.WeightedMean(values, weights);
+            var expectedVar = Measures.WeightedCovariance(values, weights);
 
             var actualMean = target.Mean;
             var actualVar = target.Covariance;
@@ -259,7 +260,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expectedVar[0, 0], actualVar[0, 0], 0.68);
         }
 
-        [TestMethod]
+        [Test]
         public void MixtureWeightsFitTest()
         {
             // Randomly initialize some mixture components
@@ -274,7 +275,7 @@ namespace Accord.Tests.Statistics
             // set. Those will be the input points:
 
             double[][] points = new double[] { 0, 3, 1, 7, 3, 5, 1, 2, -1, 2, 7, 6, 8, 6 } // (14 points)
-                .ToArray();
+                .ToJagged();
 
             // And those are their respective unnormalized weights:
             double[] weights = { 1, 1, 1, 2, 2, 1, 1, 1, 2, 1, 2, 3, 1, 1 }; // (14 weights)
@@ -315,18 +316,20 @@ namespace Accord.Tests.Statistics
  */ 
         }
 
-        [TestMethod]
+#if !NO_EXCEL
+        [Test]
+        [Category("Office")]
         public void MixtureWeightsFitTest2()
         {
-            MemoryStream stream = new MemoryStream(Resources.CircleWithWeights);
+            string path = Path.Combine(TestContext.CurrentContext.TestDirectory, "Resources", "CircleWithWeights.xls");
 
-            ExcelReader reader = new ExcelReader(stream, xlsx: false);
+            ExcelReader reader = new ExcelReader(path);
 
             DataTable table = reader.GetWorksheet("Sheet1");
 
             double[,] matrix = table.ToMatrix();
 
-            double[][] points = matrix.Submatrix(null, 0, 1).ToArray();
+            double[][] points = matrix.Submatrix(null, 0, 1).ToJagged();
             double[] weights = matrix.GetColumn(2);
 
             // Randomly initialize some mixture components
@@ -350,6 +353,6 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.11814483652855159, mean10, 1e-10);
             Assert.AreEqual(-0.12029275652994373, mean11, 1e-10);
         }
-
+#endif
     }
 }

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,35 +25,50 @@ namespace Accord.Tests.Imaging
     using System.Drawing;
     using Accord.Imaging;
     using Accord.Math;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Imaging.Converters;
     using System.Drawing.Imaging;
+    using Accord.DataSets;
 
-    [TestClass()]
+    [TestFixture]
     public class IntegralImage2Test
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
 #pragma warning disable 0618
 
-        [TestMethod()]
+        [Test]
+        public void lena_test()
+        {
+            string localPath = NUnit.Framework.TestContext.CurrentContext.TestDirectory;
+
+            #region doc_lena
+            // In this example, we will compute an integral image
+            // representation of Lena Söderberg's famous picture:
+            TestImages testImages = new TestImages(path: localPath);
+            Bitmap lena = testImages["lena.bmp"]; // get the image
+
+            // Create a new Integral Image (squared and tilted) from Lena's picture:
+            IntegralImage2 ii = IntegralImage2.FromBitmap(lena, computeTilted: true);
+
+            // Let's say we would like to get the summed area in the rectangular region
+            // delimited by pixel (34, 50) until pixels (60, 105). This is equivalent to
+            // the region under the rectangle (34, 50, 34+60, 50+105) = (34, 50, 94, 155):
+            long sum = ii.GetSum(34, 50, 94, 155); // this is the sum of values (1760032)
+
+            // Now let's say we would like to get the squared sum and tilted sum as well:
+            long ssum = ii.GetSum2(34, 50, 94, 155); // this is the sum of squared values (229508896)
+            long tsum = ii.GetSumT(34, 50, 94, 155); // this is the sum of tilted values (-593600)
+            #endregion
+
+            Assert.AreEqual(1760032, sum);
+            Assert.AreEqual(229508896, ssum);
+            Assert.AreEqual(-593600, tsum);
+        }
+
+        [Test]
         public void GetSumTest()
         {
-            byte[,] img = 
+            byte[,] img =
             {
                 { 01, 02, 03, 04, 05, 06, 07, 08, 09,  10 },
                 { 11, 12, 13, 14, 15, 16, 17, 18, 19,  20 },
@@ -68,7 +83,7 @@ namespace Accord.Tests.Imaging
             };
 
             // Create integral image
-            Bitmap bmp = Accord.Imaging.Tools.ToBitmap(img);
+            Bitmap bmp; new MatrixToImage().Convert(img, out bmp);
             IntegralImage2 ii = IntegralImage2.FromBitmap(bmp, 0, true);
 
 
@@ -81,7 +96,7 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void GetSumTest3()
         {
             // Example from Rainer Lienhart and Jochen Maydt:
@@ -89,7 +104,7 @@ namespace Accord.Tests.Imaging
 
             int x = 6, y = 2, h = 4, w = 6;
 
-            byte[,] img = 
+            byte[,] img =
             { //  0 1 2 3 4 5 6 7 8 9 A B C D E 
           /*0*/ { 9,9,9,9,9,9,9,9,9,9,9,9,9,9,9 },
           /*1*/ { 9,9,9,9,9,9,9,9,9,9,9,9,9,9,9 },
@@ -103,13 +118,13 @@ namespace Accord.Tests.Imaging
           /*9*/ { 9,9,9,9,9,9,1,1,1,1,9,9,9,9,9 },
           /*A*/ { 9,9,9,9,9,9,9,1,1,9,9,9,9,9,9 },
           /*B*/ { 9,9,9,9,9,9,9,9,9,9,9,9,9,9,9 },
-          /*C*/ { 9,9,9,9,9,9,9,9,9,9,9,9,9,9,9  },
+          /*C*/ { 9,9,9,9,9,9,9,9,9,9,9,9,9,9,9 },
             };
 
-            // -RSAT(x-1,y-1)         = [6-1,2-1]         = [ 5, 1]  => [ 1, 5] OK
-            // +RSAT(x+w-1,y+w-1)     = [6+6-1,2+6-1]     = [11, 7]  => [ 7,11] OK
-            // -RSAT(x+w-1-h,y+w-1+h) = [6+6-1-4,2+6-1+4] = [ 7,11]  => [11, 7] OK
-            // +RSAT(x-h-1, y+h-1)    = [6-4-1,2+4-1]     = [ 1, 5]  => [ 5, 1] OK
+            // -RSAT(x-1,y-1)         = [6-1,2-1]         = [ 5, 1]  => [ 1, 5]
+            // +RSAT(x+w-1,y+w-1)     = [6+6-1,2+6-1]     = [11, 7]  => [ 7,11]
+            // -RSAT(x+w-1-h,y+w-1+h) = [6+6-1-4,2+6-1+4] = [ 7,11]  => [11, 7]
+            // +RSAT(x-h-1, y+h-1)    = [6-4-1,2+4-1]     = [ 1, 5]  => [ 5, 1]
 
             // int sum = -iit[5,1] + iit[11,7] - iit[7,11] + iit[1,5];
 
@@ -141,10 +156,12 @@ namespace Accord.Tests.Imaging
 
         }
 
-        [TestMethod()]
+        [Test]
         public void GetSumTest2()
         {
-            byte[,] img = 
+            #region doc_sum
+            // Let's say we have the following image representation:
+            byte[,] img =
             {
                 { 5, 2, 3, 4, 1 },
                 { 1, 5, 4, 2, 3 },
@@ -153,9 +170,17 @@ namespace Accord.Tests.Imaging
                 { 4, 1, 3, 2, 6 },
             };
 
-            Bitmap bmp = Accord.Imaging.Tools.ToBitmap(img);
-            IntegralImage2 ii = IntegralImage2.FromBitmap(bmp, 0);
+            // Let's convert it to bitmap and 
+            // pretend it is our input image:
+            Bitmap bmp = img.ToBitmap();
 
+            // Now, create an integral image from this bitmap:
+            IntegralImage2 ii = IntegralImage2.FromBitmap(bmp);
+
+            // The sum-table would be:
+            long[,] actual = ii.Image;
+
+            // Which would be the same as:
             long[,] expected =
             {
                 { 0,  0,  0,  0,  0,  0 },
@@ -165,18 +190,17 @@ namespace Accord.Tests.Imaging
                 { 0, 11, 25, 39, 52, 65 },
                 { 0, 15, 30, 47, 62, 81 }
             };
+            #endregion
 
-
-            long[,] actual = ii.Image;
 
             Assert.IsTrue(Matrix.IsEqual(expected, actual));
 
         }
 
-        [TestMethod()]
+        [Test]
         public void GetSumTest4()
         {
-            byte[,] img = 
+            byte[,] img =
             {
                 { 1, 1, 1, 1, 1, 1 },
                 { 1, 1, 1, 1, 1, 1 },
@@ -192,7 +216,7 @@ namespace Accord.Tests.Imaging
             // http://software.intel.com/sites/products/documentation/hpc/ipp/ippi/ippi_ch11/functn_TiltedIntegral.html
             long[,] expected = tiltedIntegral3(img);
 
-            long[,] iit = 
+            long[,] iit =
             {
                 {  0,  0,  0,  0,  0,  0,  0 },
                 {  0,  0,  0,  0,  0,  0,  0 },
@@ -203,7 +227,7 @@ namespace Accord.Tests.Imaging
                 { 15, 19, 22, 24, 24, 22, 19 },
             };
 
-            long[,] iit2 = 
+            long[,] iit2 =
             {
                 {  1,  3,  6, 10, 15,  19,  0 },
                 {  1,  4,  8, 13, 18,  22,  0 },
@@ -213,7 +237,7 @@ namespace Accord.Tests.Imaging
                 {  0,  1,  3,  6, 10,  15,  0 },
             };
 
-            long[,] iit3 = 
+            long[,] iit3 =
             {
                 {  0, 0,  0,  1,  3,  6,  10,  15  },
                 {  0, 0,  1,  3,  6, 10,  15,  21  },
@@ -233,10 +257,10 @@ namespace Accord.Tests.Imaging
             Assert.IsTrue(Matrix.IsEqual(expected, actual));
         }
 
-        [TestMethod()]
+        [Test]
         public void ImageFormatsTest()
         {
-            byte[,] img = 
+            byte[,] img =
             {
                 { 5, 2, 3, 4, 1 },
                 { 1, 5, 4, 2, 3 },

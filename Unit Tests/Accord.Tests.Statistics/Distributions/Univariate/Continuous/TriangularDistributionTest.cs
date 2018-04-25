@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,34 +24,18 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Univariate;
     using Accord.Statistics;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
     using Accord.Math;
     using Accord.Statistics.Distributions.Multivariate;
     using System.Globalization;
 
-    [TestClass()]
+    [TestFixture]
     public class TriangularDistributionTest
     {
 
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ConstructorTest1()
         {
             var tri = new TriangularDistribution(min: 1, max: 6, mode: 3);
@@ -96,9 +80,15 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(5.6127016687540774, range2.Max);
             Assert.AreEqual(1.3162277235820532, range3.Min);
             Assert.AreEqual(5.6127016687540774, range3.Max);
+
+            Assert.AreEqual(1, tri.Support.Min);
+            Assert.AreEqual(6, tri.Support.Max);
+
+            Assert.AreEqual(tri.InverseDistributionFunction(0), tri.Support.Min);
+            Assert.AreEqual(tri.InverseDistributionFunction(1), tri.Support.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest1()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -122,7 +112,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(mode, target.Mode, 0.035);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest2()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -141,6 +131,15 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(min, target.Min, 1e-2);
             Assert.AreEqual(max, target.Max, 1e-2);
             Assert.AreEqual(mode, target.Mode, 0.035);
+        }
+
+        [Test]
+        public void ctor_test()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TriangularDistribution(min: 0, max: 0, mode: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TriangularDistribution(min: 1, max: 0, mode: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TriangularDistribution(min: 1, max: 0.5, mode: 1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => new TriangularDistribution(min: 1, max: 2.5, mode: 0));
         }
     }
 }

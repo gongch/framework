@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -27,17 +27,17 @@ namespace Accord.Tests.Statistics
     using Accord.Statistics.Distributions.Fitting;
     using Accord.Statistics.Distributions.Multivariate;
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class MultivariateNormalDistributionTest
     {
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest1()
         {
-            NormalDistribution normal = new NormalDistribution(4.2, 1.2);
-            MultivariateNormalDistribution target = new MultivariateNormalDistribution(new[] { 4.2 }, new[,] { { 1.2 * 1.2 } });
+            var normal = new NormalDistribution(4.2, 1.2);
+            var target = new MultivariateNormalDistribution(new[] { 4.2 }, new[,] { { 1.2 * 1.2 } });
 
             double[] mean = target.Mean;
             double[] median = target.Median;
@@ -73,7 +73,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1.0 - ecdf, eccdf);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest4()
         {
             // Create a multivariate Gaussian distribution 
@@ -125,14 +125,14 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.1, cov[0, 1]);
             Assert.AreEqual(0.1, cov[1, 0]);
             Assert.AreEqual(0.7, cov[1, 1]);
-            Assert.AreEqual(0.000000018917884164743237, pdf1);
-            Assert.AreEqual(0.35588127170858852, pdf2);
-            Assert.AreEqual(0.000000000036520107734505265, pdf3);
-            Assert.AreEqual(-24.033158110192296, lpdf);
-            Assert.AreEqual(0.033944035782101534, cdf);
+            Assert.AreEqual(0.000000018917884164743237, pdf1, 1e-10);
+            Assert.AreEqual(0.35588127170858852, pdf2, 1e-10);
+            Assert.AreEqual(0.000000000036520107734505265, pdf3, 1e-10);
+            Assert.AreEqual(-24.033158110192296, lpdf, 1e-10);
+            Assert.AreEqual(0.033944035782101534, cdf, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest()
         {
             double[] mean = { 1, -1 };
@@ -151,7 +151,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 0.00000001);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionTest()
         {
             double[] mean = { 1, -1 };
@@ -170,7 +170,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 0.00000001);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest2()
         {
             double[] mean = new double[64];
@@ -197,7 +197,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest3()
         {
             double[] mean = new double[3];
@@ -220,7 +220,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityFunctionTest4()
         {
             // https://code.google.com/p/accord/issues/detail?id=98
@@ -274,7 +274,7 @@ namespace Accord.Tests.Statistics
                 Assert.AreEqual(expected[i], actual[i], 1e-12);
         }
 
-        [TestMethod()]
+        [Test]
         public void CumulativeFunctionTest1()
         {
             // Comparison against dmvnorm from the mvtnorm R package
@@ -305,7 +305,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(0.27896707550525140507, ccdf, 1e-10);
         }
 
-        [TestMethod()]
+        [Test]
         public void CumulativeFunctionTest2()
         {
             double[] mean = { 4.2 };
@@ -339,7 +339,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             double[] mean = { 1, -1 };
@@ -359,7 +359,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2, target.Dimension);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest2()
         {
             double[] mean = { 1, -1 };
@@ -373,7 +373,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest3()
         {
             double[] mean = { 0, 0 };
@@ -392,7 +392,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void FitTest()
         {
             double[][] observations = 
@@ -403,8 +403,8 @@ namespace Accord.Tests.Statistics
                 new double[] { 2.0000,  0.3000 }
             };
 
-            double[] mean = Accord.Statistics.Tools.Mean(observations);
-            double[,] cov = Accord.Statistics.Tools.Covariance(observations);
+            double[] mean = Measures.Mean(observations, dimension: 0);
+            double[][] cov = Measures.Covariance(observations);
 
             {
                 var target = new MultivariateNormalDistribution(2);
@@ -429,7 +429,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest2()
         {
             double[][] observations = 
@@ -455,7 +455,7 @@ namespace Accord.Tests.Statistics
             target.Fit(observations, options);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest4()
         {
             double[][] observations = 
@@ -533,7 +533,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1.0, ccdf2);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest5()
         {
             double[][] observations = 
@@ -562,7 +562,7 @@ namespace Accord.Tests.Statistics
             checkDegenerate(target);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest3()
         {
             double[][] observations = 
@@ -592,7 +592,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(psd);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -603,19 +603,19 @@ namespace Accord.Tests.Statistics
 
             double[][] sample = normal.Generate(1000000);
 
-            double[] mean = sample.Mean();
-            double[,] cov = sample.Covariance();
+            double[] mean = sample.Mean(dimension: 0);
+            double[][] cov = sample.Covariance(dimension: 0);
 
             Assert.AreEqual(2, mean[0], 1e-2);
             Assert.AreEqual(6, mean[1], 1e-2);
 
-            Assert.AreEqual(2, cov[0, 0], 1e-2);
-            Assert.AreEqual(1, cov[0, 1], 1e-2);
-            Assert.AreEqual(1, cov[1, 0], 1e-2);
-            Assert.AreEqual(5, cov[1, 1], 2e-2);
+            Assert.AreEqual(2, cov[0][0], 1e-2);
+            Assert.AreEqual(1, cov[0][1], 1e-2);
+            Assert.AreEqual(1, cov[1][0], 1e-2);
+            Assert.AreEqual(5, cov[1][1], 2e-2);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest2()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -628,16 +628,16 @@ namespace Accord.Tests.Statistics
             for (int i = 0; i < sample.Length; i++)
                 sample[i] = normal.Generate();
 
-            double[] mean = sample.Mean();
-            double[,] cov = sample.Covariance();
+            double[] mean = sample.Mean(dimension: 0);
+            double[][] cov = sample.Covariance(dimension: 0);
 
             Assert.AreEqual(2, mean[0], 1e-2);
             Assert.AreEqual(6, mean[1], 1e-2);
 
-            Assert.AreEqual(2, cov[0, 0], 1e-2);
-            Assert.AreEqual(1, cov[0, 1], 1e-2);
-            Assert.AreEqual(1, cov[1, 0], 1e-2);
-            Assert.AreEqual(5, cov[1, 1], 2e-2);
+            Assert.AreEqual(2, cov[0][0], 1e-2);
+            Assert.AreEqual(1, cov[0][1], 1e-2);
+            Assert.AreEqual(1, cov[1][0], 1e-2);
+            Assert.AreEqual(5, cov[1][1], 2e-2);
         }
 
         #region public static resources

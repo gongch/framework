@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -28,14 +28,14 @@ namespace Accord.Tests.Statistics
     using Accord.Statistics.Models.Markov.Learning;
     using Accord.Statistics.Models.Markov.Topology;
     using Accord.Statistics.Running;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
 
-    [TestClass()]
+    [TestFixture]
     public class RunningMarkovModelTest
     {
 
-        [TestMethod()]
+        [Test]
         public void PushTest()
         {
             var hmm = createModel();
@@ -79,7 +79,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void PeekTest()
         {
             var hmm = createModel();
@@ -120,7 +120,7 @@ namespace Accord.Tests.Statistics
                 {
                     double actual = running.Peek(sequence[j]);
 
-                    double[][] window = sequence.Submatrix(2);
+                    double[][] window = sequence.First(2);
                     double expected = hmm.Evaluate(window.Concatenate(sequence[j]));
 
                     Assert.AreEqual(expected, actual);

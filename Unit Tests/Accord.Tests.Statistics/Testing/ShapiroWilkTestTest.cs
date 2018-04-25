@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,40 +25,43 @@ namespace Accord.Tests.Statistics
     using System;
     using Accord.Statistics.Distributions.Univariate;
     using Accord.Statistics.Testing;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class ShapiroWilkTestTest
     {
 
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ShapiroWilkTest()
         {
             // Tested against R's shapiro.test(x)
 
+            #region doc_test
+            // Let's say we would like to determine whether a set
+            // of observations come from a normal distribution:
             double[] samples =
             {
                 0.11, 7.87, 4.61, 10.14, 7.95, 3.14, 0.46, 4.43, 
                 0.21, 4.75, 0.71, 1.52, 3.24, 0.93, 0.42, 4.97,
                 9.53, 4.55, 0.47, 6.66 
             };
+
+            // For this, we can use the Shapiro-Wilk test. This test tests the null hypothesis 
+            // that samples come from a Normal distribution, vs. the alternative hypothesis that 
+            // the samples do not come from such distribution. In other words, should this test
+            // come out significant, it means our samples do not come from a Normal distribution.
+
+            // Create a new Shapiro-Wilk test:
+            var sw = new ShapiroWilkTest(samples);
+
+            double W = sw.Statistic; // should be 0.90050
+            double p = sw.PValue;    // should be 0.04209
+            bool significant = sw.Significant; // should be true
+
+            // The test is significant, therefore we should reject the null 
+            // hypothesis that the samples come from a Normal distribution. 
+            #endregion
 
             /* 
                 samples <- c(0.11, 7.87, 4.61, 10.14, 7.95, 3.14, 0.46, 4.43, 0.21,
@@ -69,13 +72,13 @@ namespace Accord.Tests.Statistics
                 W = 0.90050, p-value = 0.04209
              */
 
-            var target = new ShapiroWilkTest(samples);
 
-            Assert.AreEqual(0.90050, target.Statistic, 1e-4);
-            Assert.AreEqual(0.04209, target.PValue, 1e-5);
+            Assert.AreEqual(0.90050, W, 1e-4);
+            Assert.AreEqual(0.04209, p, 1e-5);
+            Assert.IsTrue(significant);
         }
 
-        [TestMethod()]
+        [Test]
         public void ShapiroWilkTest2()
         {
             // Tested against R's shapiro.test(x)

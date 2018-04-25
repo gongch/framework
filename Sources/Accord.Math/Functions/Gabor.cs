@@ -5,7 +5,7 @@
 // Copyright © Diego Catalano, 2013
 // diego.catalano at live.com
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -26,7 +26,8 @@
 namespace Accord.Math
 {
     using System;
-    using AForge.Math;
+    using Accord.Compat;
+    using System.Numerics;
 
     /// <summary>
     ///   Gabor kernel types.
@@ -189,11 +190,11 @@ namespace Accord.Math
                 Math.Abs(size * sigmaY * Math.Cos(theta)));
             int yMax = (int)Math.Ceiling(Math.Max(1, b));
 
-            int[] xValues = Matrix.Vector(-xMax, xMax, increment: 1);
-            int[] yValues = Matrix.Vector(-yMax, yMax, increment: 1);
+            int[] xValues = Vector.Interval(-xMax, xMax);
+            int[] yValues = Vector.Interval(-yMax, yMax);
 
-            System.Diagnostics.Debug.Assert(xValues.Length == (2 * xMax + 1));
-            System.Diagnostics.Debug.Assert(yValues.Length == (2 * yMax + 1));
+            Accord.Diagnostics.Debug.Assert(xValues.Length == (2 * xMax + 1));
+            Accord.Diagnostics.Debug.Assert(yValues.Length == (2 * yMax + 1));
 
             double[,] kernel = new double[xValues.Length, yValues.Length];
 
@@ -225,13 +226,16 @@ namespace Accord.Math
                 case GaborKernelKind.SquaredMagnitude:
                     for (int i = 0; i < xValues.Length; i++)
                         for (int j = 0; j < yValues.Length; j++)
-                            sum += kernel[i, j] = Gabor.Function2D(
-                                xValues[i], yValues[j], lambda, theta, psi, sigma, gamma).SquaredMagnitude;
+                        {
+                            double v = Gabor.Function2D(
+                                xValues[i], yValues[j], lambda, theta, psi, sigma, gamma).Magnitude;
+                            sum += kernel[i, j] = v * v;
+                        }
                     break;
             }
 
             if (normalized)
-                kernel.Divide(sum, inPlace: true);
+                kernel.Divide(sum, result: kernel);
 
             return kernel;
         }

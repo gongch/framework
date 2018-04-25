@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -20,19 +20,12 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-// #define USE_SYSTEM_NUMERICS_COMPLEX
-
 namespace Accord.Math
 {
-    using AForge;
     using System;
+    using Accord.Compat;
+    using System.Numerics;
     using System.Runtime.CompilerServices;
-
-#if USE_SYSTEM_NUMERICS_COMPLEX
-    using Complex = System.Numerics.Complex;
-#else
-    using Complex = AForge.Math.Complex;
-#endif
 
     /// <summary>
     ///  Static class ComplexExtensions. Defines a set of extension methods
@@ -49,7 +42,8 @@ namespace Accord.Math
         /// 
         public static Complex[] Abs(this Complex[] x)
         {
-            if (x == null) throw new ArgumentNullException("x");
+            if (x == null)
+                throw new ArgumentNullException("x");
 
             Complex[] r = new Complex[x.Length];
             for (int i = 0; i < x.Length; i++)
@@ -63,7 +57,8 @@ namespace Accord.Math
         /// 
         public static Complex Sum(this Complex[] x)
         {
-            if (x == null) throw new ArgumentNullException("x");
+            if (x == null)
+                throw new ArgumentNullException("x");
 
             Complex r = Complex.Zero;
             for (int i = 0; i < x.Length; i++)
@@ -77,8 +72,10 @@ namespace Accord.Math
         /// 
         public static Complex[] Multiply(this Complex[] a, Complex[] b)
         {
-            if (a == null) throw new ArgumentNullException("a");
-            if (b == null) throw new ArgumentNullException("b");
+            if (a == null)
+                throw new ArgumentNullException("a");
+            if (b == null)
+                throw new ArgumentNullException("b");
 
             Complex[] r = new Complex[a.Length];
             for (int i = 0; i < a.Length; i++)
@@ -94,13 +91,7 @@ namespace Accord.Math
         /// 
         public static double[] Magnitude(this Complex[] c)
         {
-            if (c == null) throw new ArgumentNullException("c");
-
-            double[] magnitudes = new double[c.Length];
-            for (int i = 0; i < c.Length; i++)
-                magnitudes[i] = c[i].Magnitude;
-
-            return magnitudes;
+            return c.Apply((x, i) => x.Magnitude);
         }
 
         /// <summary>
@@ -109,17 +100,16 @@ namespace Accord.Math
         /// 
         public static double[,] Magnitude(this Complex[,] c)
         {
-            if (c == null) throw new ArgumentNullException("c");
+            return c.Apply((x, i, j) => x.Magnitude);
+        }
 
-            int rows = c.GetLength(0);
-            int cols = c.GetLength(1);
-
-            double[,] magnitudes = new double[rows, cols];
-            for (int i = 0; i < rows; i++)
-                for (int j = 0; j < cols; j++)
-                    magnitudes[i, j] = c[i, j].Magnitude;
-
-            return magnitudes;
+        /// <summary>
+        ///   Gets the magnitude of every complex number in a matrix.
+        /// </summary>
+        /// 
+        public static double[][] Magnitude(this Complex[][] c)
+        {
+            return c.Apply((x, i, j) => x.Magnitude);
         }
 
         /// <summary>
@@ -128,13 +118,25 @@ namespace Accord.Math
         /// 
         public static double[] Phase(this Complex[] c)
         {
-            if (c == null) throw new ArgumentNullException("c");
+            return c.Apply((x, i) => x.Phase);
+        }
 
-            double[] phases = new double[c.Length];
-            for (int i = 0; i < c.Length; i++)
-                phases[i] = c[i].Phase;
+        /// <summary>
+        ///   Gets the phase of every complex number in a matrix.
+        /// </summary>
+        /// 
+        public static double[,] Phase(this Complex[,] c)
+        {
+            return c.Apply((x, i, j) => x.Phase);
+        }
 
-            return phases;
+        /// <summary>
+        ///   Gets the phase of every complex number in a matrix.
+        /// </summary>
+        /// 
+        public static double[][] Phase(this Complex[][] c)
+        {
+            return c.Apply((x, i, j) => x.Phase);
         }
 
         /// <summary>
@@ -147,13 +149,7 @@ namespace Accord.Math
         /// 
         public static double[] Re(this Complex[] c)
         {
-            if (c == null) throw new ArgumentNullException("c");
-
-            double[] re = new double[c.Length];
-            for (int i = 0; i < c.Length; i++)
-                re[i] = c[i].Re();
-
-            return re;
+            return c.Apply((x, i) => x.Real);
         }
 
         /// <summary>
@@ -166,18 +162,20 @@ namespace Accord.Math
         /// 
         public static double[,] Re(this Complex[,] c)
         {
-            if (c == null)
-                throw new ArgumentNullException("c");
+            return c.Apply((x, i, j) => x.Real);
+        }
 
-            int rows = c.GetLength(0);
-            int cols = c.GetLength(1);
-
-            var re = new double[rows, cols];
-            for (int i = 0; i < rows; i++)
-                for (int j = 0; i < cols; j++)
-                    re[i, j] = c[i, j].Re();
-
-            return re;
+        /// <summary>
+        ///   Returns the real matrix part of the complex matrix c.
+        /// </summary>
+        /// 
+        /// <param name="c">A matrix of complex numbers.</param>
+        /// 
+        /// <returns>A matrix of scalars with the real part of the complex numbers.</returns>
+        /// 
+        public static double[][] Re(this Complex[][] c)
+        {
+            return c.Apply((x, i, j) => x.Real);
         }
 
         /// <summary>
@@ -188,16 +186,10 @@ namespace Accord.Math
         /// 
         /// <returns>A vector of scalars with the imaginary part of the complex numbers.</returns>
         /// 
+        // TODO: Rename to Imaginary
         public static double[] Im(this Complex[] c)
         {
-            if (c == null)
-                throw new ArgumentNullException("c");
-
-            double[] im = new double[c.Length];
-            for (int i = 0; i < c.Length; i++)
-                im[i] = c[i].Im();
-
-            return im;
+            return c.Apply((x, i) => x.Imaginary);
         }
 
         /// <summary>
@@ -207,18 +199,17 @@ namespace Accord.Math
         /// <returns>A matrix of scalars with the imaginary part of the complex numbers.</returns>
         public static double[,] Im(this Complex[,] c)
         {
-            if (c == null)
-                throw new ArgumentNullException("c");
+            return c.Apply((x, i, j) => x.Imaginary);
+        }
 
-            int rows = c.GetLength(0);
-            int cols = c.GetLength(1);
-
-            var im = new double[rows, cols];
-            for (int i = 0; i < rows; i++)
-                for (int j = 0; i < cols; j++)
-                    im[i, j] = c[i, j].Im();
-
-            return im;
+        /// <summary>
+        /// Returns the imaginary matrix part of the complex matrix c.
+        /// </summary>
+        /// <param name="c">A matrix of complex numbers.</param>
+        /// <returns>A matrix of scalars with the imaginary part of the complex numbers.</returns>
+        public static double[][] Im(this Complex[][] c)
+        {
+            return c.Apply((x, i, j) => x.Imaginary);
         }
 
         /// <summary>
@@ -235,8 +226,8 @@ namespace Accord.Math
             double[,] arr = new double[c.Length, 2];
             for (int i = 0; i < c.GetLength(0); i++)
             {
-                arr[i, 0] = c[i].Re();
-                arr[i, 1] = c[i].Im();
+                arr[i, 0] = c[i].Real;
+                arr[i, 1] = c[i].Imaginary;
             }
 
             return arr;
@@ -309,17 +300,17 @@ namespace Accord.Math
             if (array == null)
                 throw new ArgumentNullException("array");
 
-            double min = array[0].SquaredMagnitude();
-            double max = array[0].SquaredMagnitude();
+            double min = array[0].Magnitude;
+            double max = array[0].Magnitude;
 
             for (int i = 1; i < array.Length; i++)
             {
-                double sqMagnitude = array[i].SquaredMagnitude();
+                double value = array[i].Magnitude;
 
-                if (min > sqMagnitude)
-                    min = sqMagnitude;
-                if (max < sqMagnitude)
-                    max = sqMagnitude;
+                if (min > value)
+                    min = value;
+                if (max < value)
+                    max = value;
             }
 
             return new DoubleRange(
@@ -340,8 +331,10 @@ namespace Accord.Math
             {
                 for (int j = 0; j < objA[i].Length; j++)
                 {
-                    double xr = objA[i][j].Re(), yr = objB[i][j].Re();
-                    double xi = objA[i][j].Im(), yi = objB[i][j].Im();
+                    double xr = objA[i][j].Real;
+                    double yr = objB[i][j].Real;
+                    double xi = objA[i][j].Imaginary;
+                    double yi = objB[i][j].Imaginary;
 
                     if (Math.Abs(xr - yr) > threshold || (Double.IsNaN(xr) ^ Double.IsNaN(yr)))
                         return false;
@@ -363,9 +356,11 @@ namespace Accord.Math
             if (objB == null) throw new ArgumentNullException("objB");
 
             for (int i = 0; i < objA.Length; i++)
-            {
-                double xr = objA[i].Re(), yr = objB[i].Re();
-                double xi = objA[i].Im(), yi = objB[i].Im();
+            { 
+                double xr = objA[i].Real;
+                double yr = objB[i].Real;
+                double xi = objA[i].Imaginary;
+                double yi = objB[i].Imaginary;
 
                 if (Math.Abs(xr - yr) > threshold || (Double.IsNaN(xr) ^ Double.IsNaN(yr)))
                     return false;
@@ -376,42 +371,16 @@ namespace Accord.Math
             return true;
         }
 
-
-
-#if NET45
+        /// <summary>
+        ///   Gets the squared magnitude of a complex number.
+        /// </summary>
+        /// 
+#if NET45 || NET46 || NET462 || NETSTANDARD2_0
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
-        internal static double Re(this Complex c)
+        public static double SquaredMagnitude(this Complex value)
         {
-#if USE_SYSTEM_NUMERICS_COMPLEX
-            return c.Real;
-#else
-            return c.Re;
-#endif
-        }
-
-#if NET45
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
-        internal static double Im(this Complex c)
-        {
-#if USE_SYSTEM_NUMERICS_COMPLEX
-            return c.Imaginary;
-#else
-            return c.Im;
-#endif
-        }
-
-#if NET45
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
-        internal static double SquaredMagnitude(this Complex c)
-        {
-#if USE_SYSTEM_NUMERICS_COMPLEX
-            return c.Magnitude * c.Magnitude;
-#else
-            return c.SquaredMagnitude;
-#endif
+            return value.Magnitude * value.Magnitude;
         }
 
     }

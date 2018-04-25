@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Analysis;
     using Accord.Statistics.Testing;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
-    [TestClass()]
+    [TestFixture]
     public class TwoMatrixKappaTestTest
     {
 
@@ -47,7 +47,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void KappaTestConstructorTest1()
         {
             // Example from Ientilucci, Emmett (2006). "On Using and Computing the Kappa Statistic".
@@ -115,7 +115,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(target.Significant);
         }
 
-        [TestMethod()]
+        [Test]
         public void KappaTestConstructorTest2()
         {
             // Example from Congalton
@@ -202,7 +202,7 @@ namespace Accord.Tests.Statistics
             Assert.IsFalse(target.Significant);
         }
 
-        [TestMethod()]
+        [Test]
         public void KappaTestConstructorTest3()
         {
             double k1 = 0.95;
@@ -221,7 +221,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(target.Significant);
         }
 
-        [TestMethod()]
+        [Test]
         public void KappaTestConstructorTest4()
         {
             {
@@ -237,7 +237,7 @@ namespace Accord.Tests.Statistics
                 Assert.AreEqual(DistributionTail.TwoTail, target.Tail);
                 Assert.AreEqual(v1 + v2, target.OverallVariance);
 
-                Assert.AreEqual(0.1839669091631167, target.Statistic, 1e-16);
+                Assert.AreEqual(0.1839669091631167, target.Statistic, 1e-10);
                 Assert.IsFalse(double.IsNaN(target.Statistic));
                 Assert.IsFalse(target.Significant);
             }

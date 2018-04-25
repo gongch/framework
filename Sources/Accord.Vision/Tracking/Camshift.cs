@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 // Copyright © Benjamin Jung, 2009
@@ -37,8 +37,8 @@ namespace Accord.Vision.Tracking
     using Accord.Imaging.Moments;
     using Accord.Statistics.Moving;
     using AForge;
-    using AForge.Imaging;
-    using AForge.Imaging.Filters;
+    using Accord.Imaging;
+    using Accord.Imaging.Filters;
 
     /// <summary>
     ///   Modes for the Camshift Tracker.
@@ -103,6 +103,9 @@ namespace Accord.Vision.Tracking
     ///       http://www.libspark.org/browser/as3/FaceIt </a></description></item>
     ///  </list></para>  
     /// </remarks>
+    /// 
+    /// <seealso cref="MatchingTracker"/>
+    /// <seealso cref="HslBlobTracker"/>
     /// 
     public class Camshift : IObjectTracker
     {
@@ -355,7 +358,7 @@ namespace Accord.Vision.Tracking
         /// <summary>
         ///   Generates a image of the histogram backprojection
         /// </summary>
-        public unsafe Bitmap GetBackprojection(PixelFormat format)
+        public Bitmap GetBackprojection(PixelFormat format)
         {
             return GetBackprojection(format, new Rectangle(0, 0,
                 map.GetLength(1), map.GetLength(0)));
@@ -372,7 +375,7 @@ namespace Accord.Vision.Tracking
             Bitmap bitmap;
 
             if (format == PixelFormat.Format8bppIndexed)
-                bitmap = AForge.Imaging.Image.CreateGrayscaleImage(width, height);
+                bitmap = Accord.Imaging.Image.CreateGrayscaleImage(width, height);
             else
                 bitmap = new Bitmap(width, height, format);
 
@@ -388,7 +391,7 @@ namespace Accord.Vision.Tracking
         /// <summary>
         ///   Generates a image of the histogram backprojection
         /// </summary>
-        public unsafe void GetBackprojection(UnmanagedImage image, Rectangle rectangle)
+        public void GetBackprojection(UnmanagedImage image, Rectangle rectangle)
         {
             lock (sync)
             {
@@ -404,42 +407,44 @@ namespace Accord.Vision.Tracking
                 int stride = image.Stride;
                 int offset = stride - width * pixelSize;
 
-
-                // Do work
-                fixed (float* map_ptr = &map[starty, startx])
+                unsafe
                 {
-                    byte* dst = (byte*)image.ImageData.ToPointer();
-                    float* src = map_ptr;
-
-                    // Check if image is grayscale (8bpp)
-                    if (format == PixelFormat.Format8bppIndexed)
+                    // Do work
+                    fixed (float* map_ptr = &map[starty, startx])
                     {
-                        for (int y = 0; y < height; y++)
+                        byte* dst = (byte*)image.ImageData.ToPointer();
+                        float* src = map_ptr;
+
+                        // Check if image is grayscale (8bpp)
+                        if (format == PixelFormat.Format8bppIndexed)
                         {
-                            for (int x = 0; x < width; x++, dst++, src++)
+                            for (int y = 0; y < height; y++)
                             {
-                                // probability map contains values between 0 and 1
-                                *dst = (byte)Math.Floor(255f * (*src));
+                                for (int x = 0; x < width; x++, dst++, src++)
+                                {
+                                    // probability map contains values between 0 and 1
+                                    *dst = (byte)Math.Floor(255f * (*src));
+                                }
+                                dst += offset;
+                                src += srcOffset;
                             }
-                            dst += offset;
-                            src += srcOffset;
                         }
-                    }
 
-                    else // Image is 24bpp
-                    {
-                        for (int y = 0; y < height; y++)
+                        else // Image is 24bpp
                         {
-                            for (int x = 0; x < width; x++, dst += pixelSize, src++)
+                            for (int y = 0; y < height; y++)
                             {
-                                // probability map contains values between 0 and 1
-                                byte value = (byte)Math.Floor(255f * (*src));
-                                *(dst + 0) = value;
-                                *(dst + 1) = value;
-                                *(dst + 2) = value;
+                                for (int x = 0; x < width; x++, dst += pixelSize, src++)
+                                {
+                                    // probability map contains values between 0 and 1
+                                    byte value = (byte)Math.Floor(255f * (*src));
+                                    *(dst + 0) = value;
+                                    *(dst + 1) = value;
+                                    *(dst + 2) = value;
+                                }
+                                dst += offset;
+                                src += srcOffset;
                             }
-                            dst += offset;
-                            src += srcOffset;
                         }
                     }
                 }
@@ -653,7 +658,7 @@ namespace Accord.Vision.Tracking
                             rgb.Blue = (*(src + RGB.B));
 
                             // Transform into HSL
-                            AForge.Imaging.HSL.FromRGB(rgb, hsl);
+                            Accord.Imaging.HSL.FromRGB(rgb, ref hsl);
 
                             if ((hsl.Saturation >= hslSaturation.Min) && (hsl.Saturation <= hslSaturation.Max) &&
                                 (hsl.Luminance >= hslLuminance.Min) && (hsl.Luminance <= hslLuminance.Max))
@@ -679,7 +684,7 @@ namespace Accord.Vision.Tracking
                             rgb.Blue = (*(src + RGB.B));
 
                             // Transform into HSL
-                            AForge.Imaging.HSL.FromRGB(rgb, hsl);
+                            Accord.Imaging.HSL.FromRGB(rgb, ref hsl);
 
                             if ((hsl.Saturation >= hslSaturation.Min) && (hsl.Saturation <= hslSaturation.Max) &&
                                 (hsl.Luminance >= hslLuminance.Min) && (hsl.Luminance <= hslLuminance.Max))
@@ -743,7 +748,7 @@ namespace Accord.Vision.Tracking
                         rgb.Green = (*(src + RGB.G));
                         rgb.Blue = (*(src + RGB.B));
 
-                        AForge.Imaging.HSL.FromRGB(rgb, hsl);
+                        Accord.Imaging.HSL.FromRGB(rgb, ref hsl);
 
                         if ((hsl.Saturation >= hslSaturation.Min) && (hsl.Saturation <= hslSaturation.Max) &&
                             (hsl.Luminance >= hslLuminance.Min) && (hsl.Luminance <= hslLuminance.Max))
@@ -767,7 +772,7 @@ namespace Accord.Vision.Tracking
                         rgb.Green = (*(src + RGB.G));
                         rgb.Blue = (*(src + RGB.B));
 
-                        AForge.Imaging.HSL.FromRGB(rgb, hsl);
+                        Accord.Imaging.HSL.FromRGB(rgb, ref hsl);
 
                         if ((hsl.Saturation >= hslSaturation.Min) && (hsl.Saturation <= hslSaturation.Max) &&
                             (hsl.Luminance >= hslLuminance.Min) && (hsl.Luminance <= hslLuminance.Max))

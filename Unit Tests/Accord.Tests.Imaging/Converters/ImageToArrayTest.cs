@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -26,31 +26,19 @@ namespace Accord.Tests.Imaging
     using System.Drawing.Imaging;
     using Accord.Imaging.Converters;
     using Accord.Math;
-    using AForge.Imaging;
-    using AForge.Imaging.Filters;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Accord.Imaging;
+    using Accord.Imaging.Filters;
+    using NUnit.Framework;
+    using Accord.Tests.Imaging.Properties;
+#if NO_BITMAP
+    using Resources = Accord.Tests.Imaging.Properties.Resources_Standard;
+#endif
 
-    [TestClass()]
+    [TestFixture]
     public class ImageToArrayTest
     {
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void ImageToArrayConstructorTest()
         {
             ImageToArray target = new ImageToArray();
@@ -60,7 +48,7 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(0, target.Channel);
         }
 
-        [TestMethod()]
+        [Test]
         public void ImageToArrayConstructorTest1()
         {
             double min = -10;
@@ -75,7 +63,7 @@ namespace Accord.Tests.Imaging
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest3()
         {
             double[] pixels = 
@@ -113,11 +101,11 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual(16 * 16, array.Length);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConvertTest4()
         {
             ImageToArray target = new ImageToArray(min: 0, max: 255);
-            Bitmap image = Properties.Resources.image3;
+            Bitmap image = Accord.Imaging.Image.Clone(Resources.image3);
             Assert.AreEqual(PixelFormat.Format32bppArgb, image.PixelFormat);
 
             {

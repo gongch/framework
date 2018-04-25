@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,32 +23,16 @@
 namespace Accord.Tests.Statistics.Models.Fields
 {
     using Accord.Statistics.Models.Fields.Functions;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Statistics.Models.Markov;
     using Accord.Statistics.Models.Fields.Features;
     using Accord.Statistics.Models.Markov.Topology;
     using Accord.Statistics.Models.Markov.Learning;
     using System;
 
-    [TestClass()]
+    [TestFixture]
     public class DiscreteHiddenMarkovModelFunctionTest
     {
-
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
 
         public static HiddenMarkovModel CreateModel1()
         {
@@ -98,7 +82,7 @@ namespace Accord.Tests.Statistics.Models.Fields
             return hmm;
         }
 
-        [TestMethod()]
+        [Test]
         public void HiddenMarkovModelFunctionConstructorTest()
         {
             HiddenMarkovModel model = CreateModel1();
@@ -126,7 +110,7 @@ namespace Accord.Tests.Statistics.Models.Fields
         }
 
 
-        [TestMethod()]
+        [Test]
         public void ComputeTest()
         {
             HiddenMarkovModel model = CreateModel1();

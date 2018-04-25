@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,10 +23,10 @@
 namespace Accord.Tests.Math
 {
     using Accord.Math;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
 
 
-    [TestClass]
+    [TestFixture]
     public class GaborTest
     {
 
@@ -47,7 +47,7 @@ namespace Accord.Tests.Math
 
 
 
-        [TestMethod]
+        [Test]
         public void KernelTest1()
         {
             double[,] expected =
@@ -74,7 +74,7 @@ namespace Accord.Tests.Math
             }
         }
 
-        [TestMethod]
+        [Test]
         public void KernelTest2()
         {
             double[,] expected = 

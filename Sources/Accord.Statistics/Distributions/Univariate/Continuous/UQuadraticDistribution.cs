@@ -20,11 +20,11 @@
 //    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
-namespace Accord.Statistics.Distributions.Univariate.Continuous
+namespace Accord.Statistics.Distributions.Univariate
 {
     using System;
     using Accord.Math;
-    using AForge;
+    using Accord.Compat;
 
     /// <summary>
     ///   U-quadratic distribution.
@@ -161,7 +161,7 @@ namespace Accord.Statistics.Distributions.Univariate.Continuous
         /// </summary>
         /// 
         /// <value>
-        ///   A <see cref="AForge.DoubleRange" /> containing
+        ///   A <see cref="DoubleRange" /> containing
         ///   the support interval for this distribution.
         /// </value>
         /// 
@@ -182,14 +182,8 @@ namespace Accord.Statistics.Distributions.Univariate.Continuous
         ///   probability that a given value or any value smaller than it will occur.
         /// </remarks>
         /// 
-        public override double DistributionFunction(double x)
+        protected internal override double InnerDistributionFunction(double x)
         {
-            if (x < a)
-                return 0;
-
-            if (x > b)
-                return 1;
-
             return (alpha / 3) * (Math.Pow(x - beta, 3) + Math.Pow(beta - a, 3));
         }
 
@@ -210,14 +204,8 @@ namespace Accord.Statistics.Distributions.Univariate.Continuous
         ///   probability that a given value <c>x</c> will occur.
         /// </remarks>
         /// 
-        public override double ProbabilityDensityFunction(double x)
+        protected internal override double InnerProbabilityDensityFunction(double x)
         {
-            if (x < a)
-                return 0;
-
-            if (x > b)
-                return 0;
-
             return alpha * Math.Pow(x - beta, 2);
         }
 

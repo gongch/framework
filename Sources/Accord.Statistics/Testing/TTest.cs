@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@ namespace Accord.Statistics.Testing
     using System;
     using Accord.Statistics.Distributions.Univariate;
     using Accord.Statistics.Testing.Power;
-    using AForge;
+    using System.Diagnostics;
+    using Accord.Compat;
 
     /// <summary>
     ///   One-sample Student's T test.
@@ -182,6 +183,8 @@ namespace Accord.Statistics.Testing
         public TTest(double statistic, double degreesOfFreedom,
             OneSampleHypothesis hypothesis = OneSampleHypothesis.ValueIsDifferentFromHypothesis)
         {
+            this.StandardError = 1;
+
             Compute(statistic, degreesOfFreedom, hypothesis);
         }
 
@@ -214,9 +217,9 @@ namespace Accord.Statistics.Testing
         {
             int n = sample.Length;
 
-            double mean = Accord.Statistics.Tools.Mean(sample);
-            double stdDev = Accord.Statistics.Tools.StandardDeviation(sample, mean);
-            double stdError = Accord.Statistics.Tools.StandardError(n, stdDev);
+            double mean = Measures.Mean(sample);
+            double stdDev = Measures.StandardDeviation(sample, mean);
+            double stdError = Measures.StandardError(n, stdDev);
 
             Compute(n, mean, hypothesizedMean, stdError, alternate);
 
@@ -244,7 +247,7 @@ namespace Accord.Statistics.Testing
         public TTest(double mean, double stdDev, int samples, double hypothesizedMean = 0,
             OneSampleHypothesis alternate = OneSampleHypothesis.ValueIsDifferentFromHypothesis)
         {
-            double stdError = Accord.Statistics.Tools.StandardError(samples, stdDev);
+            double stdError = Measures.StandardError(samples, stdDev);
 
             Compute(samples, mean, hypothesizedMean, stdError, alternate);
 
@@ -345,6 +348,13 @@ namespace Accord.Statistics.Testing
         /// 
         public override double StatisticToPValue(double x)
         {
+            if (StandardError == 0)
+            {
+                Trace.TraceWarning("Standard error is zero. This test is not applicable in this case as the samples do " +
+                    "not come from a normal distribution. One way to overcome this problem may be to increase the number of samples in your experiment.");
+                return Double.NaN;
+            }
+
             return StatisticToPValue(x, StatisticDistribution, Tail);
         }
 

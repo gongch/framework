@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,34 +23,18 @@
 namespace Accord.Tests.Math
 {
     using Accord.Math;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
 
-    [TestClass()]
+    [TestFixture]
     public class GammaTest
     {
 
 
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void FunctionTest()
         {
-            double[] x = 
+            double[] x =
             {
                 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0,
                 3.1, 5.7, 56.2, 53.8, 5.1, 6.5, 8.8, 114.2, 1024.6271,
@@ -58,11 +42,11 @@ namespace Accord.Tests.Math
                 -0.12078223763524518, 0, 281982742.12985912, 0.5212392
             };
 
-            double[] expected =    
+            double[] expected =
             {
                   1.000000000000000e+00, 0.9513507698668732, 9.181687423997607e-01,
                   8.974706963062772e-01, 8.872638175030753e-01, 8.862269254527581e-01,
-                  8.935153492876903e-01, 9.086387328532904e-01, 9.313837709802427e-01, 
+                  8.935153492876903e-01, 9.086387328532904e-01, 9.313837709802427e-01,
                   9.617658319073874e-01, 1.000000000000000e+00, 2.197620278392477e+00,
                   7.252763452022295e+01, 2.835938400359957e+73, 1.929366760161528e+69,
                   2.793175373836837e+01, 2.878852778150444e+02, 2.633998635450860e+04,
@@ -95,10 +79,10 @@ namespace Accord.Tests.Math
         }
 
 
-        [TestMethod()]
+        [Test]
         public void LogTest()
         {
-            double[] x = 
+            double[] x =
             {
                 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0,
                 3.1, 5.7, 56.2, 53.8, 5.1, 6.5, 8.8, 114.2, 1024.6271,
@@ -106,11 +90,11 @@ namespace Accord.Tests.Math
                 -0.12078223763524518, 0, 281982742.12985912, 0.5212392
             };
 
-            double[] expected =    
+            double[] expected =
             {
                  0.000000000000000e+00,  -0.04987244125983974, -8.537409000331581e-02,
                 -1.081748095078605e-01, -1.196129141723713e-01, -1.207822376352452e-01,
-                -1.125917656967558e-01, -9.580769740706588e-02, -7.108387291437214e-02, 
+                -1.125917656967558e-01, -9.580769740706588e-02, -7.108387291437214e-02,
                 -3.898427592308334e-02,  0.000000000000000e+00,  7.873750832738625e-01,
                  4.283967655031580e+00,  1.691310846763928e+02,  1.595355632621249e+02,
                  3.329764168475224e+00,  5.662562059857142e+00,  1.017884345724507e+01,
@@ -142,16 +126,16 @@ namespace Accord.Tests.Math
         }
 
 
-        [TestMethod()]
+        [Test]
         public void DigammaTest()
         {
             double[] x = { 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0 };
 
-            double[] expected =    
+            double[] expected =
             {
                 -0.5772156649015329,
-                -0.4237549404110768, 
-                -0.2890398965921883,  
+                -0.4237549404110768,
+                -0.2890398965921883,
                 -0.1691908888667997,
                 -0.06138454458511615,
                  0.03648997397857652,
@@ -172,7 +156,7 @@ namespace Accord.Tests.Math
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void GammaFunctionsTest()
         {
             double x = 0.17;
@@ -201,7 +185,26 @@ namespace Accord.Tests.Math
             Assert.AreEqual(35.915302055854525, tri);
         }
 
-        [TestMethod()]
+        [Test]
+        public void NegativeGammaFunctionsTest()
+        {
+            double x = -1.8209678549077879;
+            double gamma = Gamma.Function(x); // 5.4511741801042106
+            double log = Gamma.Log(x);        // 1.6958310313607003
+            double psi = Gamma.Digamma(x);    // -6.2100942259248626
+            double tri = Gamma.Trigamma(x);   // 35.915302055854525
+
+            double a = 4.2;
+            double lower = Gamma.LowerIncomplete(a, x); // 0.000015685073063633753
+            double upper = Gamma.UpperIncomplete(a, x); // 0.9999843149269364
+
+            Assert.AreEqual(3.4523682307588364, gamma, 1e-10); // https://www.wolframalpha.com/input/?i=gamma%5B-1.8209678549077879%5D
+            Assert.AreEqual(-4.1343001655848468, psi); // https://www.wolframalpha.com/input/?i=digamma(-1.8209678549077879)
+            Assert.AreEqual(34.283184056369407, tri);  // https://www.wolframalpha.com/input/?i=trigamma(-1.8209678549077879)
+            Assert.AreEqual(Math.Log(3.4523682307588364), log, 1e-10);
+        }
+
+        [Test]
         public void GammaTest2()
         {
             double x = 171;
@@ -210,7 +213,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(expected, actual, 1e+293);
         }
 
-        [TestMethod()]
+        [Test]
         public void LgammaTest()
         {
             double x = 57;
@@ -220,7 +223,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void DigammaTest2()
         {
             double x = 42;
@@ -229,7 +232,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void MultivariateGammaTest()
         {
             double expected = 35.342917352885181;
@@ -237,7 +240,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void GammaUpperRTest()
         {
             // Example values from
@@ -304,6 +307,21 @@ namespace Accord.Tests.Math
             expected = 0.615734;
             Assert.AreEqual(expected, actual, 1e-6);
             Assert.IsFalse(double.IsNaN(actual));
+        }
+
+        [Test]
+        public void InverseUpperIncompleteTest()
+        {
+            foreach (double lambda in Vector.Range(0.1, 10, 0.1))
+            {
+                for (int i = 1; i < 100; i++)
+                {
+                    double x = Gamma.UpperIncomplete(lambda, i);
+                    double j = Gamma.InverseUpperIncomplete(lambda, x);
+
+                    Assert.IsTrue(Math.Abs(i - j) < 1e-2 * Math.Abs(j));
+                }
+            }
         }
     }
 }

@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ namespace Accord.Neuro
 {
     using System;
     using AForge;
-    using AForge.Neuro;
+    using Accord.Compat;
 
     /// <summary>
     ///   Rectified linear activation function.
@@ -35,8 +35,8 @@ namespace Accord.Neuro
     ///   function as given by the piecewise formula:</para>
     /// 
     ///   <code lang="none">
-    ///   f(x) = 0, if x > 0
-    ///   f(x) = x, otherwise
+    ///   f(x) = x, if x > 0
+    ///   f(x) = 0, otherwise
     ///   </code>
     ///   
     /// <para>

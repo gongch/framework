@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,31 +24,14 @@ namespace Accord.Tests.Statistics
 {
     using Accord.Math;
     using Accord.Statistics.Filters;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Data;
 
-    [TestClass()]
+    [TestFixture]
     public class NormalizationFilterTest
     {
-
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+#if !NO_DATA_TABLE
+        [Test]
         public void ApplyTest()
         {
             DataTable input = new DataTable("Sample data");
@@ -89,7 +72,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ApplyTest2()
         {
             string colName = "(test ['a'])";
@@ -129,7 +112,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ApplyTest3()
         {
             // Suppose we have a data table relating the age of
@@ -175,6 +158,6 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(25.555555555555557, mean);
             Assert.AreEqual(23.297591673342072, sdev);
         }
-
+#endif
     }
 }

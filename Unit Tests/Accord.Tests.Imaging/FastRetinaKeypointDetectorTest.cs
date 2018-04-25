@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,18 +25,22 @@ namespace Accord.Tests.Imaging
     using Accord.Imaging;
     using Accord.Imaging.Filters;
     using Accord.Tests.Imaging.Properties;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System.Collections.Generic;
     using System.Drawing;
+    using System.Linq;
+#if NO_BITMAP
+    using Resources = Accord.Tests.Imaging.Properties.Resources_Standard;
+#endif
 
-    [TestClass()]
+    [TestFixture]
     public class FastRetinaKeypointDetectorTest
     {
 
-        [TestMethod()]
+        [Test]
         public void ExampleTest()
         {
-            Bitmap lena = Resources.lena512;
+            Bitmap lena = Accord.Imaging.Image.Clone(Resources.lena512);
 
             // The freak detector can be used with any other corners detection
             // algorithm. The default corners detection method used is the FAST
@@ -51,7 +55,7 @@ namespace Accord.Tests.Imaging
             var freak = new FastRetinaKeypointDetector(detector);
 
             // Now, all we have to do is to process our image:
-            List<FastRetinaKeypoint> points = freak.ProcessImage(lena);
+            IList<FastRetinaKeypoint> points = freak.Transform(lena).ToList();
 
             // Afterwards, we should obtain 83 feature points. We can inspect
             // the feature points visually using the FeaturesMarker class as
@@ -83,14 +87,14 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual("3W8M/ev///ffbr/+v3f34vz//7X+f0609v//+++/1+jfq/e83/X5/+6ft3//b4uaPZf7ePb3n/P93/rIbZlf+g==", b64);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProcessImageTest()
         {
-            Bitmap lena = Properties.Resources.lena512;
+            Bitmap lena = Accord.Imaging.Image.Clone(Resources.lena512);
 
             FastRetinaKeypointDetector target = new FastRetinaKeypointDetector();
 
-            List<FastRetinaKeypoint> actual = target.ProcessImage(lena);
+            IList<FastRetinaKeypoint> actual = target.Transform(lena).ToList();
 
             string code;
             Assert.AreEqual(1283, actual.Count);
@@ -149,10 +153,10 @@ namespace Accord.Tests.Imaging
             Assert.AreEqual("ddbf7bf8ef7effffffdfdeffff76f976efdf7f777fcdc9d7fedffffdff6fb7fb7fad3ba8feb9f1efceffbf5fffef2aeefcb5fdd8f7df9ff7fdefffc87d597fea", code);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProcessImageTest2()
         {
-            Bitmap lena = Properties.Resources.lena512;
+            Bitmap lena = Accord.Imaging.Image.Clone(Resources.lena512);
 
             FastRetinaKeypointDetector target = new FastRetinaKeypointDetector();
             target.ComputeDescriptors = FastRetinaKeypointDescriptorType.Extended;

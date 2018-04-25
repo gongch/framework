@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -26,14 +26,18 @@ namespace Accord.Tests.IO
     using System.IO;
     using System.Text;
     using Accord.IO;
+    using Accord.Math;
     using Accord.Tests.IO.Properties;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
+#if NO_DEFAULT_ENCODING
+    using Encoding = Accord.Compat.Encoding;
+#endif
 
-    [TestClass()]
+    [TestFixture]
     public class SparseReaderTest
     {
 
-        [TestMethod()]
+        [Test]
         public void ReadSampleTest()
         {
             // http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass.html#iris
@@ -49,7 +53,7 @@ namespace Accord.Tests.IO
 
             // Create a new Sparse Sample Reader to read any given file,
             //  passing the correct dense sample size in the constructor
-            SparseReader reader = new SparseReader(file, Encoding.Default, sampleSize);
+            SparseReader reader = new SparseReader(stream: file, encoding: Encoding.Default, sampleSize: sampleSize);
 
             // Declare some variables to receive each current sample
             int label = 0;
@@ -57,7 +61,10 @@ namespace Accord.Tests.IO
             double[] sample;
 
             // Read a sample from the file
-            sample = reader.ReadDense(out label, out description);
+            var r = reader.ReadDense();
+            sample = r.Item1;
+            label = (int)r.Item2;
+            description = reader.SampleDescriptions[0];
 
             Assert.AreEqual(1, label);
             Assert.AreEqual(String.Empty, description);
@@ -68,7 +75,10 @@ namespace Accord.Tests.IO
             Assert.AreEqual(-0.864407, sample[2], 0.0001);
             Assert.AreEqual(-0.916667, sample[3], 0.0001);
 
-            sample = reader.ReadSparse(out label, out description);
+            var s = reader.ReadSparse();
+            sample = s.Item1.ToSparse();
+            label = (int)s.Item2;
+            description = reader.SampleDescriptions[0];
 
             Assert.AreEqual(1, label);
             Assert.AreEqual(String.Empty, description);
@@ -89,7 +99,11 @@ namespace Accord.Tests.IO
             // Read all samples from the file
             while (!reader.EndOfStream)
             {
-                sample = reader.ReadDense(out label, out description);
+                reader.SampleDescriptions.Clear();
+                r = reader.ReadDense();
+                sample = r.Item1;
+                label = (int)r.Item2;
+                description = reader.SampleDescriptions[0];
                 Assert.IsTrue(label >= 0 && label <= 3);
                 Assert.IsTrue(description == String.Empty);
                 Assert.AreEqual(4, sample.Length);
@@ -99,7 +113,7 @@ namespace Accord.Tests.IO
             Assert.AreEqual(150, count);
         }
 
-        [TestMethod()]
+        [Test]
         public void ReadAllTest()
         {
             MemoryStream file = new MemoryStream(
@@ -113,18 +127,19 @@ namespace Accord.Tests.IO
 
             // Create a new Sparse Sample Reader to read any given file,
             //  passing the correct dense sample size in the constructor
-            SparseReader reader = new SparseReader(file, Encoding.Default, sampleSize);
+            SparseReader reader = new SparseReader(stream: file, encoding: Encoding.Default, sampleSize: sampleSize);
 
             // Declare a vector to obtain the label
             //  of each of the samples in the file
-            int[] labels = null;
 
             // Declare a vector to obtain the description (or comments)
             //  about each of the samples in the file, if present.
-            string[] descriptions = null;
 
             // Read the sparse samples and store them in a dense vector array
-            double[][] samples = reader.ReadToEnd(out labels, out descriptions);
+            var r = reader.ReadDenseToEnd();
+            double[][] samples = r.Item1;
+            int[] labels = r.Item2.ToInt32();
+            string[] descriptions = reader.SampleDescriptions.ToArray();
 
             Assert.AreEqual(150, samples.Length);
 
@@ -136,21 +151,22 @@ namespace Accord.Tests.IO
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void GuessNumberOfDimensionsTest()
         {
             MemoryStream file = new MemoryStream(
                 Encoding.Default.GetBytes(Resources.iris_scale));
 
-            SparseReader reader = new SparseReader(file, Encoding.Default);
+            SparseReader reader = new SparseReader(stream: file, encoding: Encoding.Default);
 
             Assert.AreEqual(4, reader.Dimensions);
 
-            int[] labels = null;
 
-            string[] descriptions = null;
+            var r = reader.ReadDenseToEnd();
+            double[][] samples = r.Item1;
+            int[] labels = r.Item2.ToInt32();
+            string[] descriptions = reader.SampleDescriptions.ToArray();
 
-            double[][] samples = reader.ReadToEnd(out labels, out descriptions);
 
             Assert.AreEqual(150, samples.Length);
 
@@ -162,20 +178,20 @@ namespace Accord.Tests.IO
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void DimensionsTest()
         {
             MemoryStream file = new MemoryStream(
                 Encoding.Default.GetBytes(Resources.a9a_train));
 
-            SparseReader reader = new SparseReader(file, Encoding.Default);
+            SparseReader reader = new SparseReader(stream: file, encoding: Encoding.Default);
 
             Assert.AreEqual(123, reader.Dimensions);
 
-            int[] labels = null;
-            string[] descriptions = null;
-
-            double[][] samples = reader.ReadToEnd(out labels, out descriptions);
+            var r = reader.ReadDenseToEnd();
+            double[][] samples = r.Item1;
+            int[] labels = r.Item2.ToInt32();
+            string[] descriptions = reader.SampleDescriptions.ToArray();
 
             Assert.AreEqual(26049, samples.Length);
             for (int i = 0; i < labels.Length; i++)
@@ -186,17 +202,18 @@ namespace Accord.Tests.IO
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void GuessDimensionsInMiddleRunTest()
         {
             MemoryStream file = new MemoryStream(
                 Encoding.Default.GetBytes(Resources.a9a_train));
 
-            SparseReader reader = new SparseReader(file, Encoding.Default);
+            SparseReader reader = new SparseReader(stream: file, encoding: Encoding.Default);
 
-            int[] labels = null;
-            string[] descriptions = null;
-            double[][] samples = reader.ReadToEnd(out labels, out descriptions);
+            var r = reader.ReadDenseToEnd();
+            double[][] samples = r.Item1;
+            int[] labels = r.Item2.ToInt32();
+            string[] descriptions = reader.SampleDescriptions.ToArray();
 
             Assert.AreEqual(26049, samples.Length);
             for (int i = 0; i < labels.Length; i++)

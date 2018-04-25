@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -27,19 +27,7 @@ namespace Accord.Imaging
     ///   Common interface for feature points.
     /// </summary>
     /// 
-    public interface IFeaturePoint : IFeaturePoint<double[]>
-    {
-        // This class exists to maintain backward compatibility with
-        // the non-generic version of IFeaturePoint (and to provide
-        // a more intuitive way of handling standard, double valued
-        // feature description vectors.
-    }
-
-    /// <summary>
-    ///   Common interface for feature points.
-    /// </summary>
-    /// 
-    public interface IFeaturePoint<out T> : IFeatureDescriptor<T>
+    public interface IFeaturePoint 
     {
         /// <summary>
         ///   Gets or sets the x-coordinate of this point.
@@ -52,6 +40,14 @@ namespace Accord.Imaging
         /// </summary>
         /// 
         double Y { get; }
+    }
+
+    /// <summary>
+    ///   Common interface for feature points.
+    /// </summary>
+    /// 
+    public interface IFeaturePoint<out T> : IFeaturePoint, IFeatureDescriptor<T>
+    {
     }
 
 }

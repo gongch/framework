@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,32 +23,14 @@
 namespace Accord.Tests.Math
 {
     using Accord.Math.Optimization;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
-    using AccordTestsMathCpp2;
 
-    [TestClass()]
+    [TestFixture]
     public class BoundedBroydenFletcherGoldfarbShannoTest
     {
 
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
-
-
-        [TestMethod()]
+        [Test]
         public void lbfgsTest()
         {
             Func<double[], double> f = rosenbrockFunction;
@@ -86,7 +68,7 @@ namespace Accord.Tests.Math
             Assert.AreEqual(0, d[1], 1e-6);
         }
 
-        [TestMethod()]
+        [Test]
         public void lbfgsTest2()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -171,17 +153,15 @@ namespace Accord.Tests.Math
             };
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void NoFunctionTest()
         {
             var target = new BoundedBroydenFletcherGoldfarbShanno(2);
 
-            target.Minimize();
+            Assert.Throws<InvalidOperationException>(() => target.Minimize(), "");
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void NoGradientTest()
         {
             var target = new BoundedBroydenFletcherGoldfarbShanno(2)
@@ -189,11 +169,12 @@ namespace Accord.Tests.Math
                 Function = (x) => 0.0
             };
 
-            target.Minimize();
+            Assert.IsTrue(target.Minimize());
+
+            // The optimizer should use finite differences as the gradient
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void WrongGradientSizeTest()
         {
             var target = new BoundedBroydenFletcherGoldfarbShanno(2)
@@ -202,11 +183,10 @@ namespace Accord.Tests.Math
                 Gradient = (x) => new double[1]
             };
 
-            target.Minimize();
+            Assert.Throws<InvalidOperationException>(() => target.Minimize(), "");
         }
 
-        [TestMethod]
-        [ExpectedException(typeof(InvalidOperationException))]
+        [Test]
         public void MutableGradientSizeTest()
         {
             var target = new BoundedBroydenFletcherGoldfarbShanno(2)
@@ -215,10 +195,10 @@ namespace Accord.Tests.Math
                 Gradient = (x) => x
             };
 
-            target.Minimize();
+            Assert.Throws<InvalidOperationException>(() => target.Minimize(), "");
         }
 
-        [TestMethod]
+        [Test]
         public void ConstructorTest1()
         {
             Func<double[], double> function = // min f(x) = 10 * (x+1)^2 + y^2
@@ -246,35 +226,10 @@ namespace Accord.Tests.Math
             Assert.AreEqual(expectedMinimum, minimum);
         }
 
-        [TestMethod]
-        public void ConstructorTest2()
-        {
-            Function function = // min f(x) = 10 * (x+1)^2 + y^2
-                x => 10.0 * Math.Pow(x[0] + 1.0, 2.0) + Math.Pow(x[1], 2.0);
-
-            Gradient gradient = x => new[] { 20 * (x[0] + 1), 2 * x[1] };
+     
 
 
-            double[] start = new double[2];
-
-            var target = new BoundedBroydenFletcherGoldfarbShanno(2,
-                function.Invoke, gradient.Invoke);
-
-            Assert.IsTrue(target.Minimize());
-            double minimum = target.Value;
-
-            double[] solution = target.Solution;
-
-            Assert.AreEqual(0, minimum, 1e-10);
-            Assert.AreEqual(-1, solution[0], 1e-5);
-            Assert.AreEqual(0, solution[1], 1e-5);
-
-            double expectedMinimum = function(target.Solution);
-            Assert.AreEqual(expectedMinimum, minimum);
-        }
-
-
-        [TestMethod()]
+        [Test]
         public void lbfgsTest3()
         {
             Accord.Math.Tools.SetupGenerator(0);

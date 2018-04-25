@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,14 +24,17 @@ namespace Accord.Statistics.Kernels
 {
     using System;
     using Accord.Math;
+    using Accord.Math.Distances;
+    using Accord.Compat;
 
     /// <summary>
     ///   Polynomial Kernel.
     /// </summary>
     /// 
     [Serializable]
-    public sealed class Polynomial : KernelBase, IKernel,
-        IDistance, IReverseDistance, ICloneable, ITransform
+    public struct Polynomial : IKernel, IDistance,
+        IReverseDistance, ICloneable, ITransform,
+        IKernel<Sparse<double>>, IDistance<Sparse<double>>
     {
         private int degree;
         private double constant;
@@ -67,7 +70,7 @@ namespace Accord.Statistics.Kernels
             get { return degree; }
             set
             {
-                if (degree <= 0)
+                if (value <= 0)
                     throw new ArgumentOutOfRangeException("value", "Degree must be positive.");
 
                 degree = value;
@@ -93,12 +96,26 @@ namespace Accord.Statistics.Kernels
         /// <param name="y">Vector <c>y</c> in input space.</param>
         /// <returns>Dot product in feature (kernel) space.</returns>
         /// 
-        public override double Function(double[] x, double[] y)
+        public double Function(double[] x, double[] y)
         {
             double sum = constant;
             for (int i = 0; i < x.Length; i++)
                 sum += x[i] * y[i];
 
+            return Math.Pow(sum, degree);
+        }
+
+        /// <summary>
+        ///   Polynomial kernel function.
+        /// </summary>
+        /// 
+        /// <param name="x">Vector <c>x</c> in input space.</param>
+        /// <param name="y">Vector <c>y</c> in input space.</param>
+        /// <returns>Dot product in feature (kernel) space.</returns>
+        /// 
+        public double Function(Sparse<double> x, Sparse<double> y)
+        {
+            double sum = x.Dot(y) + constant;
             return Math.Pow(sum, degree);
         }
 
@@ -125,7 +142,7 @@ namespace Accord.Statistics.Kernels
         /// 
         /// <returns>Squared distance between <c>x</c> and <c>y</c> in feature (kernel) space.</returns>
         /// 
-        public override double Distance(double[] x, double[] y)
+        public double Distance(double[] x, double[] y)
         {
             if (x == y)
                 return 0.0;
@@ -140,6 +157,30 @@ namespace Accord.Statistics.Kernels
                 sumy += y[i] * y[i];
                 sum += x[i] * y[i];
             }
+
+            int d = degree;
+
+            return Math.Pow(sumx, d) + Math.Pow(sumy, d) - 2 * Math.Pow(sum, d);
+        }
+
+        /// <summary>
+        ///   Computes the squared distance in feature space
+        ///   between two points given in input space.
+        /// </summary>
+        /// 
+        /// <param name="x">Vector <c>x</c> in input space.</param>
+        /// <param name="y">Vector <c>y</c> in input space.</param>
+        /// 
+        /// <returns>Squared distance between <c>x</c> and <c>y</c> in feature (kernel) space.</returns>
+        /// 
+        public double Distance(Sparse<double> x, Sparse<double> y)
+        {
+            if (x == y)
+                return 0.0;
+
+            double sumx = constant + x.Dot(x);
+            double sumy = constant + y.Dot(y);
+            double sum = constant + x.Dot(y);
 
             int d = degree;
 
@@ -212,6 +253,24 @@ namespace Accord.Statistics.Kernels
         }
 
         /// <summary>
+        ///   Projects a set of input points into feature space.
+        /// </summary>
+        /// 
+        /// <param name="inputs">The input points to be projected into feature space.</param>
+        /// 
+        /// <returns>
+        ///   The feature space representation of the given <paramref name="inputs"/> points.
+        /// </returns>
+        /// 
+        public double[][] Transform(double[][] inputs)
+        {
+            double[][] r = new double[inputs.Length][];
+            for (int i = 0; i < inputs.Length; i++)
+                r[i] = Transform(inputs[i]);
+            return r;
+        }
+
+        /// <summary>
         ///   Projects an input point into feature space.
         /// </summary>
         /// 
@@ -249,5 +308,6 @@ namespace Accord.Statistics.Kernels
 
             return features;
         }
+
     }
 }

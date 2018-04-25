@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,29 +23,13 @@
 namespace Accord.Tests.Audio
 {
     using Accord.Audio;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using Accord.Audio.Filters;
     using Accord.Math;
 
-    [TestClass()]
+    [TestFixture]
     public class ExtractChannelTest
     {
-
-
-        private TestContext testContextInstance;
-
-        public TestContext TestContext
-        {
-            get
-            {
-                return testContextInstance;
-            }
-            set
-            {
-                testContextInstance = value;
-            }
-        }
-
 
         private float[,] data = 
         {
@@ -57,7 +41,7 @@ namespace Accord.Tests.Audio
             { -0.22f, 0.2f  },
         };
 
-        [TestMethod()]
+        [Test]
         public void ApplyTest()
         {
             Signal target = Signal.FromArray(data, 8000);

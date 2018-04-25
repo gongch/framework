@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -25,18 +25,18 @@ namespace Accord.Tests.Neuro
     using Accord.Math;
     using Accord.Neuro;
     using Accord.Neuro.Learning;
+    using Accord.Statistics;
     using AForge;
-    using AForge.Neuro;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     using System;
 
-    [TestClass()]
+    [TestFixture]
     public class ResilientBackPropagationLearningTest
     {
 
 
 #if !NET35
-        [TestMethod()]
+        [Test]
         public void RunEpochTest1()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -57,7 +57,7 @@ namespace Accord.Tests.Neuro
                 new double[] { -1 }
             };
 
-            Neuron.RandGenerator = new ThreadSafeRandom(0);
+            //Neuron.RandGenerator = new ThreadSafeRandom(0);
             ActivationNetwork network = new ActivationNetwork(
                    new BipolarSigmoidFunction(2), 2, 2, 1);
 
@@ -77,7 +77,8 @@ namespace Accord.Tests.Neuro
             }
         }
 
-        [TestMethod()]
+        [Test]
+        [Category("Slow")]
         public void MulticlassTest1()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -116,7 +117,7 @@ namespace Accord.Tests.Neuro
             // indicator vectors, where a 1 into a position signifies that this
             // position indicates the class the sample belongs to.
             //
-            double[][] outputs = Accord.Statistics.Tools.Expand(classes, -1, +1);
+            double[][] outputs = Statistics.Tools.Expand(classes, -1, +1);
 
             // Create an activation function for the net
             var function = new BipolarSigmoidFunction();

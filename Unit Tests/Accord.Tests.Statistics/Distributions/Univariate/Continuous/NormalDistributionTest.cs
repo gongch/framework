@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -27,13 +27,14 @@ namespace Accord.Tests.Statistics
     using Accord.Statistics;
     using Accord.Statistics.Distributions.Multivariate;
     using Accord.Statistics.Distributions.Univariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
+    using Accord.Statistics.Distributions.Fitting;
 
-    [TestClass()]
+    [TestFixture]
     public class NormalDistributionTest
     {
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest5()
         {
             var normal = new NormalDistribution(mean: 4, stdDev: 4.2);
@@ -82,9 +83,15 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(13.770661070971531, range2.Max);
             Assert.AreEqual(-5.7706610709715314, range3.Min);
             Assert.AreEqual(13.770661070971531, range3.Max);
+
+            Assert.AreEqual(double.NegativeInfinity, normal.Support.Min);
+            Assert.AreEqual(double.PositiveInfinity, normal.Support.Max);
+
+            Assert.AreEqual(normal.InverseDistributionFunction(0), normal.Support.Min);
+            Assert.AreEqual(normal.InverseDistributionFunction(1), normal.Support.Max);
         }
 
-        [TestMethod()]
+        [Test]
         public void FitTest()
         {
             double expectedMean = 1.125;
@@ -109,7 +116,64 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expectedMean, target.Mean);
         }
 
-        [TestMethod()]
+
+        [Test]
+        public void FitExtensionTest_options()
+        {
+            NormalDistribution target = new NormalDistribution();
+            double[] observations = { 0.10, 0.40, 2.00, 2.00 };
+            double[] weights = { 0.25, 0.25, 0.25, 0.25 };
+            target.Fit(observations, weights);
+            NormalDistribution same = observations.Fit<NormalDistribution, NormalOptions>(new NormalOptions()
+            {
+                Regularization = 10
+            }, weights);
+            Assert.AreNotSame(same, target);
+            Assert.AreEqual(same.ToString(), target.ToString());
+
+            NormalDistribution copy = target.FitNew(observations, new NormalOptions()
+            {
+                Regularization = 10
+            }, weights);
+            Assert.AreNotSame(copy, target);
+            Assert.AreEqual(copy.ToString(), target.ToString());
+        }
+
+
+        [Test]
+        public void FitExtensionTest_weights()
+        {
+            NormalDistribution target = new NormalDistribution();
+            double[] observations = { 0.10, 0.40, 2.00, 2.00 };
+            double[] weights = { 0.25, 0.25, 0.25, 0.25 };
+            target.Fit(observations, weights);
+            NormalDistribution same = observations.Fit<NormalDistribution>(weights);
+            Assert.AreNotSame(same, target);
+            Assert.AreEqual(same.ToString(), target.ToString());
+
+            NormalDistribution copy = target.FitNew(observations, weights);
+            Assert.AreNotSame(copy, target);
+            Assert.AreEqual(copy.ToString(), target.ToString());
+        }
+
+        [Test]
+        public void FitExtensionTest()
+        {
+            NormalDistribution target = new NormalDistribution();
+            double[] observations = { 0.10, 0.40, 2.00, 2.00 };
+            target.Fit(observations);
+            NormalDistribution same = observations.Fit<NormalDistribution>();
+            Assert.AreNotSame(same, target);
+            Assert.AreEqual(same.ToString(), target.ToString());
+
+            NormalDistribution copy = target.FitNew(observations);
+            Assert.AreNotSame(copy, target);
+            Assert.AreEqual(copy.ToString(), target.ToString());
+        }
+
+
+
+        [Test]
         public void FitTest2()
         {
             NormalDistribution target;
@@ -124,7 +188,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest()
         {
             double mean = 7;
@@ -147,7 +211,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(1, target.Variance);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest2()
         {
             bool thrown = false;
@@ -158,7 +222,7 @@ namespace Accord.Tests.Statistics
             Assert.IsTrue(thrown);
         }
 
-        [TestMethod()]
+        [Test]
         public void ConstructorTest3()
         {
             Accord.Math.Tools.SetupGenerator(0);
@@ -183,9 +247,10 @@ namespace Accord.Tests.Statistics
             // Finally, let's generate 1000 samples from this distribution
             // and check if they have the specified mean and standard dev.
 
-            double[] samples = normal.Generate(1000);
+            double[] samples = normal.Generate(10000);
 
-            double sampleMean = samples.Mean();             // 1.92
+
+            double sampleMean = samples.Mean();             // 2.00
             double sampleDev = samples.StandardDeviation(); // 3.00
 
             Assert.AreEqual(2, mean);
@@ -193,12 +258,12 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2, median);
 
             Assert.AreEqual(9, variance);
-            Assert.AreEqual(1000, samples.Length);
-            Assert.AreEqual(1.9245, sampleMean, 1e-4);
-            Assert.AreEqual(3.0008, sampleDev, 1e-4);
+            Assert.AreEqual(10000, samples.Length);
+            Assert.AreEqual(2.000, sampleMean, 5e-3);
+            Assert.AreEqual(3.000, sampleDev, 5e-3);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest()
         {
             double x = 3;
@@ -214,7 +279,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void ToMultivariateTest()
         {
             double x = 3;
@@ -237,7 +302,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityDensityFunctionTest2()
         {
             double expected, actual;
@@ -254,7 +319,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityDensityFunctionTest()
         {
             double x = 3;
@@ -270,7 +335,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void StandardDensityFunctionTest()
         {
             for (int i = -100; i < 100; i++)
@@ -284,7 +349,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void LogStandardDensityFunctionTest()
         {
             for (int i = -100; i < 100; i++)
@@ -298,7 +363,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest()
         {
             double x = 3;
@@ -314,7 +379,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-15);
         }
 
-        [TestMethod()]
+        [Test]
         public void DistributionFunctionTest3()
         {
             double expected, actual;
@@ -339,7 +404,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void InverseDistributionFunctionTest()
         {
             double[] expected =
@@ -360,7 +425,7 @@ namespace Accord.Tests.Statistics
             }
         }
 
-        [TestMethod()]
+        [Test]
         public void ZScoreTest()
         {
             double x = 5;
@@ -375,7 +440,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual);
         }
 
-        [TestMethod()]
+        [Test]
         public void CloneTest()
         {
             NormalDistribution target = new NormalDistribution(0.5, 4.2);
@@ -390,7 +455,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest()
         {
             NormalDistribution target = new NormalDistribution(2, 5);
@@ -403,7 +468,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(5, actual.StandardDeviation, 0.01);
         }
 
-        [TestMethod()]
+        [Test]
         public void GenerateTest2()
         {
             NormalDistribution target = new NormalDistribution(4, 2);
@@ -419,7 +484,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(2, actual.StandardDeviation, 0.01);
         }
 
-        [TestMethod()]
+        [Test]
         public void MedianTest()
         {
             NormalDistribution target = new NormalDistribution(0.4, 2.2);
@@ -428,7 +493,7 @@ namespace Accord.Tests.Statistics
         }
 
 
-        [TestMethod()]
+        [Test]
         public void EstimateTest()
         {
             double[] values = { 1 };

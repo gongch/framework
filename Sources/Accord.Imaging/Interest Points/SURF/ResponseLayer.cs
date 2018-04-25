@@ -5,7 +5,7 @@
 // Copyright © Christopher Evans, 2009-2011
 // http://www.chrisevansdev.com/
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -28,7 +28,8 @@ namespace Accord.Imaging
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using AForge.Imaging;
+    using Accord.Imaging;
+    using Accord.Math;
 
     /// <summary>
     ///   Response filter.
@@ -53,7 +54,7 @@ namespace Accord.Imaging
         private int step;
         private int octaves;
 
-        private static readonly int[,] map = 
+        private static readonly int[,] map =
         {
             { 0,  1,  2,  3 },
             { 1,  3,  4,  5 },
@@ -268,13 +269,13 @@ namespace Accord.Imaging
         ///   Gets the responses computed from the filter.
         /// </summary>
         /// 
-        public float[,] Responses { get; private set; }
+        public float[][] Responses { get; private set; }
 
         /// <summary>
         ///   Gets the Laplacian computed from the filter.
         /// </summary>
         /// 
-        public int[,] Laplacian { get; private set; }
+        public int[][] Laplacian { get; private set; }
 
 
         /// <summary>
@@ -288,8 +289,8 @@ namespace Accord.Imaging
             this.Step = step;
             this.Size = filter;
 
-            this.Responses = new float[height, width];
-            this.Laplacian = new int[height, width];
+            this.Responses = Jagged.Zeros<float>(height, width);
+            this.Laplacian = Jagged.Zeros<int>(height, width);
         }
 
         /// <summary>
@@ -301,8 +302,8 @@ namespace Accord.Imaging
         {
             if (height > Height || width > Width)
             {
-                this.Responses = new float[height, width];
-                this.Laplacian = new int[height, width];
+                this.Responses = Jagged.Zeros<float>(height, width);
+                this.Laplacian = Jagged.Zeros<int>(height, width);
             }
 
             this.Width = width;
@@ -350,9 +351,9 @@ namespace Accord.Imaging
                     Dyy *= inv / 255f;
                     Dxy *= inv / 255f;
 
-                    // Get the determinant of Hessian response & laplacian sign
-                    Responses[y, x] = (Dxx * Dyy) - (0.9f * 0.9f * Dxy * Dxy);
-                    Laplacian[y, x] = (Dxx + Dyy) >= 0 ? 1 : 0;
+                    // Get the determinant of Hessian response & Laplacian sign
+                    Responses[y][x] = (Dxx * Dyy) - (0.9f * 0.9f * Dxy * Dxy);
+                    Laplacian[y][x] = (Dxx + Dyy) >= 0 ? 1 : 0;
                 }
             }
         }

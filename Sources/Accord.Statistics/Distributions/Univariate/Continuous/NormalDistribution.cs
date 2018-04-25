@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@ namespace Accord.Statistics.Distributions.Univariate
     using Accord.Statistics.Distributions.Fitting;
     using Accord.Statistics.Distributions.Multivariate;
     using AForge;
+    using Accord.Compat;
 
     /// <summary>
     ///   Normal (Gaussian) distribution.
@@ -141,7 +142,8 @@ namespace Accord.Statistics.Distributions.Univariate
     [Serializable]
     public class NormalDistribution : UnivariateContinuousDistribution,
         IFittableDistribution<double, NormalOptions>,
-        ISampleableDistribution<double>, IFormattable
+        ISampleableDistribution<double>, IFormattable,
+        IUnivariateFittableDistribution
     {
 
         // Distribution parameters
@@ -229,7 +231,7 @@ namespace Accord.Statistics.Distributions.Univariate
         {
             get
             {
-                System.Diagnostics.Debug.Assert(mean.IsRelativelyEqual(base.Median, 1e-10));
+                Accord.Diagnostics.Debug.Assert(mean.IsEqual(base.Median, 1e-10));
                 return mean;
             }
         }
@@ -297,7 +299,7 @@ namespace Accord.Statistics.Distributions.Univariate
         /// </summary>
         /// 
         /// <value>
-        ///   A <see cref="AForge.DoubleRange" /> containing
+        ///   A <see cref="DoubleRange" /> containing
         ///   the support interval for this distribution.
         /// </value>
         /// 
@@ -353,7 +355,7 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   See <see cref="NormalDistribution"/>.
         /// </example>
         /// 
-        public override double DistributionFunction(double x)
+        protected internal override double InnerDistributionFunction(double x)
         {
             return Normal.Function((x - mean) / stdDev);
         }
@@ -366,7 +368,7 @@ namespace Accord.Statistics.Distributions.Univariate
         /// 
         /// <param name="x">A single point in the distribution range.</param>
         /// 
-        public override double ComplementaryDistributionFunction(double x)
+        protected internal override double InnerComplementaryDistributionFunction(double x)
         {
             return Normal.Complemented((x - mean) / stdDev);
         }
@@ -394,18 +396,31 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   See <see cref="NormalDistribution"/>.
         /// </example>
         ///
-        public override double InverseDistributionFunction(double p)
+        protected internal override double InnerInverseDistributionFunction(double p)
         {
             double inv = Normal.Inverse(p);
 
             double icdf = mean + stdDev * inv;
 
 #if DEBUG
-            double baseValue = base.InverseDistributionFunction(p);
+            double baseValue;
+            if (p < 0.0 || p > 1.0)
+                throw new ArgumentOutOfRangeException("p", "Value must be between 0 and 1.");
+
+            if (Double.IsNaN(p))
+                throw new ArgumentOutOfRangeException("p", "Value is Not-a-Number (NaN).");
+
+            if (p == 0)
+                baseValue = Support.Min;
+
+            if (p == 1)
+                baseValue = Support.Max;
+
+            baseValue = base.InnerInverseDistributionFunction(p);
             double r1 = DistributionFunction(baseValue);
             double r2 = DistributionFunction(icdf);
 
-            bool close = r1.IsRelativelyEqual(r2, 1e-6);
+            bool close = r1.IsEqual(r2, 1e-6);
 
             if (!close)
             {
@@ -444,7 +459,7 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   See <see cref="NormalDistribution"/>.
         /// </example> 
         ///
-        public override double ProbabilityDensityFunction(double x)
+        protected internal override double InnerProbabilityDensityFunction(double x)
         {
             double z = (x - mean) / stdDev;
             double lnp = lnconstant - z * z * 0.5;
@@ -476,7 +491,7 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   See <see cref="NormalDistribution"/>.
         /// </example>
         /// 
-        public override double LogProbabilityDensityFunction(double x)
+        protected internal override double InnerLogProbabilityDensityFunction(double x)
         {
             double z = (x - mean) / stdDev;
             double lnp = lnconstant - z * z * 0.5;
@@ -499,9 +514,15 @@ namespace Accord.Statistics.Distributions.Univariate
         ///   Gets the Standard Gaussian Distribution, with zero mean and unit variance.
         /// </summary>
         /// 
-        public static NormalDistribution Standard { get { return standard; } }
+        public static NormalDistribution Standard
+        {
+            get { return standard; }
+        }
 
-        private static readonly NormalDistribution standard = new NormalDistribution() { immutable = true };
+        private static readonly NormalDistribution standard = new NormalDistribution()
+        {
+            immutable = true
+        };
 
         /// <summary>
         ///   Fits the underlying distribution to a given set of observations.
@@ -550,22 +571,28 @@ namespace Accord.Statistics.Distributions.Univariate
 #endif
 
                 // Compute weighted mean
-                mu = Statistics.Tools.WeightedMean(observations, weights);
+                mu = Measures.WeightedMean(observations, weights);
 
                 // Compute weighted variance
-                var = Statistics.Tools.WeightedVariance(observations, weights, mu);
+                var = Measures.WeightedVariance(observations, weights, mu);
             }
             else
             {
                 // Compute weighted mean
-                mu = Statistics.Tools.Mean(observations);
+                mu = Measures.Mean(observations);
 
                 // Compute weighted variance
-                var = Statistics.Tools.Variance(observations, mu);
+                var = Measures.Variance(observations, mu);
             }
 
             if (options != null)
             {
+                if (options.Robust)
+                {
+                    initialize(mu, Math.Sqrt(var), var);
+                    return;
+                }
+
                 // Parse optional estimation options
                 double regularization = options.Regularization;
 
@@ -669,35 +696,265 @@ namespace Accord.Statistics.Distributions.Univariate
         /// </summary>
         /// 
         /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
         /// 
         /// <returns>A random vector of observations drawn from this distribution.</returns>
         /// 
-        public override double[] Generate(int samples)
+        public override double[] Generate(int samples, double[] result, Random source)
         {
-            double[] r = new double[samples];
-
-            var g = new AForge.Math.Random.GaussianGenerator(
-                (float)mean, (float)stdDev, Accord.Math.Tools.Random.Next());
-
-            for (int i = 0; i < r.Length; i++)
-                r[i] = g.Next();
-
-            return r;
+            return Random(mean, stdDev, samples, result, source);
         }
 
         /// <summary>
-        ///   Generates a random vector of observations from the current distribution.
+        ///   Generates a random observation from the current distribution.
         /// </summary>
+        ///
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///   
+        /// <returns>A observation drawn from this distribution.</returns>
         /// 
-        /// <returns>A random vector of observations drawn from this distribution.</returns>
-        /// 
-        public override double Generate()
+        public override double Generate(Random source)
         {
-            var g = new AForge.Math.Random.GaussianGenerator(
-                (float)mean, (float)stdDev, Accord.Math.Tools.Random.Next());
-
-            return g.Next();
+            return Random(mean, stdDev, source);
         }
 
+        /// <summary>
+        ///   Generates a single random observation from the 
+        ///   Normal distribution with the given parameters.
+        /// </summary>
+        /// 
+        /// <param name="mean">The mean value μ (mu).</param>
+        /// <param name="stdDev">The standard deviation σ (sigma).</param>
+        ///
+        /// <returns>An double value sampled from the specified Normal distribution.</returns>
+        /// 
+        public static double Random(double mean, double stdDev)
+        {
+            return Random(mean, stdDev, Accord.Math.Random.Generator.Random);
+        }
+
+        /// <summary>
+        ///   Generates a single random observation from the 
+        ///   Normal distribution with the given parameters.
+        /// </summary>
+        /// 
+        /// <param name="mean">The mean value μ (mu).</param>
+        /// <param name="stdDev">The standard deviation σ (sigma).</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///
+        /// <returns>An double value sampled from the specified Normal distribution.</returns>
+        /// 
+        public static double Random(double mean, double stdDev, Random source)
+        {
+            return Random(source) * stdDev + mean;
+        }
+
+        /// <summary>
+        ///   Generates a random vector of observations from the 
+        ///   Normal distribution with the given parameters.
+        /// </summary>
+        /// 
+        /// <param name="mean">The mean value μ (mu).</param>
+        /// <param name="stdDev">The standard deviation σ (sigma).</param>
+        /// <param name="samples">The number of samples to generate.</param>
+        ///
+        /// <returns>An array of double values sampled from the specified Normal distribution.</returns>
+        /// 
+        public static double[] Random(double mean, double stdDev, int samples)
+        {
+            return Random(mean, stdDev, samples, new double[samples], Accord.Math.Random.Generator.Random);
+        }
+
+        /// <summary>
+        ///   Generates a random vector of observations from the 
+        ///   Normal distribution with the given parameters.
+        /// </summary>
+        /// 
+        /// <param name="mean">The mean value μ (mu).</param>
+        /// <param name="stdDev">The standard deviation σ (sigma).</param>
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///   
+        /// <returns>An array of double values sampled from the specified Normal distribution.</returns>
+        /// 
+        public static double[] Random(double mean, double stdDev, int samples, Random source)
+        {
+            return Random(mean, stdDev, samples, new double[samples], source);
+        }
+
+        /// <summary>
+        ///   Generates a random vector of observations from the 
+        ///   Normal distribution with the given parameters.
+        /// </summary>
+        /// 
+        /// <param name="mean">The mean value μ (mu).</param>
+        /// <param name="stdDev">The standard deviation σ (sigma).</param>
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        ///
+        /// <returns>An array of double values sampled from the specified Normal distribution.</returns>
+        /// 
+        public static double[] Random(double mean, double stdDev, int samples, double[] result)
+        {
+            return Random(mean, stdDev, samples, new double[samples], Accord.Math.Random.Generator.Random);
+        }
+
+        /// <summary>
+        ///   Generates a random vector of observations from the 
+        ///   Normal distribution with the given parameters.
+        /// </summary>
+        /// 
+        /// <param name="mean">The mean value μ (mu).</param>
+        /// <param name="stdDev">The standard deviation σ (sigma).</param>
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///
+        /// <returns>An array of double values sampled from the specified Normal distribution.</returns>
+        /// 
+        public static double[] Random(double mean, double stdDev, int samples, double[] result, Random source)
+        {
+            Random(samples, result, source);
+            for (int i = 0; i < samples; i++)
+                result[i] = result[i] * stdDev + mean;
+            return result;
+        }
+
+
+
+        [ThreadStatic]
+        private static bool useSecond = false;
+
+        [ThreadStatic]
+        private static double secondValue = 0;
+
+        /// <summary>
+        ///   Generates a random vector of observations from the standard
+        ///   Normal distribution (zero mean and unit standard deviation).
+        /// </summary>
+        /// 
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        ///
+        /// <returns>An array of double values sampled from the specified Normal distribution.</returns>
+        /// 
+        public static double[] Random(int samples, double[] result)
+        {
+            return Random(samples, result, Accord.Math.Random.Generator.Random);
+        }
+
+        /// <summary>
+        ///   Generates a random vector of observations from the standard
+        ///   Normal distribution (zero mean and unit standard deviation).
+        /// </summary>
+        /// 
+        /// <param name="samples">The number of samples to generate.</param>
+        /// <param name="result">The location where to store the samples.</param>
+        /// <param name="source">The random number generator to use as a source of randomness. 
+        ///   Default is to use <see cref="Accord.Math.Random.Generator.Random"/>.</param>
+        ///
+        /// <returns>An array of double values sampled from the specified Normal distribution.</returns>
+        /// 
+        public static double[] Random(int samples, double[] result, Random source)
+        {
+            bool useSecond = NormalDistribution.useSecond;
+            double secondValue = NormalDistribution.secondValue;
+
+            for (int i = 0; i < samples; i++)
+            {
+                // check if we can use second value
+                if (useSecond)
+                {
+                    // return the second number
+                    useSecond = false;
+                    result[i] = secondValue;
+                    continue;
+                }
+
+                // Polar form of the Box-Muller transformation
+                // http://www.design.caltech.edu/erik/Misc/Gaussian.html
+
+                double x1, x2, w, firstValue;
+
+                // generate new numbers
+                do
+                {
+                    x1 = source.NextDouble() * 2.0 - 1.0;
+                    x2 = source.NextDouble() * 2.0 - 1.0;
+                    w = x1 * x1 + x2 * x2;
+                }
+                while (w >= 1.0);
+
+                w = Math.Sqrt((-2.0 * Math.Log(w)) / w);
+
+                // get two standard random numbers
+                firstValue = x1 * w;
+                secondValue = x2 * w;
+
+                useSecond = true;
+
+                // return the first number
+                result[i] = firstValue;
+            }
+
+            NormalDistribution.useSecond = useSecond;
+            NormalDistribution.secondValue = secondValue;
+
+            return result;
+        }
+
+        /// <summary>
+        ///   Generates a random value from a standard Normal 
+        ///   distribution (zero mean and unit standard deviation).
+        /// </summary>
+        /// 
+        public static double Random()
+        {
+            return Random(Accord.Math.Random.Generator.Random);
+        }
+
+        /// <summary>
+        ///   Generates a random value from a standard Normal 
+        ///   distribution (zero mean and unit standard deviation).
+        /// </summary>
+        /// 
+        public static double Random(Random source)
+        {
+            // check if we can use second value
+            if (useSecond)
+            {
+                // return the second number
+                useSecond = false;
+                return secondValue;
+            }
+
+            double x1, x2, w, firstValue;
+
+            // generate new numbers
+            do
+            {
+                x1 = source.NextDouble() * 2.0 - 1.0;
+                x2 = source.NextDouble() * 2.0 - 1.0;
+                w = x1 * x1 + x2 * x2;
+            }
+            while (w >= 1.0);
+
+            w = Math.Sqrt((-2.0 * Math.Log(w)) / w);
+
+            // get two standard random numbers
+            firstValue = x1 * w;
+            secondValue = x2 * w;
+
+            useSecond = true;
+
+            // return the first number
+            return firstValue;
+        }
     }
 }

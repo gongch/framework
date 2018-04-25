@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -24,7 +24,9 @@ namespace Accord.Audio
 {
     using System;
     using System.Runtime.InteropServices;
-    using AForge.Math;
+    using Accord.Compat;
+    using System.Numerics;
+    using Accord.Audio.Formats;
 
     /// <summary>
     ///   Specifies the format of each sample in a signal.
@@ -96,11 +98,12 @@ namespace Accord.Audio
     ///  <para>
     ///  A sample refers to a value or set of values at a point in time 
     ///  and/or space.</para>
+    ///</remarks>
     ///
-    /// <para>Sample usage:</para>
+    /// <example>
     /// <code>
     /// // create an empty audio signal 
-    /// Signal signal = new Signal( channels, length, sampleRate, format );
+    /// Signal signal = new Signal(channels, length, sampleRate, format);
     /// </code>
     /// 
     /// <code>
@@ -119,9 +122,12 @@ namespace Accord.Audio
     /// </code>
     /// 
     /// <para>
-    /// For an example on how to decode a signal from a Wave file, please
-    /// take a look on the WaveDecoder and WaveFileAudioSource documentation.</para>
-    /// </remarks>
+    /// It is also possible to load signals from a file or stream, as long as you have
+    /// a decoder for the given format available. For example, in order to load a .wav
+    /// file using DirectSound, please add a reference to Accord.Audio.DirectSound and
+    /// run the following code snippet:</para>
+    /// <code source="Unit Tests\Accord.Tests.Audio\SignalTest.cs" region="doc_energy" />
+    /// </example>
     /// 
     /// <seealso cref="ComplexSignal"/>
     ///
@@ -155,7 +161,7 @@ namespace Accord.Audio
         ///   Gets the signal duration in milliseconds.
         /// </summary>
         /// 
-        public int Duration
+        public TimeSpan Duration
         {
             get { return DurationOfSamples(length, sampleRate); }
         }
@@ -270,26 +276,36 @@ namespace Accord.Audio
         ///   Computes the signal energy.
         /// </summary>
         /// 
-        public unsafe double GetEnergy()
+        /// <example>
+        /// <code source="Unit Tests\Accord.Tests.Audio\SignalTest.cs" region="doc_energy" />
+        /// </example>
+        /// 
+        public double GetEnergy()
         {
             double e = 0, v;
 
-            if (format != SampleFormat.Format128BitComplex)
+            unsafe
             {
-                // Iterate over all samples and compute energy
-                float* src = (float*)this.ptrData.ToPointer();
-                for (int i = 0; i < this.Samples; i++, src++)
+                if (format != SampleFormat.Format128BitComplex)
                 {
-                    v = (*src);
-                    e += v * v;
+                    // Iterate over all samples and compute energy
+                    float* src = (float*)this.ptrData.ToPointer();
+                    for (int i = 0; i < this.Samples; i++, src++)
+                    {
+                        v = (*src);
+                        e += v * v;
+                    }
                 }
-            }
-            else
-            {
-                // Iterate over all samples and compute energy
-                Complex* src = (Complex*)this.Data.ToPointer();
-                for (int i = 0; i < this.Samples; i++, src++)
-                    e += (*src).SquaredMagnitude;
+                else
+                {
+                    // Iterate over all samples and compute energy
+                    Complex* src = (Complex*)this.Data.ToPointer();
+                    for (int i = 0; i < this.Samples; i++, src++)
+                    {
+                        double m = (*src).Magnitude;
+                        e += m * m;
+                    }
+                }
             }
 
             return e;
@@ -305,19 +321,26 @@ namespace Accord.Audio
         ///   the retrieved value. Conversion is performed automatically from
         ///   the underlying signal sample format if supported.</returns>
         ///   
-        public unsafe float GetSample(int channel, int position)
+        public float GetSample(int channel, int position)
         {
-            void* ptr = ptrData.ToPointer();
-            int pos = position * Channels + channel;
+            float sample;
 
-            switch (format)
+            unsafe
             {
-                case SampleFormat.Format32BitIeeeFloat:
-                    return ((float*)ptr)[pos];
+                void* ptr = ptrData.ToPointer();
+                int pos = position * Channels + channel;
 
-                default:
-                    throw new NotSupportedException();
+                switch (format)
+                {
+                    case SampleFormat.Format32BitIeeeFloat:
+                        sample = ((float*)ptr)[pos];
+                        break;
+                    default:
+                        throw new NotSupportedException();
+                }
             }
+
+            return sample;
         }
 
         /// <summary>
@@ -330,19 +353,22 @@ namespace Accord.Audio
         ///   specifying the value to set. Conversion will be done automatically
         ///   to the underlying signal sample format if supported.</param>
         ///   
-        public unsafe void SetSample(int channel, int position, float value)
+        public void SetSample(int channel, int position, float value)
         {
-            void* ptr = ptrData.ToPointer();
-            int pos = position * Channels + channel;
-
-            switch (format)
+            unsafe
             {
-                case SampleFormat.Format32BitIeeeFloat:
-                    ((float*)ptr)[pos] = value;
-                    break;
+                void* ptr = ptrData.ToPointer();
+                int pos = position * Channels + channel;
 
-                default:
-                    throw new NotSupportedException();
+                switch (format)
+                {
+                    case SampleFormat.Format32BitIeeeFloat:
+                        ((float*)ptr)[pos] = value;
+                        break;
+
+                    default:
+                        throw new NotSupportedException();
+                }
             }
         }
 
@@ -490,18 +516,18 @@ namespace Accord.Audio
         ///   Gets the number of samples contained in a signal of given duration and sampling rate.
         /// </summary>
         /// 
-        public static int NumberOfSamples(int duration, int samplingRate)
+        public static int NumberOfSamples(long duration, int samplingRate)
         {
-            return (duration / 1000) * samplingRate;
+            return (int)((duration / 1000) * samplingRate);
         }
 
         /// <summary>
         ///   Gets the duration of each sample in a signal with the given number of samples and sampling rate.
         /// </summary>
         /// 
-        public static int DurationOfSamples(int samples, int samplingRate)
+        public static TimeSpan DurationOfSamples(long samples, int samplingRate)
         {
-            return (int)(samples / (double)samplingRate * 1000.0);
+            return TimeSpan.FromMilliseconds(samples / (double)samplingRate * 1000.0);
         }
 
         /// <summary>
@@ -584,6 +610,19 @@ namespace Accord.Audio
                 handle.Free();
                 ptrData = IntPtr.Zero;
             }
+        }
+
+        /// <summary>
+        ///   Loads a signal from a file, such as a ".wav" file.
+        /// </summary>
+        /// 
+        /// <param name="fileName">Name of the file to be read.</param>
+        /// 
+        /// <returns>The signal that has been read from the file.</returns>
+        /// 
+        public static Signal FromFile(string fileName)
+        {
+            return AudioDecoder.DecodeFromFile(fileName);
         }
 
         #endregion

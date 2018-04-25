@@ -2,7 +2,7 @@
 // The Accord.NET Framework
 // http://accord-framework.net
 //
-// Copyright © César Souza, 2009-2015
+// Copyright © César Souza, 2009-2017
 // cesarsouza at gmail.com
 //
 //    This library is free software; you can redistribute it and/or
@@ -23,9 +23,9 @@
 namespace Accord.Tests.Statistics
 {
     using Accord.Statistics.Distributions.Multivariate;
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using NUnit.Framework;
     
-    [TestClass()]
+    [TestFixture]
     public class MultivariateDiscreteDistributionTest
     {
 
@@ -46,7 +46,7 @@ namespace Accord.Tests.Statistics
 
 
 
-        [TestMethod()]
+        [Test]
         public void ProbabilityMassFunctionTest()
         {
             MultivariateDiscreteDistribution target = new MultinomialDistribution(5, 0.25, 0.25, 0.25, 0.25);
@@ -59,7 +59,7 @@ namespace Accord.Tests.Statistics
             Assert.AreEqual(expected, actual, 1e-6);
         }
 
-        [TestMethod()]
+        [Test]
         public void LogProbabilityMassFunctionTest()
         {
             MultivariateDiscreteDistribution target = new MultinomialDistribution(5, 0.25, 0.25, 0.25, 0.25);
